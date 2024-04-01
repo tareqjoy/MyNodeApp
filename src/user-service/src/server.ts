@@ -1,12 +1,14 @@
 import express from 'express';
 import { router as signupRouter } from "./routes/signup";
 import { router as userRouter } from "./routes/user";
+import { router as userInternalRouter } from "./routes/user-internal";
 import mongoose from 'mongoose';
 import bodyParser from "body-parser";
-import { UserSchema } from './models/user'
 
 
-const appport = process.env.PORT || 5000;
+const appport = process.env.PORT || 5002;
+const mongouser = process.env.MONGODB_USER || "admin";
+const mongoppass = process.env.MONGODB_PASS || "admin";
 const mongoport = process.env.MONGODB_PORT || 27017;
 const mongohost = process.env.MONGODB_HOST || "127.0.0.1";
 const mongodatabase = process.env.MONGODB_DATABASE || "mydatabase";
@@ -17,12 +19,11 @@ const mongoOptions = {
   minPoolSize: 10
 };
 
-const mongoUrl = `mongodb://${mongohost}:${mongoport}/${mongodatabase}`;
+const mongoUrl = `mongodb://${mongouser}:${mongoppass}@${mongohost}:${mongoport}/${mongodatabase}`;
 mongoose.connect(mongoUrl, mongoOptions);
 
 
-
-const app = express();
+export const app = express();
 
 class HttpError extends Error {
   statusCode: number;
@@ -36,8 +37,9 @@ class HttpError extends Error {
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use('/detail', userRouter);
-app.use('/signup', signupRouter);
+app.use('/detail/v1', userRouter);
+app.use('/signup/v1', signupRouter);
+app.use('/userid/v1', userInternalRouter);
 
 
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -57,6 +59,3 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 app.listen(appport, () => {
   console.log(`Server is running on port ${appport}`);
 });
-
-
-module.exports = app

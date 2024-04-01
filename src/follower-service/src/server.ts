@@ -5,7 +5,7 @@ import express from 'express';
 const app=express();
 const bodyParser = require("body-parser")
 // Specify a port number for the server
-const port= process.env.PORT || 5000;
+const port= process.env.PORT || 5003;
 
 import { router } from "./routes/follow";
 

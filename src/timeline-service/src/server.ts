@@ -1,13 +1,26 @@
 import express from 'express';
-
-
-// Create an instance of the express application
-const app=express();
-const bodyParser = require("body-parser")
-// Specify a port number for the server
-const port= process.env.PORT || 5000;
-
+import mongoose from 'mongoose';
+import bodyParser from "body-parser";
 import { router } from "./routes/timeline";
+
+
+const appport = process.env.PORT || 5001;
+const mongouser = process.env.MONGODB_USER || "admin";
+const mongoppass = process.env.MONGODB_PASS || "admin";
+const mongoport = process.env.MONGODB_PORT || 27017;
+const mongohost = process.env.MONGODB_HOST || "127.0.0.1";
+const mongodatabase = process.env.MONGODB_DATABASE || "mydatabase";
+
+
+const mongoOptions = {
+  maxPoolSize: 100,
+  minPoolSize: 10
+};
+
+const mongoUrl = `mongodb://${mongouser}:${mongoppass}@${mongohost}:${mongoport}/${mongodatabase}`;
+mongoose.connect(mongoUrl, mongoOptions);
+
+export const app=express(); 
 
 class HttpError extends Error {
   statusCode: number;
@@ -18,15 +31,25 @@ class HttpError extends Error {
   }
 }
 
+
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use('/', router);
+app.use('/v1', router);
 
-// Start the server and listen to the port
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const error = new HttpError('Not found', 404);
+  next(error);
 });
 
+app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  res.status(error.statusCode || 500);
+  res.json({
+    message: error
+  })
+});
 
-module.exports = app
+// Start the server and listen to the port
+app.listen(appport, () => {
+  console.log(`Server is running on port ${appport}`);
+});

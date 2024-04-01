@@ -1,4 +1,3 @@
-
 import { Schema, Types } from 'mongoose';
 
 export const UserSchema = new Schema({

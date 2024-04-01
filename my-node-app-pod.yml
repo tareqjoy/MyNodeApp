@@ -3,27 +3,34 @@ kind: ConfigMap
 metadata:
   name: timeline-service-config
 data:
-  MONGODB_HOST: mongodb-service
+  MONGODB_HOST: host.minikube.internal
   MONGODB_PORT: "27017"
   MONGODB_DATABASE: mydatabase
+  MONGODB_USER: admin
+  MONGODB_PASS: admin
+  USER_SERVICE_USERID_URL: http://host.minikube.internal:380/user/userid/v1/
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: user-service-config
 data:
-  MONGODB_HOST: mongodb-service
+  MONGODB_HOST: host.minikube.internal
   MONGODB_PORT: "27017"
   MONGODB_DATABASE: mydatabase
+  MONGODB_USER: admin
+  MONGODB_PASS: admin
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: follower-service-config
 data:
-  MONGODB_HOST: mongodb-serviceuser
+  MONGODB_HOST: host.minikube.internal
   MONGODB_PORT: "27017"
   MONGODB_DATABASE: mydatabase
+  MONGODB_USER: admin
+  MONGODB_PASS: admin
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,7 +48,7 @@ spec:
     spec:
       containers:
         - name: timeline-service-container
-          image: tareqjoy/timeline-service:v1
+          image: tareqjoy/timeline-service:v2
           ports:
             - containerPort: 3000
           envFrom:
@@ -58,7 +65,7 @@ spec:
   ports:
     - protocol: TCP
       port: 3001
-      targetPort: 5000
+      targetPort: 5001
       nodePort: 30001
   type: NodePort
 ---
@@ -97,7 +104,7 @@ spec:
     spec:
       containers:
         - name: user-service-container
-          image: tareqjoy/user-service:v1
+          image: tareqjoy/user-service:v6
           ports:
             - containerPort: 3000
           envFrom:
@@ -114,7 +121,7 @@ spec:
   ports:
     - protocol: TCP
       port: 3002
-      targetPort: 5000
+      targetPort: 5002
       nodePort: 30002
   type: NodePort
 ---
@@ -170,7 +177,7 @@ spec:
   ports:
     - protocol: TCP
       port: 3003
-      targetPort: 5000
+      targetPort: 5003
       nodePort: 30003
   type: NodePort
 ---

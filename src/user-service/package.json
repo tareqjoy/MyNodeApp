@@ -16,7 +16,6 @@
     },
     "devDependencies": {
       "@types/express": "^4.17.21",
-      "@types/mongoose": "^5.11.97",
       "typescript": "^5.4.3"
     }
   }

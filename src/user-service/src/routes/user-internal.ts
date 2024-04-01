@@ -14,7 +14,7 @@ router.get('/:username', (req, res, next) => {
         if (doc == null) {
             res.status(404).json({error: "user not found"});
         } else {
-            res.status(200).json(doc);
+            res.status(200).json({id: doc._id});
         }
     }).catch(err => {
         console.log(err);
