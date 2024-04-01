@@ -1,0 +1,282 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timeline-service-config
+data:
+  MONGODB_HOST: mongodb-service
+  MONGODB_PORT: "27017"
+  MONGODB_DATABASE: mydatabase
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-service-config
+data:
+  MONGODB_HOST: mongodb-service
+  MONGODB_PORT: "27017"
+  MONGODB_DATABASE: mydatabase
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: follower-service-config
+data:
+  MONGODB_HOST: mongodb-serviceuser
+  MONGODB_PORT: "27017"
+  MONGODB_DATABASE: mydatabase
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    events {}
+    http {
+      server {
+        listen 80;
+
+        location /timeline {
+          proxy_pass http://192.168.49.2:30001/;
+        }
+
+        location /user {
+          proxy_pass http://192.168.49.2:30002/;
+        }
+
+        location /follower {
+          proxy_pass http://192.168.49.2:30003/;
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+          readOnly: true
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 80
+      nodePort: 30000
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeline-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: timeline-service
+  template:
+    metadata:
+      labels:
+        app: timeline-service
+    spec:
+      containers:
+        - name: timeline-service-container
+          image: tareqjoy/timeline-service:v1
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: timeline-service-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timeline-service
+spec:
+  selector:
+    app: timeline-service
+  ports:
+    - protocol: TCP
+      port: 3001
+      targetPort: 5000
+      nodePort: 30001
+  type: NodePort
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: timeline-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: timeline-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service-container
+          image: tareqjoy/user-service:v1
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: user-service-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+spec:
+  selector:
+    app: user-service
+  ports:
+    - protocol: TCP
+      port: 3002
+      targetPort: 5000
+      nodePort: 30002
+  type: NodePort
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: follower-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: follower-service
+  template:
+    metadata:
+      labels:
+        app: follower-service
+    spec:
+      containers:
+        - name: follower-service-container
+          image: tareqjoy/follower-service:v1
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: follower-service-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: follower-service
+spec:
+  selector:
+    app: follower-service
+  ports:
+    - protocol: TCP
+      port: 3003
+      targetPort: 5000
+      nodePort: 30003
+  type: NodePort
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: follower-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: follower-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
