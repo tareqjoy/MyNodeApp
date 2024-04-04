@@ -58,22 +58,5 @@ router.post('/', (req, res, next) => {
         // Handle error
         console.error(err);
         res.status(500).json({error: err});
-    }); ;
-/*
-    const Post = mongoose.model('Post', PostSchema);
-    const post = new Post({
-        _id: new mongoose.Types.ObjectId(),
-        username: username,
-        body: req.body.body,
-        time: Date.now()
-    })
-
-    post.save().then(result => {
-        res.status(200).json({
-            message: "Ok"
-        });
-    })
-    .catch(err => {
-        res.status(500).json({error: err});
-    });*/
+    });
 });

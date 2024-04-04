@@ -12,7 +12,9 @@ const mongoppass = process.env.MONGODB_PASS || "admin";
 const mongoport = process.env.MONGODB_PORT || 27017;
 const mongohost = process.env.MONGODB_HOST || "127.0.0.1";
 const mongodatabase = process.env.MONGODB_DATABASE || "mydatabase";
-
+const api_path_detail = process.env.API_PATH_DETAIL || '/v1/user/detail';
+const api_path_signup = process.env.API_PATH_SIGNUP || '/v1/user/signup';
+const api_path_userid = process.env.API_PATH_USERID || '/v1/user/userid';
 
 const mongoOptions = {
   maxPoolSize: 100,
@@ -37,9 +39,9 @@ class HttpError extends Error {
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use('/detail/v1', userRouter);
-app.use('/signup/v1', signupRouter);
-app.use('/userid/v1', userInternalRouter);
+app.use(api_path_detail, userRouter);
+app.use(api_path_signup, signupRouter);
+app.use(api_path_userid, userInternalRouter);
 
 
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -50,7 +52,8 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   res.status(error.statusCode || 500);
   res.json({
-    message: error
+    message: error,
+    path: req.url
   })
 });
 

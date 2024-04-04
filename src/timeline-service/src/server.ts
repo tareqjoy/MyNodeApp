@@ -10,7 +10,7 @@ const mongoppass = process.env.MONGODB_PASS || "admin";
 const mongoport = process.env.MONGODB_PORT || 27017;
 const mongohost = process.env.MONGODB_HOST || "127.0.0.1";
 const mongodatabase = process.env.MONGODB_DATABASE || "mydatabase";
-
+const api_path_root = process.env.API_PATH_ROOT || '/v1/timeline';
 
 const mongoOptions = {
   maxPoolSize: 100,
@@ -35,7 +35,7 @@ class HttpError extends Error {
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use('/v1', router);
+app.use(api_path_root, router);
 
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   const error = new HttpError('Not found', 404);
