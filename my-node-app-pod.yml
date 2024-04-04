@@ -8,7 +8,7 @@ data:
   MONGODB_DATABASE: mydatabase
   MONGODB_USER: admin
   MONGODB_PASS: admin
-  USER_SERVICE_USERID_URL: http://192.168.49.2:30080/v1/user/userid/
+  USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
   API_PATH_ROOT: /v1/timeline
 ---
 apiVersion: v1
@@ -256,26 +256,21 @@ spec:
       - name: nginx
         image: nginx:latest
         ports:
-        - containerPort: 580
+        - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: nginx-service
-  namespace: ingress-nginx
 spec:
   selector:
     app: nginx
   type: NodePort
   ports:
-    - name: http
+    - protocol: TCP
       port: 80
-      targetPort: http
-      nodePort: 30081
-    - name: https
-      port: 443
-      targetPort: https
-      nodePort: 30444
+      targetPort: 80
+      nodePort: 30080
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
