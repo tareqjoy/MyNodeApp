@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from "body-parser";
 import { router } from "./routes/timeline";
+import { Kafka, Producer } from 'kafkajs';
 
 
 const appport = process.env.PORT || 5001;
@@ -10,7 +11,11 @@ const mongoppass = process.env.MONGODB_PASS || "admin";
 const mongoport = process.env.MONGODB_PORT || 27017;
 const mongohost = process.env.MONGODB_HOST || "127.0.0.1";
 const mongodatabase = process.env.MONGODB_DATABASE || "mydatabase";
+export const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
 const api_path_root = process.env.API_PATH_ROOT || '/v1/timeline';
+const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'timeline';
+const kafka_host_port = process.env.KAFKA_HOST_PORT || 'localhost:9092';
+export const kafka_fanout_topic = process.env.KAFKA_FANOUT_TOPIC || 'new-post';
 
 const mongoOptions = {
   maxPoolSize: 100,
@@ -30,6 +35,14 @@ class HttpError extends Error {
     this.statusCode = statusCode || 500;
   }
 }
+
+const fanoutKafka = new Kafka({
+  clientId: kafka_client_id,
+  brokers: [kafka_host_port], 
+});
+
+export const fanoutProducer = fanoutKafka.producer();
+fanoutProducer.connect();
 
 
 app.use(bodyParser.urlencoded({extended: false}));

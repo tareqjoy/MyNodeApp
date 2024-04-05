@@ -1,11 +1,13 @@
 import express from 'express'
 import mongoose from 'mongoose';
 import { PostSchema } from '../models/post'
+import { FanoutKafkaMessage } from '../models/fanout-kafka-message'
 import axios, { AxiosResponse } from 'axios';
+import { fanoutProducer, userServiceHostUrl, kafka_fanout_topic } from '../server'
 
 
 export const router = express.Router();
-const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5001/userid/v1/";
+
 
 router.get('/:username', (req, res, next) => {
     console.log(`GET /:username called`);
@@ -32,7 +34,7 @@ router.get('/:username', (req, res, next) => {
 
 router.post('/', (req, res, next) => {
     console.log(`POST / called`);
-
+        
     const username = req.body.username
 
 
@@ -48,13 +50,25 @@ router.post('/', (req, res, next) => {
             time: Date.now()
         })
 
-        post.save().then(result => {
-            res.status(200).json({
-                message: "Ok"
-            });
-        })
+        return post.save();
 
-    }).catch((err: any) => {
+    }).then((result: any) => {
+        const msg = new FanoutKafkaMessage(result._id.toString(), result.userid.toString(), result.time);
+        return fanoutProducer.send({
+            topic: kafka_fanout_topic,
+            messages: [
+                {
+                    key: msg.postId,
+                    value: JSON.stringify(msg)
+                }
+            ]
+        })
+    }).then((result: any) => {
+        res.status(200).json({
+            message: "Ok"
+        });
+    })
+    .catch((err: any) => {
         // Handle error
         console.error(err);
         res.status(500).json({error: err});

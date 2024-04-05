@@ -10,6 +10,9 @@ data:
   MONGODB_PASS: admin
   USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
   API_PATH_ROOT: /v1/timeline
+  KAFKA_CLIENT_ID: timeline
+  KAFKA_HOST_PORT: host.minikube.internal:9092
+  KAFKA_FANOUT_TOPIC: new-post
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -237,56 +240,3 @@ spec:
                   name: follower-service
                   port:
                     number: 3003
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:latest
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-service
-spec:
-  selector:
-    app: nginx
-  type: NodePort
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-      nodePort: 30080
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: nginx-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: nginx-deployment
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
