@@ -11,7 +11,7 @@ data:
   USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
   API_PATH_ROOT: /v1/timeline
   KAFKA_CLIENT_ID: timeline
-  KAFKA_HOST_PORT: host.minikube.internal:9092
+  KAFKA_HOST_PORT: 192.168.0.10:9092
   KAFKA_FANOUT_TOPIC: new-post
 ---
 apiVersion: v1
@@ -87,8 +87,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: timeline-service
-  minReplicas: 2
-  maxReplicas: 10
+  minReplicas: 1
+  maxReplicas: 1
   metrics:
     - type: Resource
       resource:
@@ -144,8 +144,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: user-service
-  minReplicas: 2
-  maxReplicas: 10
+  minReplicas: 1
+  maxReplicas: 1
   metrics:
     - type: Resource
       resource:
@@ -201,8 +201,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: follower-service
-  minReplicas: 2
-  maxReplicas: 10
+  minReplicas: 1
+  maxReplicas: 1
   metrics:
     - type: Resource
       resource:

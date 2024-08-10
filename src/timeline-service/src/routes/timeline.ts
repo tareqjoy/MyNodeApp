@@ -4,13 +4,16 @@ import { PostSchema } from '../models/post'
 import { FanoutKafkaMessage } from '../models/fanout-kafka-message'
 import axios, { AxiosResponse } from 'axios';
 import { fanoutProducer, userServiceHostUrl, kafka_fanout_topic } from '../server'
+import * as log4js from "log4js";
 
+const logger = log4js.getLogger();
+logger.level = "trace";
 
 export const router = express.Router();
 
 
 router.get('/:username', (req, res, next) => {
-    console.log(`GET /:username called`);
+    logger.trace(`GET /:username called`);
     
     const username: string = req.params.username;
 
@@ -26,7 +29,7 @@ router.get('/:username', (req, res, next) => {
             }
         })
     }).catch(err => {
-        console.log(err);
+        logger.error(err);
         res.status(500).json({error: err});
     });;
 
@@ -54,6 +57,7 @@ router.post('/', (req, res, next) => {
 
     }).then((result: any) => {
         const msg = new FanoutKafkaMessage(result._id.toString(), result.userid.toString(), result.time);
+        logger.debug(`publishing Kafka: topic: ${kafka_fanout_topic}`);
         return fanoutProducer.send({
             topic: kafka_fanout_topic,
             messages: [
@@ -70,7 +74,7 @@ router.post('/', (req, res, next) => {
     })
     .catch((err: any) => {
         // Handle error
-        console.error(err);
+        logger.error(err);
         res.status(500).json({error: err});
     });
 });

@@ -2,8 +2,11 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from "body-parser";
 import { router } from "./routes/timeline";
-import { Kafka, Producer } from 'kafkajs';
+import { Kafka, Producer, logLevel } from 'kafkajs';
+import * as log4js from "log4js";
 
+const logger = log4js.getLogger();
+logger.level = "trace";
 
 const appport = process.env.PORT || 5001;
 const mongouser = process.env.MONGODB_USER || "admin";
@@ -36,9 +39,10 @@ class HttpError extends Error {
   }
 }
 
+logger.info(`Will listen kafka at ${kafka_host_port}`);
 const fanoutKafka = new Kafka({
   clientId: kafka_client_id,
-  brokers: [kafka_host_port], 
+  brokers: [kafka_host_port]
 });
 
 export const fanoutProducer = fanoutKafka.producer();
@@ -64,5 +68,5 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 
 // Start the server and listen to the port
 app.listen(appport, () => {
-  console.log(`Server is running on port ${appport}`);
+  logger.info(`Server is running on port ${appport}`);
 });
