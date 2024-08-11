@@ -70,3 +70,14 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 app.listen(appport, () => {
   logger.info(`Server is running on port ${appport}`);
 });
+
+process.on('SIGINT', async () => {
+  try {
+    console.log('Caught interrupt signal, shutting down...');
+    fanoutProducer.disconnect();
+    console.log(`Producer disconnected`);
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during disconnect:', error);
+  }
+});

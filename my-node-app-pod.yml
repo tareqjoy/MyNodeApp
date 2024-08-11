@@ -38,7 +38,18 @@ data:
   MONGODB_DATABASE: mydatabase
   MONGODB_USER: admin
   MONGODB_PASS: admin
-  API_PATH_ROOT: /v1/folower
+  API_PATH_ROOT: /v1/follower
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fanout-service-config
+data:
+  API_PATH_ROOT: /v1/fanout
+  KAFKA_CLIENT_ID: fanout
+  KAFKA_HOST_PORT: 192.168.0.10:9092
+  KAFKA_FANOUT_TOPIC: new-post
+  KAFKA_FANOUT_GROUP: fanout-group
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -211,6 +222,63 @@ spec:
           type: Utilization
           averageUtilization: 50
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fanout-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fanout-service
+  template:
+    metadata:
+      labels:
+        app: fanout-service
+    spec:
+      containers:
+        - name: fanout-service-container
+          image: tareqjoy/fanout-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: fanout-service-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fanout-service
+spec:
+  selector:
+    app: fanout-service
+  ports:
+    - protocol: TCP
+      port: 3004
+      targetPort: 5004
+      nodePort: 30004
+  type: NodePort
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fanout-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fanout-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -240,3 +308,10 @@ spec:
                   name: follower-service
                   port:
                     number: 3003
+            - path: /v1/fanout/
+              pathType: Prefix
+              backend:
+                service:
+                  name: fanout-service
+                  port:
+                    number: 3004
