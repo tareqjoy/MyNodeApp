@@ -36,7 +36,7 @@ router.get('/:username', (req, res, next) => {
 });
 
 router.post('/', (req, res, next) => {
-    console.log(`POST / called`);
+    logger.trace(`POST / called`);
         
     const username = req.body.username
 

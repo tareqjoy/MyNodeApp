@@ -1,15 +1,36 @@
 import express from 'express'
 
-export const router = express.Router();
+import { RedisClientType } from 'redis'
 
-router.get('/', (req, res, next) => {
-    res.status(200).json({
-        message: "Handling GET request to /fanout"
-    });
-});
+const router = express.Router();
 
-router.post('/', (req, res, next) => {
-    res.status(200).json({
-        message: "Handling POST request to /fanout"
+export const createFanoutRouter = (redisClient: RedisClientType<any, any, any>) => {
+    router.get('/', async (req, res, next) => {
+        const message = await redisClient.ping();
+        if (message == "PONG") {
+            res.status(200).json({
+                message: `Hello world`
+            });
+        } else {
+            res.status(500).json({
+                message: `Redis connection failed`
+            });
+        }
     });
-});
+    
+    router.post('/', async (req, res, next) => {
+        const message = await redisClient.ping();
+        if (message == "PONG") {
+            res.status(200).json({
+                message: `Hello world`
+            });
+        } else {
+            res.status(500).json({
+                message: `Redis connection failed`
+            });
+        }
+    });
+
+    return router;
+}
+

@@ -1,29 +1,43 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: timeline-service-config
+  name: mongodb-config
 data:
   MONGODB_HOST: host.minikube.internal
   MONGODB_PORT: "27017"
   MONGODB_DATABASE: mydatabase
   MONGODB_USER: admin
   MONGODB_PASS: admin
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-config
+data:
+  KAFKA_HOST_PORT: 192.168.0.10:9092
+  KAFKA_NEW_POST_FANOUT_TOPIC: new-post
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+data:
+  REDIS_HOST_PORT: redis://192.168.0.10:6379
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timeline-service-config
+data:
   USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
   API_PATH_ROOT: /v1/timeline
   KAFKA_CLIENT_ID: timeline
-  KAFKA_HOST_PORT: 192.168.0.10:9092
-  KAFKA_FANOUT_TOPIC: new-post
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: user-service-config
 data:
-  MONGODB_HOST: host.minikube.internal
-  MONGODB_PORT: "27017"
-  MONGODB_DATABASE: mydatabase
-  MONGODB_USER: admin
-  MONGODB_PASS: admin
   API_PATH_DETAIL: /v1/user/detail
   API_PATH_SIGNUP: /v1/user/signup
   API_PATH_USERID: /v1/user/userid
@@ -33,11 +47,6 @@ kind: ConfigMap
 metadata:
   name: follower-service-config
 data:
-  MONGODB_HOST: host.minikube.internal
-  MONGODB_PORT: "27017"
-  MONGODB_DATABASE: mydatabase
-  MONGODB_USER: admin
-  MONGODB_PASS: admin
   API_PATH_ROOT: /v1/follower
 ---
 apiVersion: v1
@@ -47,10 +56,7 @@ metadata:
 data:
   API_PATH_ROOT: /v1/fanout
   KAFKA_CLIENT_ID: fanout
-  KAFKA_HOST_PORT: 192.168.0.10:9092
-  KAFKA_FANOUT_TOPIC: new-post
   KAFKA_FANOUT_GROUP: fanout-group
-  REDIS_HOST_PORT: redis://192.168.0.10:6379
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -75,6 +81,12 @@ spec:
           envFrom:
             - configMapRef:
                 name: timeline-service-config
+            - configMapRef:
+                name: mongodb-config
+            - configMapRef:
+                name: kafka-config
+            - configMapRef:
+                name: redis-config
 ---
 apiVersion: v1
 kind: Service
@@ -132,6 +144,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: user-service-config
+            - configMapRef:
+                name: mongodb-config
 ---
 apiVersion: v1
 kind: Service
@@ -246,6 +260,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: fanout-service-config
+            - configMapRef:
+                name: kafka-config
 ---
 apiVersion: v1
 kind: Service

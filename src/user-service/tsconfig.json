@@ -10,7 +10,6 @@
     "rootDir": "src",                      // Root directory for TypeScript source files
     "sourceMap": true,                     // Generate source maps for debugging
     "removeComments": true,                 // Remove comments from output JavaScript files
- 
     "types": ["node"],
     "lib": ["ESNext"]
   },

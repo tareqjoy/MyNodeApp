@@ -18,7 +18,7 @@ export const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL ||
 const api_path_root = process.env.API_PATH_ROOT || '/v1/timeline';
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'timeline';
 const kafka_host_port = process.env.KAFKA_HOST_PORT || 'localhost:9092';
-export const kafka_fanout_topic = process.env.KAFKA_FANOUT_TOPIC || 'new-post';
+export const kafka_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
 
 const mongoOptions = {
   maxPoolSize: 100,
@@ -73,11 +73,11 @@ app.listen(appport, () => {
 
 process.on('SIGINT', async () => {
   try {
-    console.log('Caught interrupt signal, shutting down...');
+    logger.info('Caught interrupt signal, shutting down...');
     fanoutProducer.disconnect();
-    console.log(`Producer disconnected`);
+    logger.info(`Producer disconnected`);
     process.exit(0);
   } catch (error) {
-    console.error('Error during disconnect:', error);
+    logger.error('Error during disconnect:', error);
   }
 });

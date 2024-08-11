@@ -1,4 +1,5 @@
 import * as log4js from "log4js";
+
 import { RedisClientType } from 'redis'
 
 const logger = log4js.getLogger();
