@@ -12,7 +12,7 @@ logger.level = "trace";
 const appport = process.env.PORT || 5004;
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'fanout';
 const kafka_host_port = process.env.KAFKA_HOST_PORT || 'localhost:9092';
-const redis_host_port = process.env.REDIS_HOST_PORT || 'redis://localhost:6379';
+const redis_host_port = process.env.REDIS_HOST_PORT || 'redis://192.168.0.10:6379';
 const kafka_fanout_topic = process.env.KAFKA_FANOUT_TOPIC || 'new-post';
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || 'fanout-group';
 const api_path_root = process.env.API_PATH_ROOT || '/v1/fanout';
@@ -30,18 +30,19 @@ class HttpError extends Error {
 }
 
 async function main() {
-  logger.info(`Will listen kafka at ${kafka_host_port}`);
-  const fanoutKafka = new Kafka({
-    clientId: kafka_client_id,
-    brokers: [kafka_host_port]
-  });
 
   const redisClient = await createClient( { url: redis_host_port })
-    .on('error', err => logger.error('Redis Client Error', err))
+    .on('error', err => logger.error('Redis client error: ', err))
+    .on('ready', () => logger.info('Redis client is ready'))
     .connect();
 
 
-
+  logger.info(`Will listen kafka at ${kafka_host_port}`);
+  const fanoutKafka = new Kafka({
+      clientId: kafka_client_id,
+      brokers: [kafka_host_port]
+    });
+  
   const fanoutConsumer = fanoutKafka.consumer({ groupId: kafka_fanout_group });
   fanoutConsumer.connect();
   logger.info(`Connected to group: ${kafka_fanout_group}`);
@@ -91,7 +92,7 @@ async function main() {
       fanoutConsumer.disconnect();
       console.log(`Consumer disconnected`);
     
-      redisClient.disconnect();
+      redisClient.quit();
       console.log(`Redis disconnected`);
       process.exit(0);
     } catch (error) {

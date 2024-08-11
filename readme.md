@@ -12,12 +12,20 @@
    4. set this: 
    ```
    listeners=PLAINTEXT://0.0.0.0:9092
-   advertised.listeners=PLAINTEXT://<hostname from step 1>:9092 #Ex: 192.168.0.10:9092
+   advertised.listeners=PLAINTEXT://<hostname from step 2>:9092 #Ex: 192.168.0.10:9092
    ```
 6. Elasticsearch: https://www.elastic.co/guide/en/elasticsearch/reference/current/targz.html
    1. use this directory to install: **/usr/local/elasticsearch/**
 7. Logstash: https://www.elastic.co/guide/en/logstash/current/installing-logstash.html
 8. Redis: https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/
+   1. get hostname: `hostname -I`
+   2. edit redis config file: `sudo vim /etc/redis/redis.conf`
+   3. set this: 
+   ```
+   bind <hostname from step 1> -::1 #Ex: bind 192.168.0.10 -::1
+   protected-mode no
+   ```
+
    
 ## How To Run
    1. Run the following commands. If any error occurs, see the Prerequisites section to setup.
