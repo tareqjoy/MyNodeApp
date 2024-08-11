@@ -5,6 +5,7 @@ import * as log4js from "log4js";
 import { PostSchema } from '../models/post'
 import { FanoutKafkaMessage } from '../models/fanout-kafka-message'
 import { Producer } from 'kafkajs';
+import { RedisClientType } from 'redis';
 import axios, { AxiosResponse } from 'axios';
 
 const logger = log4js.getLogger();
@@ -15,7 +16,7 @@ const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http:
 
 const router = express.Router();
 
-export const createTimelineRouter = (fanoutProducer: Producer) => {
+export const createTimelineRouter = (fanoutProducer: Producer, redisClient: RedisClientType<any, any, any>) => {
     router.get('/:username', (req, res, next) => {
         logger.trace(`GET /:username called`);
         

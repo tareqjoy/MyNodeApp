@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from "body-parser";
 import { createTimelineRouter } from "./routes/timeline";
+import { redisClient } from './clients/redisClient';
 import { kafkaNewPostProducer } from "./clients/kafkaClient";
 
 import * as log4js from "log4js";
@@ -22,28 +23,29 @@ class HttpError extends Error {
   }
 }
 
+async function main() {
+  app.use(bodyParser.urlencoded({extended: false}));
+  app.use(bodyParser.json());
 
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json());
+  app.use(api_path_root, createTimelineRouter(kafkaNewPostProducer, redisClient));
 
-app.use(api_path_root, createTimelineRouter(kafkaNewPostProducer));
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const error = new HttpError('Not found', 404);
+    next(error);
+  });
 
-app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const error = new HttpError('Not found', 404);
-  next(error);
-});
+  app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.status(error.statusCode || 500);
+    res.json({
+      message: error
+    })
+  });
 
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  res.status(error.statusCode || 500);
-  res.json({
-    message: error
-  })
-});
-
-// Start the server and listen to the port
-app.listen(appport, () => {
-  logger.info(`Server is running on port ${appport}`);
-});
+  // Start the server and listen to the port
+  app.listen(appport, () => {
+    logger.info(`Server is running on port ${appport}`);
+  });
+}
 
 process.on('SIGINT', async () => {
   try {
@@ -55,3 +57,5 @@ process.on('SIGINT', async () => {
     logger.error('Error during disconnect:', error);
   }
 });
+
+main();

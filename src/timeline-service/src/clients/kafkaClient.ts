@@ -17,4 +17,4 @@ const fanoutKafka = new Kafka({
   
 export const kafkaNewPostProducer = fanoutKafka.producer();
 kafkaNewPostProducer.connect();
-logger.info(`Connected to kafka producer`);
+logger.info(`Connected to kafka producer on ${kafka_host_port}`);
