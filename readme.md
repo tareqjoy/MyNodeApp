@@ -6,26 +6,39 @@
 3. Minikube: https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download
 4. MongoDB: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
 5. Apache Zookeeper & Kafka: https://anishmahapatra.medium.com/how-to-set-up-kafka-on-ubuntu-6f68f6f37b3e
-   1. get hostname: `hostname -I`
-   2. edit Kafka server file: `sudo vim /path/to/kafka/config/server.properties`
-   3. set this: 
+   1. use this directory to install: **/usr/local/kafka/**
+   2. get hostname: `hostname -I`
+   3. edit Kafka server file: `sudo vim /usr/local/kafka/config/server.properties`
+   4. set this: 
    ```
-   listeners=PLAINTEXT://<hostname from step 1>:9092 #Ex: 192.168.0.10:9092
+   listeners=PLAINTEXT://0.0.0.0:9092
    advertised.listeners=PLAINTEXT://<hostname from step 1>:9092 #Ex: 192.168.0.10:9092
    ```
+6. Elasticsearch: https://www.elastic.co/guide/en/elasticsearch/reference/current/targz.html
+   1. use this directory to install: **/usr/local/elasticsearch/**
+7. Logstash: https://www.elastic.co/guide/en/logstash/current/installing-logstash.html
+8. Redis: https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/
+   
 ## How To Run
    1. Run the following commands. If any error occurs, see the Prerequisites section to setup.
        ```
        # MongoDB
        sudo service mongod start
     
-       # Zookeeper for Kafka and others
-       sudo systemctl start zookeeper
-      sudo systemctl status zookeeper
+       # Zookeeper (for Kafka and others)
+       sudo systemctl start zookeeper && systemctl --no-pager status zookeeper
     
        # Kafka
-       sudo systemctl start kafka
-      sudo systemctl status kafka
+       sudo systemctl start kafka && systemctl --no-pager status kafka
+
+       # Elaticsearch
+       /usr/local/elasticsearch/bin/elasticsearch
+
+       # Logstash
+       sudo systemctl start logstash.service && systemctl --no-pager status logstash.service
+
+       # Redis
+       sudo systemctl start redis && systemctl --no-pager status redis
        ```
 1. a. Run using kubectl
 
