@@ -37,7 +37,7 @@ export const createTimelineRouter = (fanoutProducer: Producer, redisClient: Redi
             const userId = response.data.id;
             
             const redisKey = `userId:${userId}`;
-            const redisResults = await redisClient.zRangeByScoreWithScores(redisKey, start_time?? 0, '+inf', { 
+            const redisResults = await redisClient.zRangeByScoreWithScores(redisKey, '-inf', start_time?? '+inf', { 
                     LIMIT: {
                         offset: 0,
                         count: POST_RETURN_LIMIT,
@@ -52,13 +52,15 @@ export const createTimelineRouter = (fanoutProducer: Producer, redisClient: Redi
                 })
             );
 
+            logger.trace("loaded from redis: ", posts.length);
+
             const morePostToLoad = POST_RETURN_LIMIT - posts.length;
 
             if (morePostToLoad > 0) {
-                const lastPostTime = posts.length == 0? null: posts[posts.length - 1].time;
-                posts
+                const lastPostTime = posts.length == 0? start_time: posts[posts.length - 1].time;
+
                 const Post = mongoose.model('Post', PostSchema);
-                const queryParam = lastPostTime == null? { userid: userId} : { userid: userId, time: { $lte: lastPostTime } };
+                const queryParam = lastPostTime == null? { userid: userId} : { userid: userId, time: { $lt: lastPostTime } };
                 const doc = await Post.find(queryParam, { _id: 1, time: 1 }).sort( { time: -1 }).limit(morePostToLoad).exec();
 
 
@@ -66,6 +68,8 @@ export const createTimelineRouter = (fanoutProducer: Producer, redisClient: Redi
                     _id: String(item._id),
                     time: item.time
                 }));
+
+                logger.trace("loaded from mongodb: ", dbPosts.length);
 
                 posts.push(...dbPosts);
             }
