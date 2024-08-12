@@ -9,7 +9,8 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
     const message = JSON.parse(messageStr);
 
     if (message.postTime && message.postId) {
-        await redisClient.zAdd(message.userId, {
+        const redisKey = `userId:${message.userId}`;
+        await redisClient.zAdd(redisKey, {
             score: message.postTime,
             value: message.postId
         });

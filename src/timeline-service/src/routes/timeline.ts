@@ -16,27 +16,66 @@ const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http:
 
 const router = express.Router();
 
+const POST_RETURN_LIMIT = 10;
+
 export const createTimelineRouter = (fanoutProducer: Producer, redisClient: RedisClientType<any, any, any>) => {
-    router.get('/:username', (req, res, next) => {
+    router.get('/:username', async (req, res, next) => {
         logger.trace(`GET /:username called`);
         
+
         const username: string = req.params.username;
+        const start_time: number | null = req.query.start_time? Number(req.query.start_time): null;
     
-        axios.get(userServiceHostUrl + username).then((reponse: AxiosResponse) => {
-            return reponse.data.id
-        }).then((userid: string) => {
-            const Post = mongoose.model('Post', PostSchema);
-            Post.find({ userid: userid }).sort( { time: -1 }).limit(10).exec().then(doc => {
-                if (doc == null) {
-                    res.status(404).json({error: "no post found"});
-                } else {
-                    res.status(200).json(doc);
+        try {
+            const response = await axios.get(userServiceHostUrl + username);
+        
+            if (!response || !response.data.id) {
+                logger.error(`Invalid from userService: ${response}`);
+                res.status(500).json({error: "Invalid from userService"});
+            }
+
+            const userId = response.data.id;
+            
+            const redisKey = `userId:${userId}`;
+            const redisResults = await redisClient.zRangeByScoreWithScores(redisKey, start_time?? 0, '+inf', { 
+                    LIMIT: {
+                        offset: 0,
+                        count: POST_RETURN_LIMIT,
+                    }
                 }
-            })
-        }).catch(err => {
-            logger.error(err);
-            res.status(500).json({error: err});
-        });;
+            );
+
+            const posts = redisResults.reverse().map(
+                item => ({
+                    _id: item.value,
+                    time: item.score
+                })
+            );
+
+            const morePostToLoad = POST_RETURN_LIMIT - posts.length;
+
+            if (morePostToLoad > 0) {
+                const lastPostTime = posts.length == 0? null: posts[posts.length - 1].time;
+                posts
+                const Post = mongoose.model('Post', PostSchema);
+                const queryParam = lastPostTime == null? { userid: userId} : { userid: userId, time: { $lte: lastPostTime } };
+                const doc = await Post.find(queryParam, { _id: 1, time: 1 }).sort( { time: -1 }).limit(morePostToLoad).exec();
+
+
+                const dbPosts = doc.map( item => ({
+                    _id: String(item._id),
+                    time: item.time
+                }));
+
+                posts.push(...dbPosts);
+            }
+
+            res.status(200).json(posts);
+
+        } catch(error) {
+            logger.error("Error while get: ", error);
+            res.status(500).json({error: error});
+        }
     
     });
     
