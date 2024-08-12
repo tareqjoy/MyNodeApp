@@ -1,5 +1,9 @@
 import express from 'express';
 import { router } from "./routes/follow";
+import * as log4js from "log4js";
+
+const logger = log4js.getLogger();
+logger.level = "trace";
 
 const appport = process.env.PORT || 5002;
 const mongouser = process.env.MONGODB_USER || "admin";
@@ -32,7 +36,7 @@ app.use(api_path_root, router);
 
 // Start the server and listen to the port
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  logger.info(`Server is running on port ${port}`);
 });
 
 

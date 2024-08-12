@@ -1,6 +1,10 @@
 import express from 'express'
 import mongoose from 'mongoose';
 import { UserSchema } from '../models/user'
+import * as log4js from "log4js";
+
+const logger = log4js.getLogger();
+logger.level = "trace";
 
 export const router = express.Router();
 
@@ -11,7 +15,7 @@ router.get('/:', (req, res, next) => {
 });
 
 router.post('/', (req, res, next) => {
-    console.log(`POST / called`);
+    logger.trace(`POST / called`);
     const User = mongoose.model('User', UserSchema);
 
     const user = new User({
@@ -28,6 +32,7 @@ router.post('/', (req, res, next) => {
         });
     })
     .catch(err => {
+        logger.error("Error while sign up", err);
         res.status(500).json({error: err});
     });
 });

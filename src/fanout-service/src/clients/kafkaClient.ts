@@ -20,7 +20,7 @@ const fanoutKafka = new Kafka({
   
 export const newPostConsumer = fanoutKafka.consumer({ groupId: kafka_fanout_group });
 newPostConsumer.connect();
-logger.info(`Connected to group: ${kafka_fanout_group}`);
+logger.info(`Connected to kafka producer on ${kafka_host_port}, group: ${kafka_fanout_group}`);
 
 newPostConsumer.subscribe({ topic: kafka_new_post_fanout_topic, fromBeginning: true});
 logger.info(`Subscribed to topic: ${kafka_new_post_fanout_topic}`);

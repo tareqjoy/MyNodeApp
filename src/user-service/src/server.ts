@@ -4,6 +4,10 @@ import { router as userRouter } from "./routes/user";
 import { router as userInternalRouter } from "./routes/user-internal";
 import mongoose from 'mongoose';
 import bodyParser from "body-parser";
+import * as log4js from "log4js";
+
+const logger = log4js.getLogger();
+logger.level = "trace";
 
 
 const appport = process.env.PORT || 5002;
@@ -60,5 +64,5 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 
 // Start the server and listen to the port
 app.listen(appport, () => {
-  console.log(`Server is running on port ${appport}`);
+  logger.info(`Server is running on port ${appport}`);
 });

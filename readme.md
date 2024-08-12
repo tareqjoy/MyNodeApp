@@ -30,40 +30,29 @@
 ## How To Run
    1. Run the following commands. If any error occurs, see the Prerequisites section to setup.
        ```
-       # MongoDB
-       sudo service mongod start
-    
-       # Zookeeper (for Kafka and others)
-       sudo systemctl start zookeeper && systemctl --no-pager status zookeeper
-    
-       # Kafka
-       sudo systemctl start kafka && systemctl --no-pager status kafka
-
-       # Elaticsearch
-       /usr/local/elasticsearch/bin/elasticsearch
-
-       # Logstash
-       sudo systemctl start logstash.service && systemctl --no-pager status logstash.service
-
-       # Redis
-       sudo systemctl start redis && systemctl --no-pager status redis
+       sudo chmod +x bin/start-deps.sh
+       bin/start-deps.sh
        ```
-1. a. Run using kubectl
+   2. Run using kubectl
 
-    ```
-    # Kubernetes
-    minikube start
-    minikube dashboard
-    
-    # Running our applications
-    cd ~/workspace/MyNodeApp
-    kubectl apply -f my-node-app-pod.yml
-    ```
-
-    b. Or, run each services directly through `npm start` from the workspace 
+      ```
+      # Kubernetes
+      minikube start
+      minikube dashboard
+      
+      # Running our applications
+      cd ~/workspace/MyNodeApp
+      kubectl apply -f my-node-app-pod.yml
+      ```
+      Or, run each services directly through `npm start` from the workspace 
 
 ## Updating code
-1. Update new code
+1. Update new code from script:
+    ```
+    sudo chmod +x bin/deployall.sh
+    bin/deployall.sh
+    ```
+    Or, update manually:
     ```
    # Upload new code to docker (example for timeline-service) 
     cd ~/workspace/MyNodeApp/src/timeline-service
