@@ -1,15 +1,15 @@
 import express from 'express';
 import bodyParser from "body-parser";
-import { createTimelineRouter } from "./routes/timeline";
-import { redisClient } from './clients/redisClient';
+import { createPostRouter } from "./routes/post";
+import { kafkaNewPostProducer } from "./clients/kafkaClient";
 
 import * as log4js from "log4js";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
-const appport = process.env.PORT || 5001;
-const api_path_root = process.env.API_PATH_ROOT || '/v1/timeline';
+const appport = process.env.PORT || 5005;
+const api_path_root = process.env.API_PATH_ROOT || '/v1/post';
 
 export const app=express(); 
 
@@ -26,7 +26,7 @@ async function main() {
   app.use(bodyParser.urlencoded({extended: false}));
   app.use(bodyParser.json());
 
-  app.use(api_path_root, createTimelineRouter(redisClient));
+  app.use(api_path_root, createPostRouter(kafkaNewPostProducer));
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);
@@ -49,8 +49,8 @@ async function main() {
 process.on('SIGINT', async () => {
   try {
     logger.info('Caught interrupt signal, shutting down...');
-    redisClient.quit();
-    logger.info(`Redis disconnected`);
+    kafkaNewPostProducer.disconnect();
+    logger.info(`Producer disconnected`);
     process.exit(0);
   } catch (error) {
     logger.error('Error during disconnect:', error);

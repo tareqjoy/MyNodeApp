@@ -27,11 +27,16 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: timeline-service-config
+  name: service-url-config
 data:
   USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timeline-service-config
+data:
   API_PATH_ROOT: /v1/timeline
-  KAFKA_CLIENT_ID: timeline
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -57,6 +62,14 @@ data:
   API_PATH_ROOT: /v1/fanout
   KAFKA_CLIENT_ID: fanout
   KAFKA_FANOUT_GROUP: fanout-group
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: post-service-config
+data:
+  API_PATH_ROOT: /v1/post
+  KAFKA_CLIENT_ID: post
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -84,42 +97,9 @@ spec:
             - configMapRef:
                 name: mongodb-config
             - configMapRef:
-                name: kafka-config
-            - configMapRef:
                 name: redis-config
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: timeline-service
-spec:
-  selector:
-    app: timeline-service
-  ports:
-    - protocol: TCP
-      port: 3001
-      targetPort: 5001
-      nodePort: 30001
-  type: NodePort
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: timeline-service
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: timeline-service
-  minReplicas: 1
-  maxReplicas: 1
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
+            - configMapRef:
+                name: service-url-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -147,39 +127,6 @@ spec:
             - configMapRef:
                 name: mongodb-config
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: user-service
-spec:
-  selector:
-    app: user-service
-  ports:
-    - protocol: TCP
-      port: 3002
-      targetPort: 5002
-      nodePort: 30002
-  type: NodePort
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: user-service
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: user-service
-  minReplicas: 1
-  maxReplicas: 1
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -203,39 +150,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: follower-service-config
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: follower-service
-spec:
-  selector:
-    app: follower-service
-  ports:
-    - protocol: TCP
-      port: 3003
-      targetPort: 5003
-      nodePort: 30003
-  type: NodePort
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: follower-service
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: follower-service
-  minReplicas: 1
-  maxReplicas: 1
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 50
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -263,6 +177,78 @@ spec:
             - configMapRef:
                 name: kafka-config
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: post-service
+  template:
+    metadata:
+      labels:
+        app: post-service
+    spec:
+      containers:
+        - name: post-service-container
+          image: tareqjoy/post-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: post-service-config
+            - configMapRef:
+                name: mongodb-config
+            - configMapRef:
+                name: kafka-config
+            - configMapRef:
+                name: service-url-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: timeline-service
+spec:
+  selector:
+    app: timeline-service
+  ports:
+    - protocol: TCP
+      port: 3001
+      targetPort: 5001
+      nodePort: 30001
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+spec:
+  selector:
+    app: user-service
+  ports:
+    - protocol: TCP
+      port: 3002
+      targetPort: 5002
+      nodePort: 30002
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: follower-service
+spec:
+  selector:
+    app: follower-service
+  ports:
+    - protocol: TCP
+      port: 3003
+      targetPort: 5003
+      nodePort: 30003
+  type: NodePort
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -277,6 +263,77 @@ spec:
       nodePort: 30004
   type: NodePort
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: post-service
+spec:
+  selector:
+    app: post-service
+  ports:
+    - protocol: TCP
+      port: 3005
+      targetPort: 5005
+      nodePort: 30005
+  type: NodePort
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: timeline-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: timeline-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: follower-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: follower-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -286,6 +343,25 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: fanout-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: post-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: post-service
   minReplicas: 1
   maxReplicas: 1
   metrics:
@@ -332,3 +408,10 @@ spec:
                   name: fanout-service
                   port:
                     number: 3004
+            - path: /v1/post/
+              pathType: Prefix
+              backend:
+                service:
+                  name: post-service
+                  port:
+                    number: 3005

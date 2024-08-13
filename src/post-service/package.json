@@ -1,5 +1,5 @@
 {
-    "name": "timeline-service",
+    "name": "post-service",
     "version": "1.0.0",
     "description": "",
     "main": "dist/server.js",
@@ -13,9 +13,9 @@
     "dependencies": {
         "axios": "^1.6.8",
         "express": "^4.19.2",
+        "kafkajs": "2.0.0",
         "log4js": "^6.9.1",
-        "mongoose": "^8.2.4",
-        "redis": "^4.7.0"
+        "mongoose": "^8.2.4"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",

@@ -3,6 +3,12 @@
 
 set -e
 
+echo "Timeline service ..."
+cd src/timeline-service/
+docker build -t tareqjoy/timeline-service:latest .
+docker push tareqjoy/timeline-service:latest
+cd -
+
 echo "User service ..."
 cd src/user-service/
 docker build -t tareqjoy/user-service:latest .
@@ -21,10 +27,10 @@ docker build -t tareqjoy/fanout-service:latest .
 docker push tareqjoy/fanout-service:latest
 cd -
 
-echo "Timeline service ..."
-cd src/timeline-service/
-docker build -t tareqjoy/timeline-service:latest .
-docker push tareqjoy/timeline-service:latest
+echo "Post service ..."
+cd src/post-service/
+docker build -t tareqjoy/post-service:latest .
+docker push tareqjoy/post-service:latest
 cd -
 
 echo "Kubernetes ..."
