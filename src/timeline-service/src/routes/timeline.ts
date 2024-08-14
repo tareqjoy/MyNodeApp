@@ -29,6 +29,7 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
             if (!response || !response.data.id) {
                 logger.error(`Invalid from userService: ${response}`);
                 res.status(500).json({error: "Invalid from userService"});
+                return;
             }
 
             const userId = response.data.id;
