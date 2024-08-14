@@ -10,8 +10,6 @@ const kafka_host_port = process.env.KAFKA_HOST_PORT || 'localhost:9092';
 const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || 'fanout-group';
 
-
-
 logger.info(`Will listen kafka at ${kafka_host_port}`);
 const fanoutKafka = new Kafka({
     clientId: kafka_client_id,

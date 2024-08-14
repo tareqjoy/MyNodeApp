@@ -12,7 +12,7 @@
    4. set this: 
    ```
    listeners=PLAINTEXT://0.0.0.0:9092
-   advertised.listeners=PLAINTEXT://<hostname from step 2>:9092 #Ex: 192.168.0.10:9092
+   advertised.listeners=PLAINTEXT://<hostname>:9092 #Ex: 192.168.0.10:9092
    ```
 6. Elasticsearch: https://www.elastic.co/guide/en/elasticsearch/reference/current/targz.html
    1. use this directory to install: **/usr/local/elasticsearch/**
@@ -22,9 +22,19 @@
    2. edit redis config file: `sudo vim /etc/redis/redis.conf`
    3. set this: 
    ```
-   bind <hostname from step 1> -::1 #Ex: bind 192.168.0.10 -::1
+   bind <hostname> -::1 #Ex: bind 192.168.0.10 -::1
    protected-mode no
    ```
+9. neo4j: https://neo4j.com/docs/operations-manual/current/installation/linux/debian/#debian-installation
+   1.  get hostname: `hostname -I`
+   2.  edit neo4j config file: `sudo vim /etc/neo4j/neo4j.conf`
+   3.  Set this:
+   ```
+   server.bolt.listen_address=<hostname>:7687 #Ex: 192.168.0.10:7687
+   server.bolt.advertised_address=<hostname>:7687 #Ex: 192.168.0.10:7687
+   ```
+   4.  Default username: neo4j, default password: neo4j
+   5.  Set password: `sudo neo4j-admin dbms set-initial-password 12345678` or `cypher-shell`
 
    
 ## How To Run

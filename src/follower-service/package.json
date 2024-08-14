@@ -12,7 +12,8 @@
     "license": "ISC",
     "dependencies": {
         "express": "^4.19.2",
-        "log4js": "^6.9.1"
+        "log4js": "^6.9.1",
+        "neo4j-driver": "^5.23.0"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",

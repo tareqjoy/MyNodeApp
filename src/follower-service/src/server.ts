@@ -1,16 +1,11 @@
 import express from 'express';
-import { router } from "./routes/follow";
+import { createFollowerRouter } from "./routes/follow";
+import { neo4jDriver } from "./clients/neo4jClient"
 import * as log4js from "log4js";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
-const appport = process.env.PORT || 5002;
-const mongouser = process.env.MONGODB_USER || "admin";
-const mongoppass = process.env.MONGODB_PASS || "admin";
-const mongoport = process.env.MONGODB_PORT || 27017;
-const mongohost = process.env.MONGODB_HOST || "127.0.0.1";
-const mongodatabase = process.env.MONGODB_DATABASE || "mydatabase";
 const api_path_root = process.env.API_PATH_ROOT || '/v1/follower';
 
 // Create an instance of the express application
@@ -29,15 +24,28 @@ class HttpError extends Error {
   }
 }
 
+const neo4jSession = neo4jDriver.session();
+
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
-app.use(api_path_root, router);
+app.use(api_path_root, createFollowerRouter(neo4jSession));
 
 // Start the server and listen to the port
 app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
 });
 
-
-module.exports = app
+process.on('SIGINT', async () => {
+  try {
+    logger.info('Caught interrupt signal, shutting down...');
+    neo4jDriver.close();
+    logger.info(`Neo4j driver disconnected`);
+  
+    neo4jSession.close();
+    logger.info(`Neo4j session disconnected`);
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during disconnect:', error);
+  }
+});
