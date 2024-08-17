@@ -66,9 +66,13 @@ process.on('SIGINT', async () => {
     logger.info('Caught interrupt signal, shutting down...');
     newPostConsumer.disconnect();
     logger.info(`Consumer disconnected`);
-  
-    redisClient.quit();
-    logger.info(`Redis disconnected`);
+
+    if (redisClient.isOpen) {
+      await redisClient.quit();
+      logger.info(`Redis disconnected`);
+    } else {
+      logger.info(`Redis was not connected at the first place`);
+    }
     process.exit(0);
   } catch (error) {
     logger.error('Error during disconnect:', error);

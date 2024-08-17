@@ -9,7 +9,7 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
     const message = JSON.parse(messageStr);
 
     if (message.postTime && message.postId) {
-        const redisKey = `userId:${message.userId}`;
+        const redisKey = `timeline-userId:${message.userId}`;
         await redisClient.zAdd(redisKey, {
             score: message.postTime,
             value: message.postId

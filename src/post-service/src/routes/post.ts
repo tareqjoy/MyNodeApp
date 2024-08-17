@@ -34,10 +34,8 @@ export const createPostRouter = (newPostKafkaProducer: Producer) => {
         }
 
         try {
-            const postIds = JSON.parse(reqBody.ids);
-            logger.warn(postIds);
+            const postIds = reqBody.ids;
             postIds.forEach((item: string) => {
-                logger.warn(item);
                 if(mongoose.Types.ObjectId.isValid(item)) {
                     objectIdSet.add(new mongoose.Types.ObjectId(item));
                 }
@@ -64,10 +62,15 @@ export const createPostRouter = (newPostKafkaProducer: Producer) => {
         logger.trace(`POST /create called`);
             
         const username = req.body.username
+
+        const userServiceBody = {
+            username: username
+        };
     
-        axios.get(userServiceHostUrl + username).then((reponse: AxiosResponse) => {
-            return reponse.data.id
+        axios.post(userServiceHostUrl, userServiceBody).then((response: AxiosResponse) => {
+            return response.data[username]
         }).then((userid: string) => {
+            logger.error(userid);
             const Post = mongoose.model('Post', PostSchema);
     
             const post = new Post({
@@ -93,13 +96,13 @@ export const createPostRouter = (newPostKafkaProducer: Producer) => {
             })
         }).then((result: any) => {
             res.status(200).json({
-                message: "Ok"
+                message: "Posted"
             });
         })
         .catch((err: any) => {
             // Handle error
             logger.error(err);
-            res.status(500).json({error: err});
+            res.status(500).json({error: "Internal Server Error"});
         });
     });
 

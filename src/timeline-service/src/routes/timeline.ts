@@ -24,17 +24,21 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
         const start_time: number | null = req.query.start_time? Number(req.query.start_time): null;
     
         try {
-            const response = await axios.get(userServiceHostUrl + username);
+            const userServiceBody = {
+                username: username
+            };
+
+            const response = await axios.post(userServiceHostUrl, userServiceBody);
         
-            if (!response || !response.data.id) {
+            if (!response || !response.data[username]) {
                 logger.error(`Invalid from userService: ${response}`);
                 res.status(500).json({error: "Invalid from userService"});
                 return;
             }
 
-            const userId = response.data.id;
+            const userId = response.data[username];
             
-            const redisKey = `userId:${userId}`;
+            const redisKey = `timeline-userId:${userId}`;
             const redisResults = await redisClient.zRangeByScoreWithScores(redisKey, '-inf', start_time?? '+inf', { 
                     LIMIT: {
                         offset: 0,

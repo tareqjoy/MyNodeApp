@@ -11,11 +11,12 @@
     "author": "Tareq Joy",
     "license": "ISC",
     "dependencies": {
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.14.1",
         "express": "^4.19.2",
         "log4js": "^6.9.1",
         "mongoose": "^8.2.4",
-        "class-validator": "^0.14.1",
-        "class-transformer": "^0.5.1",
+        "redis": "^4.7.0",
         "reflect-metadata": "^0.2.2"
     },
     "devDependencies": {

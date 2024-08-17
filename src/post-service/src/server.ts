@@ -23,7 +23,6 @@ class HttpError extends Error {
 }
 
 async function main() {
-  app.use(bodyParser.urlencoded({extended: false}));
   app.use(bodyParser.json());
 
   app.use(api_path_root, createPostRouter(kafkaNewPostProducer));

@@ -1,6 +1,6 @@
 import express from 'express';
 import { createFollowerRouter } from "./routes/follow";
-import { neo4jDriver } from "./clients/neo4jClient"
+import { neo4jDriver } from "./clients/neo4jClient";
 import * as log4js from "log4js";
 
 const logger = log4js.getLogger();

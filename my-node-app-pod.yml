@@ -52,6 +52,7 @@ kind: ConfigMap
 metadata:
   name: user-service-config
 data:
+  REDIS_USERNAME_TTL_SEC: "86400" # 1day
   API_PATH_DETAIL: /v1/user/detail
   API_PATH_SIGNUP: /v1/user/signup
   API_PATH_USERID: /v1/user/userid
@@ -135,6 +136,8 @@ spec:
                 name: user-service-config
             - configMapRef:
                 name: mongodb-config
+            - configMapRef:
+                name: redis-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -161,6 +164,8 @@ spec:
                 name: follower-service-config
             - configMapRef:
                 name: neo4j-config
+            - configMapRef:
+                name: service-url-config
 ---
 apiVersion: apps/v1
 kind: Deployment
