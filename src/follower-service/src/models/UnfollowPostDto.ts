@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsNotEqualTo } from './constraints/IsNotEqualToConstraint';
 
 
-export class FollowPostDto {
+export class UnfollowPostDto {
     @IsString()
     @IsNotEmpty()
     username: string = '';
@@ -11,10 +11,5 @@ export class FollowPostDto {
     @IsString()
     @IsNotEmpty()
     @IsNotEqualTo('username')
-    followsUsername: string = '';
-
-    @IsNumber()
-    @Min(0)
-    @Type(() => Number)
-    followTime: number = -1;
+    unfollowsUsername: string = '';
 }

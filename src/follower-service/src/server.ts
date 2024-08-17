@@ -23,25 +23,29 @@ class HttpError extends Error {
     this.statusCode = statusCode || 500;
   }
 }
-
 const neo4jSession = neo4jDriver.session();
-app.use(bodyParser.json());
 
-app.use(api_path_root, createFollowerRouter(neo4jSession));
+async function main() {
+  app.use(bodyParser.json());
 
-// Start the server and listen to the port
-app.listen(port, () => {
-  logger.info(`Server is running on port ${port}`);
-});
+  app.use(api_path_root, createFollowerRouter(neo4jSession));
+
+  // Start the server and listen to the port
+  app.listen(port, () => {
+    logger.info(`Server is running on port ${port}`);
+  });
+}
+
+main();
 
 process.on('SIGINT', async () => {
   try {
+    neo4jSession.close();
+    logger.info(`Neo4j session disconnected`);
+
     logger.info('Caught interrupt signal, shutting down...');
     neo4jDriver.close();
     logger.info(`Neo4j driver disconnected`);
-  
-    neo4jSession.close();
-    logger.info(`Neo4j session disconnected`);
     process.exit(0);
   } catch (error) {
     logger.error('Error during disconnect:', error);

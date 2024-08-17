@@ -8,6 +8,7 @@ import { Request, Response } from 'express';
 import * as log4js from "log4js";
 import { FollowPostDto } from '../models/FollowPostDto';
 import axios from 'axios';
+import { UnfollowPostDto } from '../models/UnfollowPostDto';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -15,6 +16,7 @@ logger.level = "trace";
 const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
 
 const router = express.Router();
+
 
 export const createFollowerRouter = (neo4jSession: Session) => {
     router.get('/', (req, res, next) => {
@@ -41,15 +43,6 @@ export const createFollowerRouter = (neo4jSession: Session) => {
                 return;
             }
 
-            if (followPostDto.username == followPostDto.followsUsername) {
-                res.status(400).json(
-                    {
-                        error: "same usernames"
-                    }
-                );
-                return;
-            }
-
             const userServiceBody = {
                 usernames: [
                     followPostDto.username,
@@ -58,7 +51,7 @@ export const createFollowerRouter = (neo4jSession: Session) => {
             };
 
             const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
-            if (!userIdResponse.data || !userIdResponse.data.id) {
+            if (!userIdResponse.data || !userIdResponse.data[followPostDto.username] || !userIdResponse.data[followPostDto.followsUsername]) {
                 res.status(400).json(
                     {
                         message: "Invalid username"
@@ -66,25 +59,39 @@ export const createFollowerRouter = (neo4jSession: Session) => {
                 );
                 return;
             }
-/*
-            const result = await neo4jSession.run(
-                `
-                MERGE (user1:User {userId: $userId})
-                MERGE (user2:User {userId: $followsId})
-                MERGE (user1)-[followship:FOLLOW]->(user2)
-                  ON CREATE SET followship.followSince = $followSince, followship.isMuted = $isMuted
+
+            const usernameId = userIdResponse.data[followPostDto.username];
+            const followsId = userIdResponse.data[followPostDto.followsUsername];
+
+            const alreadyFollows = await neo4jSession.run(`
+                MATCH (a:User {userId: $userId1})-[r:FOLLOW]-(b:User {userId: $userId2})
+                RETURN COUNT(r) > 0 AS exists
                 `,
-                { userId: followPostDto.userId, followsId: followPostDto.followsId, followSince: followPostDto.followTime, isMuted: false }
+                { userId1: usernameId, userId2: followsId }
               );
 
-            result.records.forEach((record) => {
-                const personNode = record.get('p');
-                logger.debug(personNode.properties); // Output: { name: 'Alice', age: 30 }
-              });
-    */
+            if (alreadyFollows.records[0].get('exists') as boolean) {      
+                res.status(400).json({
+                    message: "Already following"
+                });
+                return;
+            }
+
+            await neo4jSession.run(
+                `
+                MERGE (a:User {userId: $userId})
+                MERGE (b:User {userId: $followsId})
+                MERGE (a)-[r:FOLLOW]->(b)
+                  ON CREATE SET r.followSince = $followSince, r.isMuted = $isMuted
+                `,
+                { userId: usernameId, followsId: followsId, followSince: followPostDto.followTime, isMuted: false }
+              );
+            
+
             res.status(200).json({
-                message: "Handling POST request to /follow"
+                message: "Followed"
             });
+
         } catch(error) {
             logger.error("Error while follow: ", error);
             res.status(500).json(
@@ -93,6 +100,64 @@ export const createFollowerRouter = (neo4jSession: Session) => {
             return;
         }
 
+    });
+
+    router.post('/unfollow', async (req: Request, res: Response) => {
+        try {
+            const unfollowPostDto = plainToInstance(UnfollowPostDto, req.body);
+            const errors = await validate(unfollowPostDto);
+
+            if (errors.length > 0) {
+                res.status(400).json(
+                    {
+                        message: "Invalid request",
+                        errors: errors.map((err) => ({
+                            property: err.property,
+                            constraints: err.constraints
+                        }))
+                    }
+                );
+                return;
+            }
+
+            const userServiceBody = {
+                usernames: [
+                    unfollowPostDto.username,
+                    unfollowPostDto.unfollowsUsername
+                ]
+            };
+
+            const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
+            if (!userIdResponse.data || !userIdResponse.data[unfollowPostDto.username] || !userIdResponse.data[unfollowPostDto.unfollowsUsername]) {
+                res.status(400).json(
+                    {
+                        message: "Invalid username"
+                    }
+                );
+                return;
+            }
+
+            const usernameId = userIdResponse.data[unfollowPostDto.username];
+            const unfollowsId = userIdResponse.data[unfollowPostDto.unfollowsUsername];
+
+            await neo4jSession.run(
+                `
+                MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
+                DELETE r
+                `,
+                { userId1: usernameId, userId2: unfollowsId }
+              );
+
+              res.status(200).json({
+                message: "Unfollowed"
+            });
+        } catch(error) {
+            logger.error("Error while follow: ", error);
+            res.status(500).json(
+                {error: "Internal Server Error"}
+            );
+            return;
+        }
     });
     return router;
 }

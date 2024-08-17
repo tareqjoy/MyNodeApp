@@ -38,10 +38,12 @@ export const createSignUpRouter = () => {
 
         const User = mongoose.model('User', UserSchema);
 
-        const existUser = await User.findOne({ username: signUpDto.username}).exec();
+        const existUser = await User.findOne(
+            { $or: [{username: signUpDto.username}, {email: signUpDto.email}] }
+        ).exec();
 
         if (existUser) {
-            res.status(400).json({error: "username already exists"});
+            res.status(400).json({error: "username or email already exists"});
             return;
         }
     
