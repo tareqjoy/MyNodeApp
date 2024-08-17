@@ -41,16 +41,32 @@ export const createFollowerRouter = (neo4jSession: Session) => {
                 return;
             }
 
-            const userIdResponse = await axios.get(userServiceHostUrl + followPostDto.userId);
-            if (!userIdResponse.data || !userIdResponse.data.id) {
+            if (followPostDto.username == followPostDto.followsUsername) {
                 res.status(400).json(
                     {
-                        message: "Invalid userId"
+                        error: "same usernames"
                     }
                 );
                 return;
             }
 
+            const userServiceBody = {
+                usernames: [
+                    followPostDto.username,
+                    followPostDto.followsUsername
+                ]
+            };
+
+            const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
+            if (!userIdResponse.data || !userIdResponse.data.id) {
+                res.status(400).json(
+                    {
+                        message: "Invalid username"
+                    }
+                );
+                return;
+            }
+/*
             const result = await neo4jSession.run(
                 `
                 MERGE (user1:User {userId: $userId})
@@ -65,7 +81,7 @@ export const createFollowerRouter = (neo4jSession: Session) => {
                 const personNode = record.get('p');
                 logger.debug(personNode.properties); // Output: { name: 'Alice', age: 30 }
               });
-    
+    */
             res.status(200).json({
                 message: "Handling POST request to /follow"
             });

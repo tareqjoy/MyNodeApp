@@ -5,11 +5,11 @@ import { Type } from 'class-transformer';
 export class FollowPostDto {
     @IsString()
     @IsNotEmpty()
-    userId: string = '';
+    username: string = '';
 
     @IsString()
     @IsNotEmpty()
-    followsId: string = '';
+    followsUsername: string = '';
 
     @IsNumber()
     @Min(0)

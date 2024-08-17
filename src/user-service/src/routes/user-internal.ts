@@ -20,7 +20,6 @@ export const createUserInternalRouter = (redisClient: RedisClientType<any, any, 
         logger.trace(`POST UserInternal called`);
 
         const userIdsDto = plainToInstance(UserIdsDto, req.body);
-        logger.error(userIdsDto);
 
         const errors = await validate(userIdsDto);
         if (errors.length > 0) {
@@ -37,7 +36,6 @@ export const createUserInternalRouter = (redisClient: RedisClientType<any, any, 
         }
 
         const usernames = userIdsDto.getNormalizedIds();
-        logger.error(usernames);
         if (usernames.length == 0) {
             res.status(400).json(
                 {

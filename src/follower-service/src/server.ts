@@ -25,8 +25,6 @@ class HttpError extends Error {
 }
 
 const neo4jSession = neo4jDriver.session();
-
-app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 app.use(api_path_root, createFollowerRouter(neo4jSession));
