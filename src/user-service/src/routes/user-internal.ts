@@ -35,49 +35,52 @@ export const createUserInternalRouter = (redisClient: RedisClientType<any, any, 
             return;
         }
 
-        const usernames = userIdsDto.getNormalizedIds();
-        if (usernames.length == 0) {
-            res.status(400).json(
-                {
-                    message: "Invalid request",
-                    errors: "No username provided"
-                }
-            );
-            return;
-        }
+        const combined: [string, string][] = [];
+
+        userIdsDto.getNormalizedUsernames().map(str => combined.push([str, "uname"]));
+        userIdsDto.getNormalizedIds().map(str => combined.push([str, "uid"]));
 
         try {
-            const nameToId = new Map<string, string | null>();
-            for (const username of usernames) {
-                const redisKey = `uid-map-username:${username}`;
-                const userId = await redisClient.get(redisKey);
+            const map = new Map<string, string | null>();
+            for (const [nameOrId, tag] of combined) {
+
+                if (tag == "uid" && !mongoose.Types.ObjectId.isValid(nameOrId)) {
+                    map.set(nameOrId, null);
+                    logger.trace(`invalid uid: ${nameOrId}`)
+                    continue;
+                }
+
+                const redisKey = tag == "uname"? `uname-uid:${nameOrId}`: `uid-uname:${nameOrId}`;
+                const redisNameOrId = await redisClient.get(redisKey);
         
-                if (userId != null) {
-                    nameToId.set(username, userId);
-                    logger.trace(`username found in redis: ${username}`)
+                if (redisNameOrId != null) {
+                    map.set(nameOrId, redisNameOrId);
+                    logger.trace(`found in redis: ${nameOrId} -> ${redisNameOrId}`)
                     continue;
                 }
     
-                logger.trace(`username not found in redis: ${username}`)
+                logger.trace(`not found in redis: ${nameOrId}`)
                 const User = mongoose.model('User', UserSchema);
-        
-                const user = await User.findOne({ username: username }, { _id: 1 }).exec();
+                
+                const query = tag == "uname"? { username: nameOrId }: { _id: new mongoose.Types.ObjectId(nameOrId) };
+                const user = await User.findOne(query, { _id: 1, username: 1 }).exec();
         
                 if(user == null) {
-                    nameToId.set(username, null);
+                    map.set(nameOrId, null);
                     continue;
                 }
                 
-                redisClient.setEx(redisKey, Number(redisUsernameTtlSec), String(user._id));
-                nameToId.set(username, String(user._id));
-                logger.trace(`username cached into redis. key: ${username}, ttl: ${redisUsernameTtlSec}`)
+                const value =  tag == "uname"? String(user._id): user.username;
+                redisClient.setEx(redisKey, Number(redisUsernameTtlSec), value);
+                map.set(nameOrId, value);
+                logger.trace(`username cached into redis. key: ${nameOrId}, ttl: ${redisUsernameTtlSec}`)
             };
 
             const mapToObject = (map: Map<any, any>): Record<string, any> => {
                 return Object.fromEntries(map);
             };
 
-            res.status(200).json(mapToObject(nameToId));
+            res.status(200).json(mapToObject(map));
         } catch(error) {
             logger.error("Error while finding user", error);
             res.status(500).json({error: "Internal Server Error"});

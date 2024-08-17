@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import { IsArray, IsOptional } from 'class-validator';
+import { IsAtLeastOneFieldRequired } from './constraints/IsAtLeastOneFieldRequired';
 
 export class UserIdsDto {
   @IsOptional()
@@ -10,13 +11,37 @@ export class UserIdsDto {
   @IsArray()
   usernames?: string[];
 
-  getNormalizedIds(): string[] {
+  @IsOptional()
+  userId?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) // Normalize to an array
+  @IsArray()
+  userIds?: string[];
+
+
+  @IsAtLeastOneFieldRequired(['username', 'usernames', 'userId', 'userIds'])
+  anyField?: string; // This is a dummy field for the validation to work
+
+  getNormalizedUsernames(): string[] {
+    const norms: Set<string> = new Set();
     if (this.usernames) {
-      return this.usernames;
+      this.usernames.forEach(uname => norms.add(uname));
     }
     if (this.username) {
-      return [this.username];
+      norms.add(this.username);
     }
-    return [];
+    return Array.from<string>(norms);
+  }
+
+  getNormalizedIds(): string[] {
+    const norms: Set<string> = new Set();
+    if (this.userIds) {
+      this.userIds.forEach(uid => norms.add(uid));
+    }
+    if (this.userId) {
+      norms.add(this.userId);
+    }
+    return Array.from<string>(norms);
   }
 }
