@@ -6,10 +6,10 @@ import 'reflect-metadata';
 import { Request, Response } from 'express';
 
 import * as log4js from "log4js";
-import { FollowPostDto } from '../models/FollowPostDto';
+import { FollowReq, FollowersReq, UnfollowReq } from '@tareqjoy/models';
+import { FollowRes, FollowersRes, UnfollowRes } from '@tareqjoy/models';
+import { InvalidRequest, InternalServerError } from '@tareqjoy/models';
 import axios from 'axios';
-import { UnfollowPostDto } from '../models/UnfollowPostDto';
-import { FollowersDto } from '../models/FollowersDto';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -19,19 +19,11 @@ const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http:
 const router = express.Router();
 
 async function commonFollow(neo4jSession: Session, query: string, reqBody: any, res: Response) {
-    const followersDto = plainToInstance(FollowersDto, reqBody);
+    const followersDto = plainToInstance(FollowersReq, reqBody);
     const errors = await validate(followersDto);
 
     if (errors.length > 0) {
-        res.status(400).json(
-            {
-                message: "Invalid request",
-                errors: errors.map((err) => ({
-                    property: err.property,
-                    constraints: err.constraints
-                }))
-            }
-        );
+        res.status(400).json(new InvalidRequest(errors));
         return;
     }
     var usernameId;
@@ -42,18 +34,13 @@ async function commonFollow(neo4jSession: Session, query: string, reqBody: any, 
     
         const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
         if (!userIdResponse.data || !userIdResponse.data[followersDto.username]) {
-            res.status(400).json(
-                {
-                    message: "Invalid username"
-                }
-            );
+            res.status(400).json(new InvalidRequest("Invalid username"));
             return;
         }
         usernameId = userIdResponse.data[followersDto.username];
     } else {
-        usernameId = followersDto.userId
+        usernameId = followersDto.userId;
     }
-    
 
     const followers = await neo4jSession.run(query,{ userId: usernameId  });
 
@@ -75,13 +62,9 @@ async function commonFollow(neo4jSession: Session, query: string, reqBody: any, 
             usernames.push(userNameResponse.data[key]);
         }
     
-        res.status(200).json(
-                usernames
-        );
+        res.status(200).json(new FollowersRes(usernames, true));
     } else {
-        res.status(200).json(
-            whoFollows
-        );
+        res.status(200).json(new FollowersRes(whoFollows, false));
     }
 }
 
@@ -99,9 +82,7 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
         } catch(error) {
             await session.close();
             logger.error("Error while follow: ", error);
-            res.status(500).json(
-                {error: "Internal Server Error"}
-            );
+            res.status(500).json(new InternalServerError());
         }
     });
 
@@ -117,29 +98,18 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
         } catch(error) {
             await session.close();
             logger.error("Error while follow: ", error);
-            res.status(500).json(
-                {error: "Internal Server Error"}
-            );
+            res.status(500).json(new InternalServerError());
         }
-
     });
     
     router.post('/follow', async (req: Request, res: Response) => {
         const session =  neo4jDriver.session();
         try {
-            const followPostDto = plainToInstance(FollowPostDto, req.body);
+            const followPostDto = plainToInstance(FollowReq, req.body);
             const errors = await validate(followPostDto);
 
             if (errors.length > 0) {
-                res.status(400).json(
-                    {
-                        message: "Invalid request",
-                        errors: errors.map((err) => ({
-                            property: err.property,
-                            constraints: err.constraints
-                        }))
-                    }
-                );
+                res.status(400).json(new InvalidRequest(errors));
                 return;
             }
 
@@ -152,11 +122,7 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
 
             const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
             if (!userIdResponse.data || !userIdResponse.data[followPostDto.username] || !userIdResponse.data[followPostDto.followsUsername]) {
-                res.status(400).json(
-                    {
-                        message: "Invalid username"
-                    }
-                );
+                res.status(400).json(new InvalidRequest("Invalid username"));
                 return;
             }
 
@@ -170,10 +136,8 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
                 { userId1: usernameId, userId2: followsId }
               );
 
-            if (alreadyFollows.records[0].get('exists') as boolean) {      
-                res.status(400).json({
-                    message: "Already following"
-                });
+            if (alreadyFollows.records[0].get('exists') as boolean) {   
+                res.status(400).json(new InvalidRequest("Already following"));   
                 return;
             }
 
@@ -189,36 +153,22 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
             
             await session.close();
 
-            res.status(200).json({
-                message: "Followed"
-            });
-
+            res.status(500).json(new FollowRes());
         } catch(error) {
             await session.close();
             logger.error("Error while follow: ", error);
-            res.status(500).json(
-                {error: "Internal Server Error"}
-            );
+            res.status(500).json(new InternalServerError());
         }
-
     });
 
     router.post('/unfollow', async (req: Request, res: Response) => {
         const session =  neo4jDriver.session();
         try {
-            const unfollowPostDto = plainToInstance(UnfollowPostDto, req.body);
+            const unfollowPostDto = plainToInstance(UnfollowReq, req.body);
             const errors = await validate(unfollowPostDto);
 
             if (errors.length > 0) {
-                res.status(400).json(
-                    {
-                        message: "Invalid request",
-                        errors: errors.map((err) => ({
-                            property: err.property,
-                            constraints: err.constraints
-                        }))
-                    }
-                );
+                res.status(400).json(new InvalidRequest(errors));
                 return;
             }
 
@@ -231,11 +181,7 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
 
             const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
             if (!userIdResponse.data || !userIdResponse.data[unfollowPostDto.username] || !userIdResponse.data[unfollowPostDto.unfollowsUsername]) {
-                res.status(400).json(
-                    {
-                        message: "Invalid username"
-                    }
-                );
+                res.status(400).json(new InvalidRequest("Invalid username"));
                 return;
             }
 
@@ -252,15 +198,11 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
 
             await session.close();
 
-            res.status(200).json({
-                message: "Unfollowed"
-            });
+            res.status(500).json(new UnfollowRes());
         } catch(error) {
             await session.close();
             logger.error("Error while follow: ", error);
-            res.status(500).json(
-                {error: "Internal Server Error"}
-            );
+            res.status(500).json(new InternalServerError());
         }
     });
     return router;

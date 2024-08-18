@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsMongoId } from 'class-validator';
-import { IsAtLeastOneFieldRequired } from './constraints/IsAtLeastOneFieldRequired';
+import { IsAtLeastOneFieldRequired } from '../../constraints/IsAtLeastOneFieldRequired';
 
-export class FollowersDto {
+export class FollowersReq {
     @IsString()
     @IsOptional()
     username?: string;
