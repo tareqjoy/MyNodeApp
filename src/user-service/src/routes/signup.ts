@@ -4,6 +4,7 @@ import { UserSchema } from '../schema/UserSchema'
 import * as log4js from "log4js";
 import { plainToInstance } from 'class-transformer';
 import { SignUpReq } from '@tareqjoy/models';
+import { InternalServerError, InvalidRequest, MessageResponse } from '@tareqjoy/models';
 import { validate } from 'class-validator';
 
 const logger = log4js.getLogger();
@@ -24,15 +25,7 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
         const signUpDto = plainToInstance(SignUpReq, req.body);
         const errors = await validate(signUpDto);
         if (errors.length > 0) {
-            res.status(400).json(
-                {
-                    message: "Invalid request",
-                    errors: errors.map((err) => ({
-                        property: err.property,
-                        constraints: err.constraints
-                    }))
-                }
-            );
+            res.status(400).json(new InvalidRequest(errors));
             return;
         }
 
@@ -43,7 +36,7 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
         ).exec();
 
         if (existUser) {
-            res.status(400).json({error: "username or email already exists"});
+            res.status(400).json(new InvalidRequest("username or email already exists"));
             return;
         }
     
@@ -56,13 +49,11 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
         })
     
         user.save().then(result => {
-            res.status(200).json({
-                message: "Signed up"
-            });
+            res.status(200).json(new MessageResponse("Signed up"));
         })
         .catch(err => {
             logger.error("Error while sign up", err);
-            res.status(500).json({error: err});
+            res.status(500).json(new InternalServerError());
         });
     });
     

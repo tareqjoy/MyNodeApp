@@ -5,6 +5,7 @@ import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
 import { plainToInstance } from 'class-transformer';
 import { UserInternalReq } from '@tareqjoy/models';
+import { InvalidRequest, InternalServerError, UserInternalRes } from '@tareqjoy/models';
 import { validate } from 'class-validator';
 
 const logger = log4js.getLogger();
@@ -22,15 +23,7 @@ export const createUserInternalRouter = (mongoClient: Mongoose, redisClient: Red
 
         const errors = await validate(userIdsDto);
         if (errors.length > 0) {
-            res.status(400).json(
-                {
-                    message: "Invalid request",
-                    errors: errors.map((err) => ({
-                        property: err.property,
-                        constraints: err.constraints
-                    }))
-                }
-            );
+            res.status(400).json(new InvalidRequest(errors));
             return;
         }
 
@@ -40,13 +33,19 @@ export const createUserInternalRouter = (mongoClient: Mongoose, redisClient: Red
         userIdsDto.getNormalizedIds().map(str => combined.push([str, "uid"]));
 
         try {
-            const map = new Map<string, string | null>();
+            const toUsername = new Map<string, string | null>();
+            const toUserId = new Map<string, string | null>();
             for (const [nameOrId, tag] of combined) {
                 const redisKey = tag == "uname"? `uname-uid:${nameOrId}`: `uid-uname:${nameOrId}`;
                 const redisNameOrId = await redisClient.get(redisKey);
         
                 if (redisNameOrId != null) {
-                    map.set(nameOrId, redisNameOrId);
+                    if (tag == "uname") {
+                        toUserId.set(nameOrId, redisNameOrId);
+                    } else {
+                        toUsername.set(nameOrId, redisNameOrId);
+                    }
+                    
                     logger.trace(`found in redis: ${nameOrId} -> ${redisNameOrId}`)
                     continue;
                 }
@@ -58,25 +57,29 @@ export const createUserInternalRouter = (mongoClient: Mongoose, redisClient: Red
                 const user = await User.findOne(query, { _id: 1, username: 1 }).exec();
         
                 if(user == null) {
-                    map.set(nameOrId, null);
+                    if (tag == "uname") {
+                        toUserId.set(nameOrId, null);
+                    } else {
+                        toUsername.set(nameOrId, null);
+                    }
                     logger.trace(`not found in mongodb: ${nameOrId}`)
                     continue;
                 }
                 
                 const value =  tag == "uname"? String(user._id): user.username;
                 redisClient.setEx(redisKey, Number(redisUsernameTtlSec), value);
-                map.set(nameOrId, value);
+                if (tag == "uname") {
+                    toUserId.set(nameOrId, value);
+                } else {
+                    toUsername.set(nameOrId, value);
+                }
                 logger.trace(`username cached into redis. key: ${nameOrId}, ttl: ${redisUsernameTtlSec}`)
             };
 
-            const mapToObject = (map: Map<any, any>): Record<string, any> => {
-                return Object.fromEntries(map);
-            };
-
-            res.status(200).json(mapToObject(map));
+            res.status(200).json(new UserInternalRes(toUsername, toUserId));
         } catch(error) {
             logger.error("Error while finding user", error);
-            res.status(500).json({error: "Internal Server Error"});
+            res.status(500).json(new InternalServerError());
         }
     });
     return router;
