@@ -9,7 +9,7 @@ export class InvalidRequest {
         if(typeof arg === "string") {
             this.error = arg;
         } else if (Array.isArray(arg) && arg.length > 0) {
-            this.error = `Invalid request. ${arg![0].property}: ${arg![0].constraints}`
+            this.error = `Invalid request. ${Object.values(arg![0].constraints || "")}`
         }
     }
 }

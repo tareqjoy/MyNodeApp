@@ -11,18 +11,18 @@
     "author": "Tareq Joy",
     "license": "ISC",
     "dependencies": {
+        "@tareqjoy/clients": "^1.0.12",
+        "@tareqjoy/models": "^1.0.10",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.1",
         "express": "^4.19.2",
         "log4js": "^6.9.1",
-        "mongoose": "^8.2.4",
         "redis": "^4.7.0",
-        "reflect-metadata": "^0.2.2",
-        "@tareqjoy/clients": "^1.0.12"
+        "reflect-metadata": "^0.2.2"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",
         "nodemon": "^3.1.4",
-        "typescript": "^5.4.3"
+        "typescript": "^5.5.4"
     }
 }

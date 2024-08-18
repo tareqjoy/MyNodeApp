@@ -1,11 +1,10 @@
 import express from 'express'
 import mongoose, { Mongoose } from 'mongoose';
-import { UserSchema } from '../models/user'
+import { UserSchema } from '../schema/UserSchema'
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
-import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
-import { UserIdsDto } from '../models/UserIdsDto';
+import { UserInternalReq } from '@tareqjoy/models';
 import { validate } from 'class-validator';
 
 const logger = log4js.getLogger();
@@ -19,7 +18,7 @@ export const createUserInternalRouter = (mongoClient: Mongoose, redisClient: Red
     router.post('/', async (req, res, next) => {
         logger.trace(`POST UserInternal called`);
 
-        const userIdsDto = plainToInstance(UserIdsDto, req.body);
+        const userIdsDto = plainToInstance(UserInternalReq, req.body);
 
         const errors = await validate(userIdsDto);
         if (errors.length > 0) {

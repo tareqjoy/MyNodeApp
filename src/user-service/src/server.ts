@@ -1,10 +1,12 @@
 import express from 'express';
+import 'reflect-metadata';
 import { connectMongo, connectRedis } from '@tareqjoy/clients';
 import { createSignUpRouter} from "./routes/signup";
 import { createUserDetailsRouter } from "./routes/user";
 import { createUserInternalRouter } from "./routes/user-internal";
 import bodyParser from "body-parser";
 import * as log4js from "log4js";
+
 
 const logger = log4js.getLogger();
 logger.level = "trace";

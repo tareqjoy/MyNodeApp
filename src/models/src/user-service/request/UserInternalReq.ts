@@ -1,8 +1,8 @@
 import { Transform } from 'class-transformer';
 import { IsArray, IsMongoId, IsOptional } from 'class-validator';
-import { IsAtLeastOneFieldRequired } from './constraints/IsAtLeastOneFieldRequired';
+import { IsAtLeastOneFieldRequired } from '../../constraints/IsAtLeastOneFieldRequired';
 
-export class UserIdsDto {
+export class UserInternalReq {
   @IsOptional()
   username?: string;
 
@@ -45,5 +45,30 @@ export class UserIdsDto {
       norms.add(this.userId);
     }
     return Array.from<string>(norms);
+  }
+
+  constructor();
+  constructor(arg1?: string | string[], providedUsername?: boolean) {
+    if (typeof providedUsername === "boolean") {
+      if (providedUsername) {
+        if (Array.isArray(arg1)) {
+          this.usernames = arg1;
+        } else {
+          this.username = arg1;
+        }
+      } else {
+        if (Array.isArray(arg1)) {
+          this.userIds = arg1;
+        } else {
+          this.userId = arg1;
+        }
+      }
+    } else {
+      if (Array.isArray(arg1)) {
+        this.usernames = arg1;
+      } else {
+        this.username = arg1;
+      }
+    }
   }
 }

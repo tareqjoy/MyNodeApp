@@ -1,9 +1,9 @@
 import express from 'express'
 import mongoose, { Mongoose } from 'mongoose';
-import { UserSchema } from '../models/user'
+import { UserSchema } from '../schema/UserSchema'
 import * as log4js from "log4js";
 import { plainToInstance } from 'class-transformer';
-import { SignUpDto } from '../models/SignUpDto';
+import { SignUpReq } from '@tareqjoy/models';
 import { validate } from 'class-validator';
 
 const logger = log4js.getLogger();
@@ -21,7 +21,7 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
     router.post('/', async (req, res, next) => {
         logger.trace(`POST / called`);
 
-        const signUpDto = plainToInstance(SignUpDto, req.body);
+        const signUpDto = plainToInstance(SignUpReq, req.body);
         const errors = await validate(signUpDto);
         if (errors.length > 0) {
             res.status(400).json(

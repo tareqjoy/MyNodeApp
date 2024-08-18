@@ -1,6 +1,6 @@
 import express from 'express'
 import { Mongoose } from 'mongoose';
-import { UserSchema } from '../models/user'
+import { UserSchema } from '../schema/UserSchema'
 import * as log4js from "log4js";
 
 const logger = log4js.getLogger();

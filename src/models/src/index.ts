@@ -8,3 +8,6 @@ export * from './follow-service/request/UnfollowReq';
 export * from './follow-service/response/FollowersRes';
 export * from './follow-service/response/FollowRes';
 export * from './follow-service/response/UnfollowRes';
+
+export * from './user-service/request/SignUprReq';
+export * from './user-service/request/UserInternalReq';

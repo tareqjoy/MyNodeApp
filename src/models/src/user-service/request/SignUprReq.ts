@@ -1,7 +1,7 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, IsInt, IsNotEmpty, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
 
-export class SignUpDto {
+export class SignUpReq {
   @IsNotEmpty()
   @IsString()
   @Matches(/^[^\s]+$/, { message: 'Username cannot contain spaces' })

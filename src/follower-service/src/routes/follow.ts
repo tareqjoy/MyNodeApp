@@ -168,6 +168,11 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
             const errors = await validate(unfollowPostDto);
 
             if (errors.length > 0) {
+                logger.error(`Invalid request. ${Object.values(errors![0].constraints || "")}`)
+
+            }
+
+            if (errors.length > 0) {
                 res.status(400).json(new InvalidRequest(errors));
                 return;
             }
