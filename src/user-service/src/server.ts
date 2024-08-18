@@ -1,5 +1,5 @@
 import express from 'express';
-import { redisClient } from './clients/redisClient';
+import { connectMongo, connectRedis } from '@tareqjoy/clients';
 import { createSignUpRouter} from "./routes/signup";
 import { createUserDetailsRouter } from "./routes/user";
 import { createUserInternalRouter } from "./routes/user-internal";
@@ -28,10 +28,13 @@ class HttpError extends Error {
 
 async function main() {
   app.use(bodyParser.json());
+
+  const redisClient = await connectRedis();
+  const mongoClient = await connectMongo();
   
-  app.use(api_path_detail, createUserDetailsRouter());
-  app.use(api_path_signup, createSignUpRouter());
-  app.use(api_path_userid, createUserInternalRouter(redisClient));
+  app.use(api_path_detail, createUserDetailsRouter(mongoClient));
+  app.use(api_path_signup, createSignUpRouter(mongoClient));
+  app.use(api_path_userid, createUserInternalRouter(mongoClient, redisClient));
   
   
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -52,23 +55,23 @@ async function main() {
   app.listen(appport, () => {
     logger.info(`Server is running on port ${appport}`);
   });
-}
 
-process.on('SIGINT', async () => {
-  try {
-    logger.info('Caught interrupt signal, shutting down...');
-    if (redisClient.isOpen) {
-      await redisClient.quit();
-      logger.info(`Redis disconnected`);
-    } else {
-      logger.info(`Redis was not connected at the first place`);
+  process.on('SIGINT', async () => {
+    try {
+      logger.info('Caught interrupt signal, shutting down...');
+      if (redisClient.isOpen) {
+        await redisClient.quit();
+        logger.info(`Redis disconnected`);
+      } else {
+        logger.info(`Redis was not connected at the first place`);
+      }
+      
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during disconnect:', error);
     }
-    
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during disconnect:', error);
-  }
-});
+  });
+}
 
 
 main();

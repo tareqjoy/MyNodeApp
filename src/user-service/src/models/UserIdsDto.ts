@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsOptional } from 'class-validator';
+import { IsArray, IsMongoId, IsOptional } from 'class-validator';
 import { IsAtLeastOneFieldRequired } from './constraints/IsAtLeastOneFieldRequired';
 
 export class UserIdsDto {
@@ -12,11 +12,13 @@ export class UserIdsDto {
   usernames?: string[];
 
   @IsOptional()
+  @IsMongoId()
   userId?: string;
 
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : [value])) // Normalize to an array
   @IsArray()
+  @IsMongoId({each: true})
   userIds?: string[];
 
 

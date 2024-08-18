@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Mongoose } from 'mongoose';
 
 import * as log4js from "log4js";
 
@@ -16,15 +16,11 @@ const mongoUrl = `mongodb://${mongouser}:${mongoppass}@${mongohost}:${mongoport}
 const mongoOptions = {
     maxPoolSize: 100,
     minPoolSize: 10
-  };
+};
 
-(async () => {
-    try {
-        await mongoose.connect(mongoUrl, mongoOptions);
-        logger.info(`Connected to MongoDB at port ${mongoport}`);
-    } catch (error) {
-        logger.error("Error connecting to MongoDB: ", error);
-    }
-})();
+export async function connectMongo(): Promise<Mongoose> {
+  const mongoClient = await mongoose.connect(mongoUrl, mongoOptions);
+  logger.info(`Connected to MongoDB at port ${mongoport}`);
+  return mongoClient!;
+}
 
-export default mongoose;

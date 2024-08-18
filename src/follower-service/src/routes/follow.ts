@@ -1,5 +1,5 @@
 import express from 'express'
-import { Session, Result } from 'neo4j-driver';
+import { Session, Result, Transaction } from 'neo4j-driver';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import 'reflect-metadata';
@@ -19,6 +19,7 @@ const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http:
 const router = express.Router();
 
 async function commonFollow(neo4jSession: Session, query: string, reqBody: any, res: Response) {
+    const tx = neo4jSession.beginTransaction();
     const followersDto = plainToInstance(FollowersDto, reqBody);
     const errors = await validate(followersDto);
 
@@ -34,24 +35,28 @@ async function commonFollow(neo4jSession: Session, query: string, reqBody: any, 
         );
         return;
     }
-
-    const userServiceBody = {
-        username: followersDto.username
-    };
-
-    const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
-    if (!userIdResponse.data || !userIdResponse.data[followersDto.username]) {
-        res.status(400).json(
-            {
-                message: "Invalid username"
-            }
-        );
-        return;
+    var usernameId;
+    if (followersDto.username) {
+        const userServiceBody = {
+            username: followersDto.username
+        };
+    
+        const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
+        if (!userIdResponse.data || !userIdResponse.data[followersDto.username]) {
+            res.status(400).json(
+                {
+                    message: "Invalid username"
+                }
+            );
+            return;
+        }
+        usernameId = userIdResponse.data[followersDto.username];
+    } else {
+        usernameId = followersDto.userId
     }
+    
 
-    const usernameId = userIdResponse.data[followersDto.username];
-
-    const followers = await neo4jSession.run(query,{ userId: usernameId  });
+    const followers = await tx.run(query,{ userId: usernameId  });
 
     const whoFollows = [];
 
@@ -85,7 +90,7 @@ export const createFollowerRouter = (neo4jSession: Session) => {
     router.post('/who-follows', async (req, res, next) => {
         try {
             const followersQ = `
-                MATCH (fuser:User)-[:FOLLOW]->(b:User {userId: $userId})
+                MATCH (user:User {userId: $userId})-[:FOLLOW]->(fuser:User)
                 RETURN fuser
             `;
             commonFollow(neo4jSession, followersQ, req.body, res);
@@ -100,10 +105,10 @@ export const createFollowerRouter = (neo4jSession: Session) => {
     router.post('/i-follow', async (req, res, next) => {
         try {
             const followersQ = `
-                MATCH (user:User {userId: $userId})-[:FOLLOW]->(fuser:User)
+                MATCH (fuser:User)-[:FOLLOW]->(b:User {userId: $userId})
                 RETURN fuser
-        `;
-        commonFollow(neo4jSession, followersQ, req.body, res);
+            `;
+            commonFollow(neo4jSession, followersQ, req.body, res);
         } catch(error) {
             logger.error("Error while follow: ", error);
             res.status(500).json(
@@ -114,6 +119,7 @@ export const createFollowerRouter = (neo4jSession: Session) => {
     });
     
     router.post('/follow', async (req: Request, res: Response) => {
+        var tx: Transaction | null = null; 
         try {
             const followPostDto = plainToInstance(FollowPostDto, req.body);
             const errors = await validate(followPostDto);
@@ -151,7 +157,9 @@ export const createFollowerRouter = (neo4jSession: Session) => {
             const usernameId = userIdResponse.data[followPostDto.username];
             const followsId = userIdResponse.data[followPostDto.followsUsername];
 
-            const alreadyFollows = await neo4jSession.run(`
+            tx = await neo4jSession.beginTransaction();
+
+            const alreadyFollows = await tx.run(`
                 MATCH (a:User {userId: $userId1})-[r:FOLLOW]-(b:User {userId: $userId2})
                 RETURN COUNT(r) > 0 AS exists
                 `,
@@ -165,7 +173,7 @@ export const createFollowerRouter = (neo4jSession: Session) => {
                 return;
             }
 
-            await neo4jSession.run(
+            await tx.run(
                 `
                 MERGE (a:User {userId: $userId})
                 MERGE (b:User {userId: $followsId})
@@ -173,14 +181,16 @@ export const createFollowerRouter = (neo4jSession: Session) => {
                   ON CREATE SET r.followSince = $followSince, r.isMuted = $isMuted
                 `,
                 { userId: usernameId, followsId: followsId, followSince: followPostDto.followTime, isMuted: false }
-              );
+            );
             
+            await tx.commit();
 
             res.status(200).json({
                 message: "Followed"
             });
 
         } catch(error) {
+            await tx?.rollback();
             logger.error("Error while follow: ", error);
             res.status(500).json(
                 {error: "Internal Server Error"}
@@ -190,6 +200,7 @@ export const createFollowerRouter = (neo4jSession: Session) => {
     });
 
     router.post('/unfollow', async (req: Request, res: Response) => {
+        var tx: Transaction | null = null; 
         try {
             const unfollowPostDto = plainToInstance(UnfollowPostDto, req.body);
             const errors = await validate(unfollowPostDto);
@@ -227,18 +238,23 @@ export const createFollowerRouter = (neo4jSession: Session) => {
             const usernameId = userIdResponse.data[unfollowPostDto.username];
             const unfollowsId = userIdResponse.data[unfollowPostDto.unfollowsUsername];
 
-            await neo4jSession.run(
+            tx = await neo4jSession.beginTransaction();
+
+            await tx.run(
                 `
                 MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
                 DELETE r
                 `,
                 { userId1: usernameId, userId2: unfollowsId }
-              );
+            );
 
-              res.status(200).json({
+            await tx.commit();
+
+            res.status(200).json({
                 message: "Unfollowed"
             });
         } catch(error) {
+            await tx?.rollback();
             logger.error("Error while follow: ", error);
             res.status(500).json(
                 {error: "Internal Server Error"}

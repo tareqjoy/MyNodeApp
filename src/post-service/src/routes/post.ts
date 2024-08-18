@@ -1,7 +1,6 @@
 import express from 'express'
-import mongoose from '../clients/mongoClient';
 import * as log4js from "log4js";
-
+import mongoose, { Mongoose } from 'mongoose';
 import { PostSchema } from '../models/post'
 import { FanoutKafkaMessage } from '../models/fanout-kafka-message'
 import { Producer } from 'kafkajs';
@@ -15,7 +14,7 @@ const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http:
 
 const router = express.Router();
 
-export const createPostRouter = (newPostKafkaProducer: Producer) => {
+export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Producer) => {
     router.post('/get', async (req, res, next) => {
         logger.trace(`POST /get called`);
 
@@ -50,7 +49,7 @@ export const createPostRouter = (newPostKafkaProducer: Producer) => {
         }
 
 
-        const Post = mongoose.model('Post', PostSchema);
+        const Post = mongoClient.model('Post', PostSchema);
         const posts = await Post.find({ _id: { $in: Array.from(objectIdSet)}}).sort( { time: -1 });
 
         res.status(200).json(
@@ -71,7 +70,7 @@ export const createPostRouter = (newPostKafkaProducer: Producer) => {
             return response.data[username]
         }).then((userid: string) => {
             logger.error(userid);
-            const Post = mongoose.model('Post', PostSchema);
+            const Post = mongoClient.model('Post', PostSchema);
     
             const post = new Post({
                 _id: new mongoose.Types.ObjectId(),

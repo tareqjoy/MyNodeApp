@@ -1,5 +1,5 @@
 import express from 'express'
-import mongoose from '../clients/mongoClient';
+import mongoose, { Mongoose } from 'mongoose';
 import { UserSchema } from '../models/user'
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
@@ -15,7 +15,7 @@ const redisUsernameTtlSec: string = process.env.REDIS_USERNAME_TTL_SEC || "86400
 
 const router = express.Router();
 
-export const createUserInternalRouter = (redisClient: RedisClientType<any, any, any>) => {
+export const createUserInternalRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any>) => {
     router.post('/', async (req, res, next) => {
         logger.trace(`POST UserInternal called`);
 
@@ -43,13 +43,6 @@ export const createUserInternalRouter = (redisClient: RedisClientType<any, any, 
         try {
             const map = new Map<string, string | null>();
             for (const [nameOrId, tag] of combined) {
-
-                if (tag == "uid" && !mongoose.Types.ObjectId.isValid(nameOrId)) {
-                    map.set(nameOrId, null);
-                    logger.trace(`invalid uid: ${nameOrId}`)
-                    continue;
-                }
-
                 const redisKey = tag == "uname"? `uname-uid:${nameOrId}`: `uid-uname:${nameOrId}`;
                 const redisNameOrId = await redisClient.get(redisKey);
         
@@ -60,13 +53,14 @@ export const createUserInternalRouter = (redisClient: RedisClientType<any, any, 
                 }
     
                 logger.trace(`not found in redis: ${nameOrId}`)
-                const User = mongoose.model('User', UserSchema);
+                const User = mongoClient.model('User', UserSchema);
                 
                 const query = tag == "uname"? { username: nameOrId }: { _id: new mongoose.Types.ObjectId(nameOrId) };
                 const user = await User.findOne(query, { _id: 1, username: 1 }).exec();
         
                 if(user == null) {
                     map.set(nameOrId, null);
+                    logger.trace(`not found in mongodb: ${nameOrId}`)
                     continue;
                 }
                 

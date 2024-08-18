@@ -2,11 +2,13 @@ import express from 'express';
 import bodyParser from "body-parser";
 import * as log4js from "log4js";
 
-import { newPostConsumer } from './clients/kafkaClient';
-import { redisClient } from './clients/redisClient';
+import { connectKafkaConsumer, connectRedis } from '@tareqjoy/clients';
 import { createFanoutRouter } from "./routes/fanout";
 import { newPostFanout } from "./workers/new-post"
 
+const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'fanout';
+const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
+const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || 'fanout-group';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -26,6 +28,8 @@ class HttpError extends Error {
 }
 
 async function main() {
+  const newPostConsumer = connectKafkaConsumer(kafka_client_id, kafka_fanout_group, kafka_new_post_fanout_topic);
+  const redisClient = await connectRedis();
   newPostConsumer.run({
     eachMessage: async({ topic, partition, message}) => {
         logger.trace("Kafka message received: ", {topic, partition, offset: message.offset, value: message.value?.toString()});
@@ -59,25 +63,25 @@ async function main() {
   app.listen(appport, () => {
     logger.info(`Server is running on port ${appport}`);
   });
-};
 
-process.on('SIGINT', async () => {
-  try {
-    logger.info('Caught interrupt signal, shutting down...');
-    newPostConsumer.disconnect();
-    logger.info(`Consumer disconnected`);
-
-    if (redisClient.isOpen) {
-      await redisClient.quit();
-      logger.info(`Redis disconnected`);
-    } else {
-      logger.info(`Redis was not connected at the first place`);
+  process.on('SIGINT', async () => {
+    try {
+      logger.info('Caught interrupt signal, shutting down...');
+      newPostConsumer.disconnect();
+      logger.info(`Consumer disconnected`);
+  
+      if (redisClient.isOpen) {
+        await redisClient.quit();
+        logger.info(`Redis disconnected`);
+      } else {
+        logger.info(`Redis was not connected at the first place`);
+      }
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during disconnect:', error);
     }
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during disconnect:', error);
-  }
-});
+  });
+};
 
 main()
 

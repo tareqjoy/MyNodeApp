@@ -1,10 +1,9 @@
 import express from 'express'
-import mongoose from '../clients/mongoClient';
 import * as log4js from "log4js";
-
 import { PostSchema } from '../models/post'
 import { RedisClientType } from 'redis';
 import axios from 'axios';
+import { Mongoose } from 'mongoose';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -15,7 +14,7 @@ const router = express.Router();
 
 const POST_RETURN_LIMIT = 10;
 
-export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>) => {
+export const createTimelineRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any>) => {
     router.get('/:username', async (req, res, next) => {
         logger.trace(`GET /:username called`);
         
@@ -61,7 +60,7 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
             if (morePostToLoad > 0) {
                 const lastPostTime = posts.length == 0? start_time: posts[posts.length - 1].time;
 
-                const Post = mongoose.model('Post', PostSchema);
+                const Post = mongoClient.model('Post', PostSchema);
                 const queryParam = lastPostTime == null? { userid: userId} : { userid: userId, time: { $lt: lastPostTime } };
                 const doc = await Post.find(queryParam, { _id: 1, time: 1 }).sort( { time: -1 }).limit(morePostToLoad).exec();
 

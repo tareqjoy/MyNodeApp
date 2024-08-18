@@ -1,6 +1,6 @@
 import express from 'express';
 import { createFollowerRouter } from "./routes/follow";
-import { neo4jDriver } from "./clients/neo4jClient";
+import { connectNeo4jDriver } from "@tareqjoy/clients";
 import * as log4js from "log4js";
 
 const logger = log4js.getLogger();
@@ -14,7 +14,6 @@ const bodyParser = require("body-parser")
 // Specify a port number for the server
 const port= process.env.PORT || 5003;
 
-
 class HttpError extends Error {
   statusCode: number;
 
@@ -23,9 +22,11 @@ class HttpError extends Error {
     this.statusCode = statusCode || 500;
   }
 }
-const neo4jSession = neo4jDriver.session();
+
 
 async function main() {
+  const neo4jDriver = await connectNeo4jDriver();
+  const neo4jSession = neo4jDriver.session();
   app.use(bodyParser.json());
 
   app.use(api_path_root, createFollowerRouter(neo4jSession));
@@ -34,20 +35,20 @@ async function main() {
   app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);
   });
+
+  process.on('SIGINT', async () => {
+    try {
+      neo4jSession.close();
+      logger.info(`Neo4j session disconnected`);
+  
+      logger.info('Caught interrupt signal, shutting down...');
+      neo4jDriver.close();
+      logger.info(`Neo4j driver disconnected`);
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during disconnect:', error);
+    }
+  });
 }
 
 main();
-
-process.on('SIGINT', async () => {
-  try {
-    neo4jSession.close();
-    logger.info(`Neo4j session disconnected`);
-
-    logger.info('Caught interrupt signal, shutting down...');
-    neo4jDriver.close();
-    logger.info(`Neo4j driver disconnected`);
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during disconnect:', error);
-  }
-});

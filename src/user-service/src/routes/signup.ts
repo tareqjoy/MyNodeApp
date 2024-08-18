@@ -1,5 +1,5 @@
 import express from 'express'
-import mongoose from '../clients/mongoClient';
+import mongoose, { Mongoose } from 'mongoose';
 import { UserSchema } from '../models/user'
 import * as log4js from "log4js";
 import { plainToInstance } from 'class-transformer';
@@ -11,7 +11,7 @@ logger.level = "trace";
 
 const router = express.Router();
 
-export const createSignUpRouter = () => {
+export const createSignUpRouter = (mongoClient: Mongoose) => {
     router.get('/:', (req, res, next) => {
         res.status(200).json({
             message: "Handling GET request to /signup"
@@ -36,7 +36,7 @@ export const createSignUpRouter = () => {
             return;
         }
 
-        const User = mongoose.model('User', UserSchema);
+        const User = mongoClient.model('User', UserSchema);
 
         const existUser = await User.findOne(
             { $or: [{username: signUpDto.username}, {email: signUpDto.email}] }

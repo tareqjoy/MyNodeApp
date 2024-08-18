@@ -1,0 +1,27 @@
+{
+  "name": "@tareqjoy/clients",
+  "version": "1.0.12",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [],
+  "license": "ISC",
+  "dependencies": {
+    "kafkajs": "2.0.0",
+    "log4js": "^6.9.1",
+    "redis": "^4.7.0",
+    "mongoose": "^8.2.4",
+    "neo4j-driver": "^5.23.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4",
+    "typescript": "^5.4.3"
+  }
+}

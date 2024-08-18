@@ -1,5 +1,5 @@
 import express from 'express'
-import mongoose from '../clients/mongoClient';
+import { Mongoose } from 'mongoose';
 import { UserSchema } from '../models/user'
 import * as log4js from "log4js";
 
@@ -8,12 +8,12 @@ logger.level = "trace";
 
 const router = express.Router();
 
-export const createUserDetailsRouter = () => {
+export const createUserDetailsRouter = (mongoClient: Mongoose) => {
     router.get('/:username', async (req, res, next) => {
         logger.trace(`GET /:username called`);
         
         const username: string = req.params.username;
-        const User = mongoose.model('User', UserSchema);
+        const User = mongoClient.model('User', UserSchema);
         
         User.findOne({ username: username }).exec().then(doc => {
             if (doc == null) {

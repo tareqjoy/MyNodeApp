@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from "body-parser";
 import { createTimelineRouter } from "./routes/timeline";
-import { redisClient } from './clients/redisClient';
+import { connectRedis, connectMongo } from '@tareqjoy/clients';
 
 import * as log4js from "log4js";
 
@@ -26,7 +26,10 @@ async function main() {
   app.use(bodyParser.urlencoded({extended: false}));
   app.use(bodyParser.json());
 
-  app.use(api_path_root, createTimelineRouter(redisClient));
+  const redisClient = await connectRedis();
+  const mongoClient = await connectMongo();
+
+  app.use(api_path_root, createTimelineRouter(mongoClient, redisClient));
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);
@@ -44,17 +47,17 @@ async function main() {
   app.listen(appport, () => {
     logger.info(`Server is running on port ${appport}`);
   });
-}
 
-process.on('SIGINT', async () => {
-  try {
-    logger.info('Caught interrupt signal, shutting down...');
-    redisClient.quit();
-    logger.info(`Redis disconnected`);
-    process.exit(0);
-  } catch (error) {
-    logger.error('Error during disconnect:', error);
-  }
-});
+  process.on('SIGINT', async () => {
+    try {
+      logger.info('Caught interrupt signal, shutting down...');
+      redisClient.quit();
+      logger.info(`Redis disconnected`);
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during disconnect:', error);
+    }
+  });
+}
 
 main();

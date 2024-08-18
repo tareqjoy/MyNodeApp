@@ -74,6 +74,12 @@
    kubectl apply -f my-node-app-pod.yml --force  
    kubectl rollout restart -f my-node-app-pod.yml 
     ``` 
+2. Update library:
+   ```
+   npm run build
+   npm version patch
+   npm publish --access public
+   ```
 ## How To Test
 API Testing:
 Postman: https://learning.postman.com/docs/getting-started/installation/installation-and-updates/
