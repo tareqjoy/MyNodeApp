@@ -18,139 +18,92 @@ const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http:
 
 const router = express.Router();
 
+async function commonFollow(neo4jSession: Session, query: string, reqBody: any, res: Response) {
+    const followersDto = plainToInstance(FollowersDto, reqBody);
+    const errors = await validate(followersDto);
+
+    if (errors.length > 0) {
+        res.status(400).json(
+            {
+                message: "Invalid request",
+                errors: errors.map((err) => ({
+                    property: err.property,
+                    constraints: err.constraints
+                }))
+            }
+        );
+        return;
+    }
+
+    const userServiceBody = {
+        username: followersDto.username
+    };
+
+    const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
+    if (!userIdResponse.data || !userIdResponse.data[followersDto.username]) {
+        res.status(400).json(
+            {
+                message: "Invalid username"
+            }
+        );
+        return;
+    }
+
+    const usernameId = userIdResponse.data[followersDto.username];
+
+    const followers = await neo4jSession.run(query,{ userId: usernameId  });
+
+    const whoFollows = [];
+
+    for(const record of followers.records) {
+        whoFollows.push(record.get('fuser').properties.userId);
+    }
+
+    if (followersDto.returnAsUsername) {
+        const userIdServiceBody = {
+            userIds: whoFollows
+        };
+    
+        const userNameResponse = await axios.post(userServiceHostUrl, userIdServiceBody);
+    
+        const usernames = [];
+        for(const key in userNameResponse.data) {
+            usernames.push(userNameResponse.data[key]);
+        }
+    
+        res.status(200).json(
+                usernames
+        );
+    } else {
+        res.status(200).json(
+            whoFollows
+        );
+    }
+}
 
 export const createFollowerRouter = (neo4jSession: Session) => {
     router.post('/who-follows', async (req, res, next) => {
         try {
-            const followersDto = plainToInstance(FollowersDto, req.body);
-            const errors = await validate(followersDto);
-    
-            if (errors.length > 0) {
-                res.status(400).json(
-                    {
-                        message: "Invalid request",
-                        errors: errors.map((err) => ({
-                            property: err.property,
-                            constraints: err.constraints
-                        }))
-                    }
-                );
-                return;
-            }
-    
-            const userServiceBody = {
-                username: followersDto.username
-            };
-    
-            const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
-            if (!userIdResponse.data || !userIdResponse.data[followersDto.username]) {
-                res.status(400).json(
-                    {
-                        message: "Invalid username"
-                    }
-                );
-                return;
-            }
-    
-            const usernameId = userIdResponse.data[followersDto.username];
-    
-            const followers = await neo4jSession.run(`
-                MATCH (whoFollows:User)-[:FOLLOW]->(b:User {userId: $userId})
-                RETURN whoFollows
-                `,
-                { userId: usernameId  }
-            );
-
-            const whoFollows = [];
-
-            for(const record of followers.records) {
-                whoFollows.push(record.get('whoFollows').properties.userId);
-            }
-
-            const userIdServiceBody = {
-                userIds: whoFollows
-            };
-    
-            const userNameResponse = await axios.post(userServiceHostUrl, userIdServiceBody);
-
-            const usernames = [];
-            for(const key in userNameResponse.data) {
-                usernames.push(userNameResponse.data[key]);
-            }
-    
-            res.status(200).json(
-                 usernames
-            );
+            const followersQ = `
+                MATCH (fuser:User)-[:FOLLOW]->(b:User {userId: $userId})
+                RETURN fuser
+            `;
+            commonFollow(neo4jSession, followersQ, req.body, res);
         } catch(error) {
             logger.error("Error while follow: ", error);
             res.status(500).json(
                 {error: "Internal Server Error"}
             );
         }
-
     });
 
     router.post('/i-follow', async (req, res, next) => {
         try {
-            const followersDto = plainToInstance(FollowersDto, req.body);
-            const errors = await validate(followersDto);
-    
-            if (errors.length > 0) {
-                res.status(400).json(
-                    {
-                        message: "Invalid request",
-                        errors: errors.map((err) => ({
-                            property: err.property,
-                            constraints: err.constraints
-                        }))
-                    }
-                );
-                return;
-            }
-    
-            const userServiceBody = {
-                username: followersDto.username
-            };
-    
-            const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
-            if (!userIdResponse.data || !userIdResponse.data[followersDto.username]) {
-                res.status(400).json(
-                    {
-                        message: "Invalid username"
-                    }
-                );
-                return;
-            }
-    
-            const usernameId = userIdResponse.data[followersDto.username];
-    
-            const followers = await neo4jSession.run(`
-                MATCH (user:User {userId: $userId})-[:FOLLOW]->(iFollow:User)
-                RETURN iFollow
-                `,
-                { userId: usernameId  }
-            );
-
-            const whoFollows = [];
-
-            for(const record of followers.records) {
-                whoFollows.push(record.get('iFollow').properties.userId);
-            }
-
-            const userIdServiceBody = {
-                userIds: whoFollows
-            };
-    
-            const userNameResponse = await axios.post(userServiceHostUrl, userIdServiceBody);
-
-            const usernames = [];
-            for(const key in userNameResponse.data) {
-                usernames.push(userNameResponse.data[key]);
-            }
-    
-            res.status(200).json(
-                 usernames
-            );
+            const followersQ = `
+                MATCH (user:User {userId: $userId})-[:FOLLOW]->(fuser:User)
+                RETURN fuser
+        `;
+        commonFollow(neo4jSession, followersQ, req.body, res);
         } catch(error) {
             logger.error("Error while follow: ", error);
             res.status(500).json(
