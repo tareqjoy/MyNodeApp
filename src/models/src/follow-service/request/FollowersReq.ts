@@ -17,5 +17,16 @@ export class FollowersReq {
     @IsBoolean()
     @IsOptional()
     returnAsUsername: boolean = false;
+
+    constructor();
+    constructor(arg?: string, providedUsername?: boolean, returnAsUsername?: boolean) {
+        if (providedUsername && providedUsername === true) {
+            this.username = arg;
+        } else {
+            this.userId = arg;
+        }
+        
+        this.returnAsUsername = returnAsUsername || false;
+    }
 }
 
