@@ -26,10 +26,9 @@ class HttpError extends Error {
 
 async function main() {
   const neo4jDriver = await connectNeo4jDriver();
-  const neo4jSession = neo4jDriver.session();
   app.use(bodyParser.json());
 
-  app.use(api_path_root, createFollowerRouter(neo4jSession));
+  app.use(api_path_root, createFollowerRouter(neo4jDriver));
 
   // Start the server and listen to the port
   app.listen(port, () => {
@@ -38,12 +37,9 @@ async function main() {
 
   process.on('SIGINT', async () => {
     try {
-      neo4jSession.close();
-      logger.info(`Neo4j session disconnected`);
-  
       logger.info('Caught interrupt signal, shutting down...');
       neo4jDriver.close();
-      logger.info(`Neo4j driver disconnected`);
+      logger.info(`Neo4j session disconnected`);
       process.exit(0);
     } catch (error) {
       logger.error('Error during disconnect:', error);
