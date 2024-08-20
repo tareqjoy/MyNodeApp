@@ -48,6 +48,7 @@ export class UserInternalReq {
   }
 
   constructor();
+  constructor(arg1?: string | string[], providedUsername?: boolean);
   constructor(arg1?: string | string[], providedUsername?: boolean) {
     if (typeof providedUsername === "boolean") {
       if (providedUsername) {

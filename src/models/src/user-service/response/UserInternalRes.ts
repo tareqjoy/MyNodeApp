@@ -2,6 +2,8 @@ export class UserInternalRes {
     toUsernames?: Record<string, any>;
     toUserIds?: Record<any, any>;
     
+    constructor();
+    constructor(toUsernames?: Map<string, string | null>, toUserIds?: Map<string, string | null>);
     constructor(toUsernames?: Map<string, string | null>, toUserIds?: Map<string, string | null>) {
         const mapToObject = (map: Map<any, any>): Record<string, any> => {
             return Object.fromEntries(map);

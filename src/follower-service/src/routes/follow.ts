@@ -6,7 +6,7 @@ import 'reflect-metadata';
 import { Request, Response } from 'express';
 
 import * as log4js from "log4js";
-import { FollowReq, FollowersReq, UnfollowReq } from '@tareqjoy/models';
+import { FollowReq, FollowersReq, UnfollowReq, UserDetailsRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { FollowRes, FollowersRes, UnfollowRes } from '@tareqjoy/models';
 import { InvalidRequest, InternalServerError } from '@tareqjoy/models';
 import axios from 'axios';
@@ -28,16 +28,16 @@ async function commonFollow(neo4jSession: Session, query: string, reqBody: any, 
     }
     var usernameId;
     if (followersDto.username) {
-        const userServiceBody = {
-            username: followersDto.username
-        };
-    
-        const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
-        if (!userIdResponse.data || !userIdResponse.data[followersDto.username]) {
+        const fUserInternalReq = new UserInternalReq(followersDto.username, true);
+        const fUserIdAxiosResponse = await axios.post(userServiceHostUrl, fUserInternalReq);
+
+        const fUserResObj = plainToInstance(UserInternalRes, fUserIdAxiosResponse.data);
+
+        if (!fUserResObj.toUserIds || !fUserResObj.toUserIds[followersDto.username]) {
             res.status(400).json(new InvalidRequest("Invalid username"));
             return;
         }
-        usernameId = userIdResponse.data[followersDto.username];
+        usernameId = fUserResObj.toUserIds[followersDto.username];
     } else {
         usernameId = followersDto.userId;
     }
@@ -51,15 +51,14 @@ async function commonFollow(neo4jSession: Session, query: string, reqBody: any, 
     }
 
     if (followersDto.returnAsUsername) {
-        const userIdServiceBody = {
-            userIds: whoFollows
-        };
-    
-        const userNameResponse = await axios.post(userServiceHostUrl, userIdServiceBody);
+        const resultUserInternalReq = new UserInternalReq(whoFollows, false);
+
+        const resultUserAxiosRes = await axios.post(userServiceHostUrl, resultUserInternalReq);
+        const resultUserResObj = plainToInstance(UserInternalRes, resultUserAxiosRes.data);
     
         const usernames = [];
-        for(const key in userNameResponse.data) {
-            usernames.push(userNameResponse.data[key]);
+        for(const key in resultUserResObj.toUsernames) {
+            usernames.push(resultUserResObj.toUsernames[key]);
         }
     
         res.status(200).json(new FollowersRes(usernames, true));
@@ -113,21 +112,18 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
                 return;
             }
 
-            const userServiceBody = {
-                usernames: [
-                    followPostDto.username,
-                    followPostDto.followsUsername
-                ]
-            };
+            const userInternalReq = new UserInternalReq([followPostDto.username, followPostDto.followsUsername], true);
+            const userIdResponse = await axios.post(userServiceHostUrl, userInternalReq);
 
-            const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
-            if (!userIdResponse.data || !userIdResponse.data[followPostDto.username] || !userIdResponse.data[followPostDto.followsUsername]) {
+            const userInternalResponse = plainToInstance(UserInternalRes, userIdResponse.data);
+
+            if (!userInternalResponse.toUserIds || !userInternalResponse.toUserIds[followPostDto.username] || !userInternalResponse.toUserIds[followPostDto.followsUsername]) {
                 res.status(400).json(new InvalidRequest("Invalid username"));
                 return;
             }
 
-            const usernameId = userIdResponse.data[followPostDto.username];
-            const followsId = userIdResponse.data[followPostDto.followsUsername];
+            const usernameId = userInternalResponse.toUserIds[followPostDto.username];
+            const followsId = userInternalResponse.toUserIds[followPostDto.followsUsername];
 
             const alreadyFollows = await session.run(`
                 MATCH (a:User {userId: $userId1})-[r:FOLLOW]-(b:User {userId: $userId2})
@@ -177,21 +173,19 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
                 return;
             }
 
-            const userServiceBody = {
-                usernames: [
-                    unfollowPostDto.username,
-                    unfollowPostDto.unfollowsUsername
-                ]
-            };
 
-            const userIdResponse = await axios.post(userServiceHostUrl, userServiceBody);
-            if (!userIdResponse.data || !userIdResponse.data[unfollowPostDto.username] || !userIdResponse.data[unfollowPostDto.unfollowsUsername]) {
+            const userInternalReq = new UserInternalReq([unfollowPostDto.username, unfollowPostDto.unfollowsUsername], true);
+            const userIdResponse = await axios.post(userServiceHostUrl, userInternalReq);
+
+            const userInternalResponse = plainToInstance(UserInternalRes, userIdResponse.data);
+
+            if (!userInternalResponse.toUserIds || !userInternalResponse.toUserIds[unfollowPostDto.username] || !userInternalResponse.toUserIds[unfollowPostDto.unfollowsUsername]) {
                 res.status(400).json(new InvalidRequest("Invalid username"));
                 return;
             }
 
-            const usernameId = userIdResponse.data[unfollowPostDto.username];
-            const unfollowsId = userIdResponse.data[unfollowPostDto.unfollowsUsername];
+            const usernameId = userInternalResponse.toUserIds[unfollowPostDto.username];
+            const unfollowsId = userInternalResponse.toUserIds[unfollowPostDto.unfollowsUsername];
 
             await session.run(
                 `

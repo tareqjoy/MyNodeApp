@@ -2,6 +2,7 @@ export class FollowersRes {
     usernames?: string[];
     userIds?: string[];
     
+    constructor();
     constructor(lst?: string[], isUserName?: boolean);
     constructor(usernames?: string[], userIds?: string[]);
     constructor(arg1?: string[], arg2?: string[] | boolean) {

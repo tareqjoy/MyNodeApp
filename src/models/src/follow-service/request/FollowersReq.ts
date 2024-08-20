@@ -19,11 +19,12 @@ export class FollowersReq {
     returnAsUsername: boolean = false;
 
     constructor();
-    constructor(arg?: string, providedUsername?: boolean, returnAsUsername?: boolean) {
+    constructor(nameOrId?: string, providedUsername?: boolean, returnAsUsername?: boolean);
+    constructor(nameOrId?: string, providedUsername?: boolean, returnAsUsername?: boolean) {
         if (providedUsername && providedUsername === true) {
-            this.username = arg;
+            this.username = nameOrId;
         } else {
-            this.userId = arg;
+            this.userId = nameOrId;
         }
         
         this.returnAsUsername = returnAsUsername || false;
