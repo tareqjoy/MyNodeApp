@@ -7,7 +7,7 @@ logger.level = "trace";
 
 const kafka_host_port = process.env.KAFKA_HOST_PORT || 'localhost:9092';
 
-export function connectKafkaConsumer(clientId: string, groupName: string, topic: string): Consumer {
+export async function connectKafkaConsumer(clientId: string, groupName: string, topic: string): Promise<Consumer> {
     logger.info(`Will listen kafka at ${kafka_host_port}`);
     const fanoutKafka = new Kafka({
         clientId: clientId,
@@ -15,10 +15,10 @@ export function connectKafkaConsumer(clientId: string, groupName: string, topic:
     });
       
     const newPostConsumer = fanoutKafka.consumer({ groupId: groupName });
-    newPostConsumer.connect();
+    await newPostConsumer.connect();
     logger.info(`Connected to kafka producer on ${kafka_host_port}, group: ${groupName}`);
     
-    newPostConsumer.subscribe({ topic: topic, fromBeginning: true});
+    await newPostConsumer.subscribe({ topic: topic, fromBeginning: true});
     logger.info(`Subscribed to topic: ${topic}`);
 
     return newPostConsumer;

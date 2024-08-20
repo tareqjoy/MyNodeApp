@@ -7,7 +7,7 @@ logger.level = "trace";
 
 const kafka_host_port = process.env.KAFKA_HOST_PORT || 'localhost:9092';
 
-export function connectKafkaProducer(clientId: string): Producer {
+export async function connectKafkaProducer(clientId: string): Promise<Producer> {
     logger.info(`Will listen kafka at ${kafka_host_port}`);
     const fanoutKafka = new Kafka({
         clientId: clientId,
@@ -15,7 +15,7 @@ export function connectKafkaProducer(clientId: string): Producer {
     });
       
     const kafkaNewPostProducer = fanoutKafka.producer();
-    kafkaNewPostProducer.connect();
+    await kafkaNewPostProducer.connect();
     logger.info(`Connected to kafka producer on ${kafka_host_port}`);
     return kafkaNewPostProducer;
 }

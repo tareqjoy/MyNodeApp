@@ -39,6 +39,7 @@ metadata:
   name: service-url-config
 data:
   USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
+  WHO_FOLLOWS_ME_URL: http://192.168.49.2:80/v1/follower/who-follows-me/
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -192,6 +193,8 @@ spec:
                 name: fanout-service-config
             - configMapRef:
                 name: kafka-config
+            - configMapRef:
+                name: service-url-config
 ---
 apiVersion: apps/v1
 kind: Deployment

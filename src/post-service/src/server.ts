@@ -1,6 +1,7 @@
 import express from 'express';
+import 'reflect-metadata';
 import bodyParser from "body-parser";
-import { createPostRouter } from "./routes/post";
+import { createPostRouter } from "./routes/PostRouter";
 import { connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
 import * as log4js from "log4js";
 

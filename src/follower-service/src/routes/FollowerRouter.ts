@@ -68,7 +68,7 @@ async function commonFollow(neo4jSession: Session, query: string, reqBody: any, 
 }
 
 export const createFollowerRouter = (neo4jDriver: Driver) => {
-    router.post('/who-follows', async (req, res, next) => {
+    router.post('/my-followers', async (req, res, next) => {
         const session = neo4jDriver.session();
         try {
             const followersQ = `
@@ -85,7 +85,7 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
         }
     });
 
-    router.post('/i-follow', async (req, res, next) => {
+    router.post('/who-follows-me', async (req, res, next) => {
         const session = neo4jDriver.session();
         try {
             const followersQ = `

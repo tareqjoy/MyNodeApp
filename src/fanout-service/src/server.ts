@@ -1,10 +1,11 @@
 import express from 'express';
+import 'reflect-metadata';
 import bodyParser from "body-parser";
 import * as log4js from "log4js";
 
 import { connectKafkaConsumer, connectRedis } from '@tareqjoy/clients';
 import { createFanoutRouter } from "./routes/fanout";
-import { newPostFanout } from "./workers/new-post"
+import { newPostFanout } from "./workers/NewPostWorker"
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'fanout';
 const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
@@ -28,18 +29,28 @@ class HttpError extends Error {
 }
 
 async function main() {
-  const newPostConsumer = connectKafkaConsumer(kafka_client_id, kafka_fanout_group, kafka_new_post_fanout_topic);
+  const newPostConsumer = await connectKafkaConsumer(kafka_client_id, kafka_fanout_group, kafka_new_post_fanout_topic);
   const redisClient = await connectRedis();
-  newPostConsumer.run({
-    eachMessage: async({ topic, partition, message}) => {
+  await newPostConsumer.run({
+    eachMessage: async({ topic, partition, message }) => {
         logger.trace("Kafka message received: ", {topic, partition, offset: message.offset, value: message.value?.toString()});
         
         if (message.value != undefined) {
-          newPostFanout(redisClient, message.value?.toString());
+          const isProcessed = await newPostFanout(redisClient, message.value?.toString());
+
+          if (isProcessed) {
+            await newPostConsumer.commitOffsets([
+              { topic, partition, offset: (Number(message.offset) + 1).toString() },
+            ]);
+          } else {
+            logger.warn(`Message is not processed by worker`);
+          }
+
         } else {
           logger.warn(`Message value undefined`);
         }
-    }
+    },
+    autoCommit: false
   });
 
   app.use(bodyParser.urlencoded({extended: false}));
@@ -67,7 +78,7 @@ async function main() {
   process.on('SIGINT', async () => {
     try {
       logger.info('Caught interrupt signal, shutting down...');
-      newPostConsumer.disconnect();
+      await newPostConsumer.disconnect();
       logger.info(`Consumer disconnected`);
   
       if (redisClient.isOpen) {

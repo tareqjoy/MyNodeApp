@@ -15,3 +15,11 @@ export * from './user-service/request/UserInternalReq';
 
 export * from './user-service/response/UserDetailsRes';
 export * from './user-service/response/UserInternalRes';
+
+export * from './fanout-service/request/NewPostKafkaMsg';
+
+export * from './post-service/request/CreatePostReq';
+export * from './post-service/request/GetPostReq';
+
+export * from './post-service/response/PostDetailsRes';
+

@@ -1,5 +1,5 @@
 import express from 'express';
-import { createFollowerRouter } from "./routes/follow";
+import { createFollowerRouter } from "./routes/FollowerRouter";
 import { connectNeo4jDriver } from "@tareqjoy/clients";
 import * as log4js from "log4js";
 
