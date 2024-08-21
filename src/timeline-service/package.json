@@ -11,20 +11,20 @@
     "author": "Tareq Joy",
     "license": "ISC",
     "dependencies": {
-        "axios": "^1.6.8",
+        "axios": "^1.7.4",
         "express": "^4.19.2",
         "log4js": "^6.9.1",
-        "mongoose": "^8.2.4",
+        "mongoose": "^8.5.3",
         "redis": "^4.7.0",
         "class-validator": "^0.14.1",
         "class-transformer": "^0.5.1",
         "reflect-metadata": "^0.2.2",
-        "@tareqjoy/clients": "^1.0.12",
-        "@tareqjoy/models": "^1.0.14"
+        "@tareqjoy/clients": "^1.0.14",
+        "@tareqjoy/models": "^1.0.20"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",
         "nodemon": "^3.1.4",
-        "typescript": "^5.4.3"
+        "typescript": "^5.5.4"
     }
 }

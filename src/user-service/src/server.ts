@@ -67,6 +67,9 @@ async function main() {
       } else {
         logger.info(`Redis was not connected at the first place`);
       }
+
+      await mongoClient.disconnect();
+      logger.info(`MongoDB disconnected`);
       
       process.exit(0);
     } catch (error) {

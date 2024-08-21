@@ -8,10 +8,22 @@ export class GetPostReq {
   postId?: string;
 
   @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) // Normalize to an array
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) 
   @IsArray()
   @IsMongoId({each: true})
   postIds?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) 
+  @IsArray()
+  usernames?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) 
+  @IsArray()
+  @IsMongoId({each: true})
+  userIds?: string[];
+
 
   @IsBoolean()
   @IsOptional()

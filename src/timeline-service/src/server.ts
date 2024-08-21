@@ -1,6 +1,7 @@
 import express from 'express';
+import 'reflect-metadata';
 import bodyParser from "body-parser";
-import { createTimelineRouter } from "./routes/timeline";
+import { createTimelineRouter } from "./routes/TimelineRouter";
 import { connectRedis, connectMongo } from '@tareqjoy/clients';
 
 import * as log4js from "log4js";
@@ -23,7 +24,6 @@ class HttpError extends Error {
 }
 
 async function main() {
-  app.use(bodyParser.urlencoded({extended: false}));
   app.use(bodyParser.json());
 
   const redisClient = await connectRedis();

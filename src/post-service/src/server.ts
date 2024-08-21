@@ -27,7 +27,7 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
 
-  const kafkaNewPostProducer = connectKafkaProducer(kafka_client_id);
+  const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
   app.use(api_path_root, createPostRouter(mongoClient, kafkaNewPostProducer));
 
@@ -51,8 +51,10 @@ async function main() {
   process.on('SIGINT', async () => {
     try {
       logger.info('Caught interrupt signal, shutting down...');
-      kafkaNewPostProducer.disconnect();
+      await kafkaNewPostProducer.disconnect();
       logger.info(`Producer disconnected`);
+      await mongoClient.disconnect();
+      logger.info(`MongoDB disconnected`);
       process.exit(0);
     } catch (error) {
       logger.error('Error during disconnect:', error);

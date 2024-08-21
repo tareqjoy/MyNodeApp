@@ -9,14 +9,15 @@ const logger = log4js.getLogger();
 logger.level = "trace";
 
 const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
+const whoFollowsMeUrl: string = process.env.WHO_FOLLOWS_ME_URL || "http://127.0.0.1:5003/v1/follower/who-follows-me/";
 
 const router = express.Router();
 
 const POST_RETURN_LIMIT = 10;
 
 export const createTimelineRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any>) => {
-    router.get('/:username', async (req, res, next) => {
-        logger.trace(`GET /:username called`);
+    router.post('/home', async (req, res, next) => {
+        logger.trace(`POST /home called`);
         
 
         const username: string = req.params.username;
