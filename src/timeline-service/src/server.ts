@@ -2,7 +2,7 @@ import express from 'express';
 import 'reflect-metadata';
 import bodyParser from "body-parser";
 import { createTimelineRouter } from "./routes/TimelineRouter";
-import { connectRedis, connectMongo } from '@tareqjoy/clients';
+import { connectRedis } from '@tareqjoy/clients';
 
 import * as log4js from "log4js";
 
@@ -27,9 +27,8 @@ async function main() {
   app.use(bodyParser.json());
 
   const redisClient = await connectRedis();
-  const mongoClient = await connectMongo();
 
-  app.use(api_path_root, createTimelineRouter(mongoClient, redisClient));
+  app.use(api_path_root, createTimelineRouter(redisClient));
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);
@@ -51,7 +50,7 @@ async function main() {
   process.on('SIGINT', async () => {
     try {
       logger.info('Caught interrupt signal, shutting down...');
-      redisClient.quit();
+      await redisClient.quit();
       logger.info(`Redis disconnected`);
       process.exit(0);
     } catch (error) {

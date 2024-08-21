@@ -40,6 +40,9 @@ metadata:
 data:
   USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
   WHO_FOLLOWS_ME_URL: http://192.168.49.2:80/v1/follower/who-follows-me/
+  I_FOLLOW_URL: http://192.168.49.2:80/v1/follower/i-follow/
+  GET_POST_BY_USER_URL: http://192.168.49.2:80/v1/post/get-by-user/
+  GET_POST_BY_POST_ID_URL: http://192.168.49.2:80/v1/post/get/
 ---
 apiVersion: v1
 kind: ConfigMap

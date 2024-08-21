@@ -14,7 +14,7 @@ export class GetPostByUserReq {
   @IsMongoId({each: true})
   userIds?: string[];
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
   @Type(() => Number)
   @Min(1)
@@ -56,7 +56,7 @@ export class GetPostByUserReq {
         this.userIds = namesOrIds;
       }
 
-      this.startTime = startTime || 0;
+      this.startTime = startTime || Date.now();
       this.limit = limit || 10;
       this.returnAsUsername = returnAsUsername || false;
   }

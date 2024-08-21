@@ -2,9 +2,9 @@ export * from './common/InternalServerError';
 export * from './common/InvalidRequest';
 export * from './common/MessageResponse';
 
-export * from './timeline-service/request/HomeReq';
+export * from './timeline-service/request/TimelineHomeReq';
 
-export * from './timeline-service/response/HomeRes';
+export * from './timeline-service/response/TimelineHomeRes';
 
 export * from './user-service/request/SignUprReq';
 export * from './user-service/request/UserInternalReq';

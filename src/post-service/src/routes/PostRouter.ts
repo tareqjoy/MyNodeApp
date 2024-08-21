@@ -33,11 +33,11 @@ async function toResPosts(dbPosts: any, returnAsUsername: boolean): Promise<Post
         const pUserResObj = plainToInstance(UserInternalRes, pUserIdAxiosResponse.data);
 
         for(const dbp of dbPosts) {
-            resPosts.push(new SinglePost(pUserResObj.toUsernames![dbp.userid!.toString()], dbp.body, dbp.time, true));
+            resPosts.push(new SinglePost(dbp.id, pUserResObj.toUsernames![dbp.userid!.toString()], dbp.body, dbp.time, true));
         }
     } else {
         for(const dbp of dbPosts) {
-            resPosts.push(new SinglePost(dbp.userid!.toString(), dbp.body, dbp.time, false));
+            resPosts.push(new SinglePost(dbp.id, dbp.userid!.toString(), dbp.body, dbp.time, false));
         }
     }
 

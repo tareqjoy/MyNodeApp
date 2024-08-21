@@ -68,7 +68,8 @@ async function commonFollow(neo4jSession: Session, query: string, reqBody: any, 
 }
 
 export const createFollowerRouter = (neo4jDriver: Driver) => {
-    router.post('/my-followers', async (req, res, next) => {
+    router.post('/i-follow', async (req, res, next) => {
+        logger.trace(`POST /i-follow called`);
         const session = neo4jDriver.session();
         try {
             const followersQ = `
@@ -86,6 +87,7 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
     });
 
     router.post('/who-follows-me', async (req, res, next) => {
+        logger.trace(`POST /who-follows-me called`);
         const session = neo4jDriver.session();
         try {
             const followersQ = `
@@ -102,6 +104,7 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
     });
     
     router.post('/follow', async (req: Request, res: Response) => {
+        logger.trace(`POST /follow called`);
         const session =  neo4jDriver.session();
         try {
             const followPostDto = plainToInstance(FollowReq, req.body);
@@ -126,7 +129,7 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
             const followsId = userInternalResponse.toUserIds[followPostDto.followsUsername];
 
             const alreadyFollows = await session.run(`
-                MATCH (a:User {userId: $userId1})-[r:FOLLOW]-(b:User {userId: $userId2})
+                MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
                 RETURN COUNT(r) > 0 AS exists
                 `,
                 { userId1: usernameId, userId2: followsId }

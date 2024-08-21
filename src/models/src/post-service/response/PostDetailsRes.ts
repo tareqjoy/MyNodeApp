@@ -1,12 +1,14 @@
 export class SinglePost {
+    postId: string
     userId?: string;
     username?: string;
     body: string;
     time: number;
     
     constructor();
-    constructor(userIdOrUsername: string, body: string, time: number, isUserName: boolean);
-    constructor(userIdOrUsername?: string, body?: string, time?: number, isUserName?: boolean) {
+    constructor(postId: string, userIdOrUsername: string, body: string, time: number, isUserName: boolean);
+    constructor(postId?: string, userIdOrUsername?: string, body?: string, time?: number, isUserName?: boolean) {
+        this.postId = postId || "";
         if (isUserName) {
             this.username = userIdOrUsername;
         } else {

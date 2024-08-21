@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsMongoId, IsOptional } from 'class-validator';
 import { IsAtLeastOneFieldRequired } from '../../constraints/IsAtLeastOneFieldRequired';
 
@@ -12,18 +12,6 @@ export class GetPostReq {
   @IsArray()
   @IsMongoId({each: true})
   postIds?: string[];
-
-  @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) 
-  @IsArray()
-  usernames?: string[];
-
-  @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) 
-  @IsArray()
-  @IsMongoId({each: true})
-  userIds?: string[];
-
 
   @IsBoolean()
   @IsOptional()
