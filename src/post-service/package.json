@@ -6,6 +6,8 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "tsc -p . && node dist/server.js",
+        "setup:db:createIndex": "tsc -p . && node dist/db/DbSetup.js --create-index",
+        "setup:db:createShard": "tsc -p . && node dist/db/DbSetup.js --create-shard",
         "build": "tsc -p ."
     },
     "author": "Tareq Joy",

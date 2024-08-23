@@ -1,7 +1,7 @@
 import express from 'express'
 import * as log4js from "log4js";
 import mongoose, { Mongoose } from 'mongoose';
-import { PostSchema } from '../models/PostSchema'
+import { PostSchema } from '../db/PostSchema'
 import { Producer } from 'kafkajs';
 import axios, { AxiosResponse } from 'axios';
 import { GetPostByUserReq, GetPostReq, InternalServerError, MessageResponse, PostDetailsRes, SinglePost, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
