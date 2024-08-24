@@ -2,19 +2,20 @@ export class SinglePost {
     postId: string
     userId?: string;
     username?: string;
-    body: string;
+    body?: string;
     time: number;
     
     constructor();
-    constructor(postId: string, userIdOrUsername: string, body: string, time: number, isUserName: boolean);
-    constructor(postId?: string, userIdOrUsername?: string, body?: string, time?: number, isUserName?: boolean) {
+    constructor(postId: string, time: number, options?: {userIdOrUsername?: string, isUserName?: boolean, body?: string});
+    constructor(postId?: string, time?: number, options?: {userIdOrUsername?: string,  isUserName?: boolean, body?: string}) {
         this.postId = postId || "";
-        if (isUserName) {
-            this.username = userIdOrUsername;
+        if (options?.isUserName) {
+            this.username = options?.userIdOrUsername;
         } else {
-            this.userId = userIdOrUsername;
+            //isUserName undefined or false
+            this.userId = options?.userIdOrUsername;
         }
-        this.body = body || "";
+        this.body = options?.body;
         this.time = time || 0;
     }
 }

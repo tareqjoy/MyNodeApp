@@ -18,7 +18,13 @@ export class GetPostByUserReq {
   @IsNumber()
   @Type(() => Number)
   @Min(1)
-  startTime: number = 0;
+  startTime: number = Date.now();
+
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @Min(1)
+  endTime?: number;
 
   @IsOptional()
   @IsInt()
@@ -29,7 +35,11 @@ export class GetPostByUserReq {
 
   @IsBoolean()
   @IsOptional()
-  returnAsUsername: boolean = false;
+  returnOnlyPostId: boolean = false;
+
+  @IsBoolean()
+  @IsOptional()
+  returnAsUsername: boolean = false; // not needed when returnOnlyPostId = true as userId/name will not be returned anyway as response
 
   @IsAtLeastOneFieldRequired(['usernames', 'userIds'])
   anyField?: string; // This is a dummy field for the validation to work
@@ -45,19 +55,19 @@ export class GetPostByUserReq {
   }
 
   constructor();
-  constructor(namesOrIds?: string[], startTime?: number);
-  constructor(namesOrIds?: string[], startTime?: number, limit?: number);
-  constructor(namesOrIds?: string[], startTime?: number, limit?: number, returnAsUsername?: boolean);
-  constructor(namesOrIds?: string[], startTime?: number, limit?: number, returnAsUsername?: boolean, providedUsernames?: boolean);
-  constructor(namesOrIds?: string[], startTime?: number, limit?: number, returnAsUsername?: boolean, providedUsernames?: boolean) {
+  constructor(namesOrIds?: string[], providedUsernames?: boolean);
+  constructor(namesOrIds?: string[], providedUsernames?: boolean, options?: {startTime?: number, endTime?: number, limit?: number, returnAsUsername?: boolean, returnOnlyPostId?: boolean});
+  constructor(namesOrIds?: string[], providedUsernames?: boolean, options?: {startTime?: number, endTime?: number, limit?: number, returnAsUsername?: boolean, returnOnlyPostId?: boolean}) {
       if (providedUsernames) {
         this.usernames = namesOrIds;
       } else {
         this.userIds = namesOrIds;
       }
 
-      this.startTime = startTime || Date.now();
-      this.limit = limit || 10;
-      this.returnAsUsername = returnAsUsername || false;
+      this.startTime = options?.startTime || Date.now();
+      this.endTime = options?.endTime; //undefined means no end time, rely on limit
+      this.limit = options?.limit || 100;
+      this.returnAsUsername = options?.returnAsUsername || false;
+      this.returnOnlyPostId = options?.returnOnlyPostId || false;
   }
 }

@@ -21,6 +21,8 @@ export * from './follow-service/response/FollowRes';
 export * from './follow-service/response/UnfollowRes';
 
 export * from './fanout-service/request/NewPostKafkaMsg';
+export * from './fanout-service/request/IFollowedKafkaMsg';
+export * from './fanout-service/request/IUnfollowedKafkaMsg';
 
 export * from './post-service/request/CreatePostReq';
 export * from './post-service/request/GetPostReq';

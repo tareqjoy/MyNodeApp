@@ -77,7 +77,7 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
                 const iFollowAxiosRes = await axios.post(iFollowUrl, iFollowReq);
                 const iFollowIdsObj = plainToInstance(FollowersRes, iFollowAxiosRes.data);
 
-                const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, lastPostTime, morePostToLoad, timelineHomeReq.returnAsUsername, false);
+                const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, {startTime: lastPostTime, limit: morePostToLoad, returnAsUsername: timelineHomeReq.returnAsUsername});
                 const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
                 const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 

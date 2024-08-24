@@ -18,28 +18,35 @@ const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http:
 
 const router = express.Router();
 
-async function toResPosts(dbPosts: any, returnAsUsername: boolean): Promise<PostDetailsRes> {
+async function toResPosts(dbPosts: any, returnOnlyPostId: boolean, returnAsUsername: boolean): Promise<PostDetailsRes> {
     const resPosts: SinglePost[] = [];
-    if (returnAsUsername) {
-        const pUserIds: string[] = [];
-
+    if (returnOnlyPostId) {
         for(const dbp of dbPosts) {
-            pUserIds.push(dbp.userid!.toString());
-        }
-
-        const pUserInternalReq = new UserInternalReq(pUserIds, false);
-        const pUserIdAxiosResponse = await axios.post(userServiceHostUrl, pUserInternalReq);
-
-        const pUserResObj = plainToInstance(UserInternalRes, pUserIdAxiosResponse.data);
-
-        for(const dbp of dbPosts) {
-            resPosts.push(new SinglePost(dbp.id, pUserResObj.toUsernames![dbp.userid!.toString()], dbp.body, dbp.time, true));
+            resPosts.push(new SinglePost(dbp.id, dbp.time));
         }
     } else {
-        for(const dbp of dbPosts) {
-            resPosts.push(new SinglePost(dbp.id, dbp.userid!.toString(), dbp.body, dbp.time, false));
+        if (returnAsUsername) {
+            const pUserIds: string[] = [];
+    
+            for(const dbp of dbPosts) {
+                pUserIds.push(dbp.userid!.toString());
+            }
+    
+            const pUserInternalReq = new UserInternalReq(pUserIds, false);
+            const pUserIdAxiosResponse = await axios.post(userServiceHostUrl, pUserInternalReq);
+    
+            const pUserResObj = plainToInstance(UserInternalRes, pUserIdAxiosResponse.data);
+    
+            for(const dbp of dbPosts) {
+                resPosts.push(new SinglePost(dbp.id, dbp.time, {userIdOrUsername: pUserResObj.toUsernames![dbp.userid?.toString()], isUserName: true, body: dbp.body}));
+            }
+        } else {
+            for(const dbp of dbPosts) {
+                resPosts.push(new SinglePost(dbp.id, dbp.time, {userIdOrUsername: dbp.userid?.toString(), isUserName: false, body: dbp.body}));
+            }
         }
     }
+
 
     return new PostDetailsRes(resPosts);
 }
@@ -77,7 +84,7 @@ export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Pr
         const Post = mongoClient.model('Post', PostSchema);
         const dbPosts = await Post.find({ _id: { $in: Array.from(postObjectIds)}}).sort( { time: -1 });
 
-        res.status(200).json(await toResPosts(dbPosts, getPostReq.returnAsUsername));
+        res.status(200).json(await toResPosts(dbPosts, true, getPostReq.returnAsUsername));
     });
 
     router.post('/get-by-user', async (req, res, next) => {
@@ -90,16 +97,19 @@ export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Pr
             res.status(400).json(new InvalidRequest(errors));
             return;
         }
-        var userIds = []
+        const userIds: Set<string> = new Set()
         if (getPostReq.userIds) {
-            userIds = getPostReq.userIds;
-        } else {
+            for(const id of getPostReq.userIds) {
+                userIds.add(id);
+            }
+        } 
+        if (getPostReq.usernames) {
             const pUserInternalReq = new UserInternalReq(getPostReq.usernames, true);
             const pUserIdAxiosResponse = await axios.post(userServiceHostUrl, pUserInternalReq);
             const pUserResObj = plainToInstance(UserInternalRes, pUserIdAxiosResponse.data);
 
             for(const key in pUserResObj.toUserIds) {
-                userIds.push(pUserResObj.toUserIds[key]);
+                userIds.add(pUserResObj.toUserIds[key]);
             }
         }
 
@@ -113,9 +123,12 @@ export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Pr
         
 
         const Post = mongoClient.model('Post', PostSchema);
-        const dbPosts = await Post.find({ userid: { $in: userMongoIds}, time: { $lt: getPostReq.startTime } }).sort( { time: -1 }).limit(getPostReq.limit);
 
-        res.status(200).json(await toResPosts(dbPosts, getPostReq.returnAsUsername));
+        const projection = getPostReq.returnOnlyPostId? {_id: 1, time: 1}: {};
+        const timeFiler = getPostReq.endTime? { $lte: getPostReq.startTime, $gte: getPostReq.endTime } : { $lt: getPostReq.startTime };
+        const dbPosts = await Post.find({ userid: { $in: userMongoIds}, time: timeFiler }, projection).sort( { time: -1 }).limit(getPostReq.limit);
+
+        res.status(200).json(await toResPosts(dbPosts, getPostReq.returnOnlyPostId, getPostReq.returnAsUsername));
     });
 
     router.post('/create', async (req, res, next) => {

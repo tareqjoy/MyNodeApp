@@ -9,6 +9,8 @@ import { newPostFanout } from "./workers/NewPostWorker"
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'fanout';
 const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
+const kafka_i_followed_fanout_topic = process.env.KAFKA_I_FOLLOWED_FANOUT_TOPIC || 'i-followed';
+const kafka_i_unfollowed_fanout_topic = process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || 'i_unfollowed';
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || 'fanout-group';
 
 const logger = log4js.getLogger();
@@ -29,14 +31,19 @@ class HttpError extends Error {
 }
 
 async function main() {
-  const newPostConsumer = await connectKafkaConsumer(kafka_client_id, kafka_fanout_group, kafka_new_post_fanout_topic);
+  const newPostConsumer = await connectKafkaConsumer(kafka_client_id, kafka_fanout_group, 
+    [kafka_new_post_fanout_topic, kafka_i_followed_fanout_topic, kafka_i_unfollowed_fanout_topic]
+  );
   const redisClient = await connectRedis();
   await newPostConsumer.run({
     eachMessage: async({ topic, partition, message }) => {
         logger.trace("Kafka message received: ", {topic, partition, offset: message.offset, value: message.value?.toString()});
         
         if (message.value != undefined) {
-          const isProcessed = await newPostFanout(redisClient, message.value?.toString());
+          var isProcessed = false;
+          if (topic === kafka_new_post_fanout_topic) {
+            isProcessed = await newPostFanout(redisClient, message.value?.toString());
+          }
 
           if (isProcessed) {
             await newPostConsumer.commitOffsets([

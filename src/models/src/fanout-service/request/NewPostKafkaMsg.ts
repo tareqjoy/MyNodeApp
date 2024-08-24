@@ -1,14 +1,19 @@
 import { Type } from "class-transformer";
-import { IsNumber, IsString } from "class-validator";
+import { IsMongoId, IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class NewPostKafkaMsg {
     @IsString()
+    @IsMongoId()
+    @IsNotEmpty()
     postId: string;
 
     @IsString()
+    @IsMongoId()
+    @IsNotEmpty()
     userId: string;
 
     @IsNumber()
+    @IsNotEmpty()
     @Type(() => Number)
     postTime: number;
 

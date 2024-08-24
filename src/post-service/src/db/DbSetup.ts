@@ -8,8 +8,8 @@ async function setupDatabase(createIndex: boolean, createShard: boolean) {
     const db = client.db('mydatabase');
 
     if (createIndex) {
-
         await db.collection('posts').createIndex({ userid: 1, time: -1 });
+        await db.collection('posts').createIndex({ userid: 1 });
         console.log('Indexes created successfully.');
     }
 
@@ -36,4 +36,4 @@ const shouldCreateShard = args.includes('--create-shard');
 
 setupDatabase(shouldCreateIndex, shouldCreateShard);
 
-// 
+// npm run setup:db:createIndex
