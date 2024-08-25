@@ -6,11 +6,13 @@ import * as log4js from "log4js";
 import { connectKafkaConsumer, connectRedis } from '@tareqjoy/clients';
 import { createFanoutRouter } from "./routes/fanout";
 import { newPostFanout } from "./workers/NewPostWorker"
+import { iFollowedFanout } from './workers/IFollowedWorker';
+import { iUnfollowedFanout } from './workers/IUnfollowedWorker';
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'fanout';
 const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
 const kafka_i_followed_fanout_topic = process.env.KAFKA_I_FOLLOWED_FANOUT_TOPIC || 'i-followed';
-const kafka_i_unfollowed_fanout_topic = process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || 'i_unfollowed';
+const kafka_i_unfollowed_fanout_topic = process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || 'i-unfollowed';
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || 'fanout-group';
 
 const logger = log4js.getLogger();
@@ -43,6 +45,10 @@ async function main() {
           var isProcessed = false;
           if (topic === kafka_new_post_fanout_topic) {
             isProcessed = await newPostFanout(redisClient, message.value?.toString());
+          } else if (topic === kafka_i_followed_fanout_topic) {
+            isProcessed = await iFollowedFanout(redisClient, message.value?.toString());
+          } else if (topic === kafka_i_unfollowed_fanout_topic) {
+            isProcessed = await iUnfollowedFanout(redisClient, message.value?.toString());
           }
 
           if (isProcessed) {
@@ -50,7 +56,7 @@ async function main() {
               { topic, partition, offset: (Number(message.offset) + 1).toString() },
             ]);
           } else {
-            logger.warn(`Message is not processed by worker`);
+            logger.warn(`Message is not processed by worker. topic: ${topic}`);
           }
 
         } else {

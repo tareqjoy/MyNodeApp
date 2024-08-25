@@ -55,7 +55,10 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
 
             const redisPostIds = redisResults.reverse().map(item => item.value);
 
-            const postsToReturn: SinglePost[] = [];
+            // lastPostTime is inclusive in post service, so there is a chance of overlap of same post in redis and post service
+            // using map to get rid of duplicate post that were posted on same time
+            const postsMap = new Map<string, SinglePost>();
+            var lowestTime = Number.MAX_VALUE;
             logger.trace("loaded from redis: ", redisPostIds.length);
 
             if (redisPostIds.length > 0) {
@@ -64,27 +67,33 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
                 const postDetailsResObj = plainToInstance(PostDetailsRes, postByPostIdAxiosRes.data);
 
                 for(const post of postDetailsResObj.posts) {
-                    postsToReturn.push(post);
+                    postsMap.set(post.postId, post);
+                    lowestTime = Math.min(lowestTime, post.time);
                 }
             }
 
-            const morePostToLoad = POST_RETURN_LIMIT - postsToReturn.length;
+            const morePostToLoad = POST_RETURN_LIMIT - postsMap.size;
 
             if (morePostToLoad > 0) {
-                const lastPostTime = postsToReturn.length == 0? (timelineHomeReq.startTime || Date.now()): postsToReturn[postsToReturn.length - 1].time;
+                const lastPostTime = postsMap.size == 0? (timelineHomeReq.startTime || Date.now()): lowestTime;
 
                 const iFollowReq = new FollowersReq(userId, false, false);
                 const iFollowAxiosRes = await axios.post(iFollowUrl, iFollowReq);
                 const iFollowIdsObj = plainToInstance(FollowersRes, iFollowAxiosRes.data);
 
                 const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, {startTime: lastPostTime, limit: morePostToLoad, returnAsUsername: timelineHomeReq.returnAsUsername});
+                
+
                 const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
                 const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 
                 for(const post of postDetailsResObj.posts) {
-                    postsToReturn.push(post);
+                    postsMap.set(post.postId, post);
                 }
             }
+
+            const postsToReturn: SinglePost[] = Array.from(postsMap.values());
+            postsToReturn.sort((a, b) => b.time - a.time);
 
             res.status(200).json(new TimelineHomeRes(postsToReturn));
         } catch(error) {

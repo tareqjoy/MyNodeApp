@@ -9,6 +9,7 @@ const logger = log4js.getLogger();
 logger.level = "trace";
 
 const whoFollowsMeUrl: string = process.env.WHO_FOLLOWS_ME_URL || "http://127.0.0.1:5003/v1/follower/who-follows-me/";
+const maxPostSetSize: number = Number(process.env.KAFKA_MAX_POST_SET_SIZE) || 100;
 
 export const newPostFanout = async (redisClient: RedisClientType<any, any, any>, messageStr: string): Promise<boolean> => {
     try {
@@ -33,6 +34,14 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
                 score: newPostKafkaMsg.postTime,
                 value: newPostKafkaMsg.postId
             });
+
+            const setSize = await redisClient.zCard(redisKey);
+            if (setSize > maxPostSetSize) {
+                const toRemove =  setSize - maxPostSetSize -1;
+                await redisClient.zRemRangeByRank(redisKey, 0, toRemove);
+                logger.trace(`${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`);
+            }
+
             logger.trace(`Posted to redis of ${redisKey}`);
         }
 

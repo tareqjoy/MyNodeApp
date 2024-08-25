@@ -4,9 +4,9 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import 'reflect-metadata';
 import { Request, Response } from 'express';
-
+import { Producer } from 'kafkajs';
 import * as log4js from "log4js";
-import { FollowReq, FollowersReq, UnfollowReq, UserDetailsRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
+import { FollowReq, FollowersReq, UnfollowReq, IFollowedKafkaMsg, UserInternalReq, UserInternalRes, IUnfollowedKafkaMsg } from '@tareqjoy/models';
 import { FollowRes, FollowersRes, UnfollowRes } from '@tareqjoy/models';
 import { InvalidRequest, InternalServerError } from '@tareqjoy/models';
 import axios from 'axios';
@@ -14,60 +14,13 @@ import axios from 'axios';
 const logger = log4js.getLogger();
 logger.level = "trace";
 
+const kafka_i_followed_fanout_topic = process.env.KAFKA_I_FOLLOWED_FANOUT_TOPIC || 'i-followed';
+const kafka_i_unfollowed_fanout_topic = process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || 'i-unfollowed';
 const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
 
 const router = express.Router();
 
-async function commonFollow(neo4jSession: Session, query: string, reqBody: any, res: Response) {
-    const followersDto = plainToInstance(FollowersReq, reqBody);
-    const errors = await validate(followersDto);
-
-    if (errors.length > 0) {
-        res.status(400).json(new InvalidRequest(errors));
-        return;
-    }
-    var usernameId;
-    if (followersDto.username) {
-        const fUserInternalReq = new UserInternalReq(followersDto.username, true);
-        const fUserIdAxiosResponse = await axios.post(userServiceHostUrl, fUserInternalReq);
-
-        const fUserResObj = plainToInstance(UserInternalRes, fUserIdAxiosResponse.data);
-
-        if (!fUserResObj.toUserIds || !fUserResObj.toUserIds[followersDto.username]) {
-            res.status(400).json(new InvalidRequest("Invalid username"));
-            return;
-        }
-        usernameId = fUserResObj.toUserIds[followersDto.username];
-    } else {
-        usernameId = followersDto.userId;
-    }
-
-    const followers = await neo4jSession.run(query,{ userId: usernameId  });
-
-    const whoFollows = [];
-
-    for(const record of followers.records) {
-        whoFollows.push(record.get('fuser').properties.userId);
-    }
-
-    if (followersDto.returnAsUsername) {
-        const resultUserInternalReq = new UserInternalReq(whoFollows, false);
-
-        const resultUserAxiosRes = await axios.post(userServiceHostUrl, resultUserInternalReq);
-        const resultUserResObj = plainToInstance(UserInternalRes, resultUserAxiosRes.data);
-    
-        const usernames = [];
-        for(const key in resultUserResObj.toUsernames) {
-            usernames.push(resultUserResObj.toUsernames[key]);
-        }
-    
-        res.status(200).json(new FollowersRes(usernames, true));
-    } else {
-        res.status(200).json(new FollowersRes(whoFollows, false));
-    }
-}
-
-export const createFollowerRouter = (neo4jDriver: Driver) => {
+export const createFollowerRouter = (neo4jDriver: Driver, kafkaProducer: Producer) => {
     router.post('/i-follow', async (req, res, next) => {
         logger.trace(`POST /i-follow called`);
         const session = neo4jDriver.session();
@@ -152,6 +105,18 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
             
             await session.close();
 
+            const kafkaMsg = new IFollowedKafkaMsg(usernameId, followsId);
+            logger.debug(`publishing Kafka: topic: ${kafka_i_followed_fanout_topic}`);
+            await kafkaProducer.send({
+                topic: kafka_i_followed_fanout_topic,
+                messages: [
+                    {
+                        key: usernameId,
+                        value: JSON.stringify(kafkaMsg)
+                    }
+                ]
+            })
+
             res.status(500).json(new FollowRes());
         } catch(error) {
             await session.close();
@@ -190,6 +155,18 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
             const usernameId = userInternalResponse.toUserIds[unfollowPostDto.username];
             const unfollowsId = userInternalResponse.toUserIds[unfollowPostDto.unfollowsUsername];
 
+            const ifFollows = await session.run(`
+                MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
+                RETURN COUNT(r) > 0 AS exists
+                `,
+                { userId1: usernameId, userId2: unfollowsId }
+              );
+
+            if (!ifFollows.records[0].get('exists') as boolean) {   
+                res.status(400).json(new InvalidRequest("Already not following"));   
+                return;
+            }
+
             await session.run(
                 `
                 MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
@@ -200,6 +177,19 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
 
             await session.close();
 
+
+            const kafkaMsg = new IUnfollowedKafkaMsg(usernameId, unfollowsId);
+            logger.debug(`publishing Kafka: topic: ${kafka_i_unfollowed_fanout_topic}`);
+            await kafkaProducer.send({
+                topic: kafka_i_unfollowed_fanout_topic,
+                messages: [
+                    {
+                        key: usernameId,
+                        value: JSON.stringify(kafkaMsg)
+                    }
+                ]
+            })
+
             res.status(500).json(new UnfollowRes());
         } catch(error) {
             await session.close();
@@ -208,4 +198,55 @@ export const createFollowerRouter = (neo4jDriver: Driver) => {
         }
     });
     return router;
+}
+
+
+
+async function commonFollow(neo4jSession: Session, query: string, reqBody: any, res: Response) {
+    const followersDto = plainToInstance(FollowersReq, reqBody);
+    const errors = await validate(followersDto);
+
+    if (errors.length > 0) {
+        res.status(400).json(new InvalidRequest(errors));
+        return;
+    }
+    var usernameId;
+    if (followersDto.username) {
+        const fUserInternalReq = new UserInternalReq(followersDto.username, true);
+        const fUserIdAxiosResponse = await axios.post(userServiceHostUrl, fUserInternalReq);
+
+        const fUserResObj = plainToInstance(UserInternalRes, fUserIdAxiosResponse.data);
+
+        if (!fUserResObj.toUserIds || !fUserResObj.toUserIds[followersDto.username]) {
+            res.status(400).json(new InvalidRequest("Invalid username"));
+            return;
+        }
+        usernameId = fUserResObj.toUserIds[followersDto.username];
+    } else {
+        usernameId = followersDto.userId;
+    }
+
+    const followers = await neo4jSession.run(query,{ userId: usernameId  });
+
+    const whoFollows = [];
+
+    for(const record of followers.records) {
+        whoFollows.push(record.get('fuser').properties.userId);
+    }
+
+    if (followersDto.returnAsUsername) {
+        const resultUserInternalReq = new UserInternalReq(whoFollows, false);
+
+        const resultUserAxiosRes = await axios.post(userServiceHostUrl, resultUserInternalReq);
+        const resultUserResObj = plainToInstance(UserInternalRes, resultUserAxiosRes.data);
+    
+        const usernames = [];
+        for(const key in resultUserResObj.toUsernames) {
+            usernames.push(resultUserResObj.toUsernames[key]);
+        }
+    
+        res.status(200).json(new FollowersRes(usernames, true));
+    } else {
+        res.status(200).json(new FollowersRes(whoFollows, false));
+    }
 }

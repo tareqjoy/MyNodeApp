@@ -18,40 +18,63 @@ const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http:
 
 const router = express.Router();
 
-async function toResPosts(dbPosts: any, returnOnlyPostId: boolean, returnAsUsername: boolean): Promise<PostDetailsRes> {
-    const resPosts: SinglePost[] = [];
-    if (returnOnlyPostId) {
-        for(const dbp of dbPosts) {
-            resPosts.push(new SinglePost(dbp.id, dbp.time));
-        }
-    } else {
-        if (returnAsUsername) {
-            const pUserIds: string[] = [];
-    
-            for(const dbp of dbPosts) {
-                pUserIds.push(dbp.userid!.toString());
+export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Producer) => {
+    router.post('/create', async (req, res, next) => {
+        logger.trace(`POST /create called`);
+        
+        try {
+            const createPostReq = plainToInstance(CreatePostReq, req.body);
+            const errors = await validate(createPostReq);
+        
+            if (errors.length > 0) {
+                res.status(400).json(new InvalidRequest(errors));
+                return;
             }
     
-            const pUserInternalReq = new UserInternalReq(pUserIds, false);
+            const pUserInternalReq = new UserInternalReq(createPostReq.username, true);
             const pUserIdAxiosResponse = await axios.post(userServiceHostUrl, pUserInternalReq);
     
             const pUserResObj = plainToInstance(UserInternalRes, pUserIdAxiosResponse.data);
     
-            for(const dbp of dbPosts) {
-                resPosts.push(new SinglePost(dbp.id, dbp.time, {userIdOrUsername: pUserResObj.toUsernames![dbp.userid?.toString()], isUserName: true, body: dbp.body}));
+            if (!pUserResObj.toUserIds || !pUserResObj.toUserIds[createPostReq.username]) {
+                res.status(400).json(new InvalidRequest("Invalid username"));
+                return;
             }
-        } else {
-            for(const dbp of dbPosts) {
-                resPosts.push(new SinglePost(dbp.id, dbp.time, {userIdOrUsername: dbp.userid?.toString(), isUserName: false, body: dbp.body}));
-            }
+    
+            const Post = mongoClient.model('Post', PostSchema);
+        
+            
+            const post = new Post({
+                _id: new mongoose.Types.ObjectId(),
+                userid: pUserResObj.toUserIds[createPostReq.username],
+                body: createPostReq.body,
+                time: createPostReq.postTime
+            })
+    
+            const dbResult = await post.save();
+            logger.debug(`saved to mongodb with postId: ${dbResult.id}`);
+    
+            const kafkaMsg = new NewPostKafkaMsg(dbResult.id, dbResult.userid!.toString(), dbResult.time);
+            logger.debug(`publishing Kafka: topic: ${kafka_new_post_fanout_topic}`);
+            await newPostKafkaProducer.send({
+                topic: kafka_new_post_fanout_topic,
+                messages: [
+                    {
+                        key: dbResult.id,
+                        value: JSON.stringify(kafkaMsg)
+                    }
+                ]
+            })
+    
+            res.status(200).json(new MessageResponse("Posted"));
+        } catch (error) {
+            logger.error("Error while posting: ", error);
+            res.status(500).json(new InternalServerError());
         }
-    }
+        
+    });
 
 
-    return new PostDetailsRes(resPosts);
-}
-
-export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Producer) => {
     router.post('/get', async (req, res, next) => {
         logger.trace(`POST /get called`);
 
@@ -131,60 +154,40 @@ export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Pr
         res.status(200).json(await toResPosts(dbPosts, getPostReq.returnOnlyPostId, getPostReq.returnAsUsername));
     });
 
-    router.post('/create', async (req, res, next) => {
-        logger.trace(`POST /create called`);
-        
-        try {
-            const createPostReq = plainToInstance(CreatePostReq, req.body);
-            const errors = await validate(createPostReq);
-        
-            if (errors.length > 0) {
-                res.status(400).json(new InvalidRequest(errors));
-                return;
+
+
+    return router;
+}
+
+
+async function toResPosts(dbPosts: any, returnOnlyPostId: boolean, returnAsUsername: boolean): Promise<PostDetailsRes> {
+    const resPosts: SinglePost[] = [];
+    if (returnOnlyPostId) {
+        for(const dbp of dbPosts) {
+            resPosts.push(new SinglePost(dbp.id, dbp.time));
+        }
+    } else {
+        if (returnAsUsername) {
+            const pUserIds: string[] = [];
+    
+            for(const dbp of dbPosts) {
+                pUserIds.push(dbp.userid!.toString());
             }
     
-            const pUserInternalReq = new UserInternalReq(createPostReq.username, true);
+            const pUserInternalReq = new UserInternalReq(pUserIds, false);
             const pUserIdAxiosResponse = await axios.post(userServiceHostUrl, pUserInternalReq);
     
             const pUserResObj = plainToInstance(UserInternalRes, pUserIdAxiosResponse.data);
     
-            if (!pUserResObj.toUserIds || !pUserResObj.toUserIds[createPostReq.username]) {
-                res.status(400).json(new InvalidRequest("Invalid username"));
-                return;
+            for(const dbp of dbPosts) {
+                resPosts.push(new SinglePost(dbp.id, dbp.time, {userIdOrUsername: pUserResObj.toUsernames![dbp.userid?.toString()], isUserName: true, body: dbp.body}));
             }
-    
-            const Post = mongoClient.model('Post', PostSchema);
-        
-            
-            const post = new Post({
-                _id: new mongoose.Types.ObjectId(),
-                userid: pUserResObj.toUserIds[createPostReq.username],
-                body: createPostReq.body,
-                time: createPostReq.postTime
-            })
-    
-            const dbResult = await post.save();
-            logger.debug(`saved to mongodb with postId: ${dbResult.id}`);
-    
-            const kafkaMsg = new NewPostKafkaMsg(dbResult.id, dbResult.userid!.toString(), dbResult.time);
-            logger.debug(`publishing Kafka: topic: ${kafka_new_post_fanout_topic}`);
-            await newPostKafkaProducer.send({
-                topic: kafka_new_post_fanout_topic,
-                messages: [
-                    {
-                        key: dbResult.id,
-                        value: JSON.stringify(kafkaMsg)
-                    }
-                ]
-            })
-    
-            res.status(200).json(new MessageResponse("Posted"));
-        } catch (error) {
-            logger.error("Error while posting: ", error);
-            res.status(500).json(new InternalServerError());
+        } else {
+            for(const dbp of dbPosts) {
+                resPosts.push(new SinglePost(dbp.id, dbp.time, {userIdOrUsername: dbp.userid?.toString(), isUserName: false, body: dbp.body}));
+            }
         }
-        
-    });
+    }
 
-    return router;
+    return new PostDetailsRes(resPosts);
 }
