@@ -89,6 +89,13 @@ data:
   API_PATH_ROOT: /v1/post
   KAFKA_CLIENT_ID: post
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: search-service-config
+data:
+  API_PATH_ROOT: /v1/search
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -233,6 +240,30 @@ spec:
             - configMapRef:
                 name: service-url-config
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: search-service
+  template:
+    metadata:
+      labels:
+        app: search-service
+    spec:
+      containers:
+        - name: search-service-container
+          image: tareqjoy/search-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: search-service-config
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -301,6 +332,20 @@ spec:
       port: 3005
       targetPort: 5005
       nodePort: 30005
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-service
+spec:
+  selector:
+    app: search-service
+  ports:
+    - protocol: TCP
+      port: 3006
+      targetPort: 5006
+      nodePort: 30006
   type: NodePort
 ---
 apiVersion: autoscaling/v2
@@ -398,6 +443,25 @@ spec:
           type: Utilization
           averageUtilization: 50
 ---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: search-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: search-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -441,3 +505,10 @@ spec:
                   name: post-service
                   port:
                     number: 3005
+            - path: /v1/search/
+              pathType: Prefix
+              backend:
+                service:
+                  name: search-service
+                  port:
+                    number: 3006

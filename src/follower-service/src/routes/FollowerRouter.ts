@@ -117,7 +117,7 @@ export const createFollowerRouter = (neo4jDriver: Driver, kafkaProducer: Produce
                 ]
             })
 
-            res.status(500).json(new FollowRes());
+            res.status(200).json(new FollowRes());
         } catch(error) {
             await session.close();
             logger.error("Error while follow: ", error);
@@ -190,7 +190,7 @@ export const createFollowerRouter = (neo4jDriver: Driver, kafkaProducer: Produce
                 ]
             })
 
-            res.status(500).json(new UnfollowRes());
+            res.status(200).json(new UnfollowRes());
         } catch(error) {
             await session.close();
             logger.error("Error while follow: ", error);

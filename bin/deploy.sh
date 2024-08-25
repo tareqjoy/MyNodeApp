@@ -33,6 +33,12 @@ docker build -t tareqjoy/post-service:latest .
 docker push tareqjoy/post-service:latest
 cd -
 
+echo "Search service ..."
+cd src/search-service/
+docker build -t tareqjoy/seacrh-service:latest .
+docker push tareqjoy/seacrh-service:latest
+cd -
+
 echo "Kubernetes ..."
 kubectl apply -f my-node-app-pod.yml --force
 kubectl rollout restart deployment -n default
