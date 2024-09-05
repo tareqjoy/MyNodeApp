@@ -107,7 +107,7 @@ export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Pr
         const Post = mongoClient.model('Post', PostSchema);
         const dbPosts = await Post.find({ _id: { $in: Array.from(postObjectIds)}}).sort( { time: -1 });
 
-        res.status(200).json(await toResPosts(dbPosts, true, getPostReq.returnAsUsername));
+        res.status(200).json(await toResPosts(dbPosts, false, getPostReq.returnAsUsername));
     });
 
     router.post('/get-by-user', async (req, res, next) => {

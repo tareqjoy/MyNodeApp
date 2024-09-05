@@ -19,7 +19,7 @@
         "class-validator": "^0.14.1",
         "class-transformer": "^0.5.1",
         "reflect-metadata": "^0.2.2",
-        "@tareqjoy/clients": "^1.0.14",
+        "@tareqjoy/clients": "^1.0.17",
         "@tareqjoy/models": "^1.0.31"
     },
     "devDependencies": {

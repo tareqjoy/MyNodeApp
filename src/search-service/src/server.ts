@@ -1,6 +1,6 @@
 import express from 'express';
 import * as log4js from "log4js";
-import { createSearchRouter } from './routes/FollowerRouter';
+import { createSearchRouter } from './routes/SearchRouter';
 
 const logger = log4js.getLogger();
 logger.level = "trace";

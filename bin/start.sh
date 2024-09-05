@@ -3,11 +3,16 @@
 
 set -e
 
-sudo service mongod start
+sudo systemctl start mongod-rs0-0 && systemctl --no-pager status mongod-rs0-0
+sudo systemctl start mongod-rs0-1 && systemctl --no-pager status mongod-rs0-1
+sudo systemctl start mongod-rs0-2 && systemctl --no-pager status mongod-rs0-2
 sudo systemctl start zookeeper && systemctl --no-pager status zookeeper
 sudo systemctl start kafka && systemctl --no-pager status kafka
 sudo systemctl start redis && systemctl --no-pager status redis
 sudo systemctl start neo4j && systemctl --no-pager status neo4j
+sudo systemctl start elasticsearch.service && systemctl --no-pager status elasticsearch.service
+#sudo systemctl start logstash.service && systemctl --no-pager status logstash.service 
+sudo systemctl start kibana.service && systemctl --no-pager status kibana.service
 minikube start
 
 echo "Done ..."
