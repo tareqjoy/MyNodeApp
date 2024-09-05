@@ -168,6 +168,7 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
             [Service]
             User=mongodb
             ExecStart=/usr/bin/mongod --replSet rs0 --port 27017 --bind_ip localhost,192.168.0.10 --dbpath /srv/mongodb/rs0-0 --oplogSize 128 --logpath /var/log/mongodb/rs0-0.log --logappend
+            ExecStop=/bin/kill -TERM $MAINPID
             Restart=always
 
             [Install]
@@ -184,16 +185,47 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
             sudo systemctl start mongod-rs0-1
             sudo systemctl start mongod-rs0-2
             ```
-- Elasticsearch
+- Mongo to Elasticsearch:
+     1. Use this command to create a service file.
+         ```sh
+         sudo nano /etc/systemd/system/mongo-kafka-source.service
+         ```
+     2. Use this template to create as service. Update the conf files location as necessary.
+         ```ini
+         [Unit]
+         Description=Mongodb to Kafka connect
+         After=network.target
 
+         [Service]
+         ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-source.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-users-connector.properties
+         ExecStop=/bin/kill -TERM $MAINPID
+         Restart=always
 
-sudo /usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-source.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-posts-connector.properties
+         [Install]
+         WantedBy=multi-user.target
+         ```
+     3. Use this command to create a service file.
+         ```sh
+         sudo nano /etc/systemd/system/elasticsearch-kafka-sink.service
+         ```
+     4. Use this template to create as service. Update the conf files location as necessary.
+         ```ini
+         [Unit]
+         Description=Kafka to Elasticsearch connect
+         After=network.target
 
-sudo /usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-sink.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-connector.properties
+         [Service]
+         ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-sink.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-users-connector.properties
+         ExecStop=/bin/kill -TERM $MAINPID
+         Restart=always
 
-
-,{\"$project\":{\"fullDocument._id\":1,\"fullDocument.body\":1}}
-
-
-Kafka gets:
-"{\"_id\": {\"$oid\": \"66d39bc6b9b8a4752be9e25a\"}}"	"{\"_id\": {\"_id\": {\"$oid\": \"66d39bc6b9b8a4752be9e25a\"}, \"copyingData\": true}, \"operationType\": \"insert\", \"documentKey\": {\"_id\": {\"$oid\": \"66d39bc6b9b8a4752be9e25a\"}}, \"fullDocument\": {\"_id\": {\"$oid\": \"66d39bc6b9b8a4752be9e25a\"}, \"userid\": {\"$oid\": \"66cd05666b3f7dc8911b005f\"}, \"body\": \"New Post with old vibe 3\", \"time\": 123, \"__v\": 0}, \"ns\": {\"db\": \"mydatabase\", \"coll\": \"posts\"}}"
+         [Install]
+         WantedBy=multi-user.target
+         ```
+     5. Run these commands:
+         ```sh
+         sudo systemctl daemon-reload
+         sudo chmod -R 777 /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/
+         sudo mkdir /usr/local/kafka/offsets/
+         sudo chmod -R 777 /usr/local/kafka/offsets
+         ```
