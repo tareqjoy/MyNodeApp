@@ -1,6 +1,7 @@
 import express from 'express';
 import * as log4js from "log4js";
 import { createSearchRouter } from './routes/SearchRouter';
+import { connectElasticSearch } from '@tareqjoy/clients';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -26,7 +27,10 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
 
-  app.use(api_path_root, createSearchRouter());
+  const elasticSearchClient =  await connectElasticSearch();
+
+  app.use(api_path_root, createSearchRouter(elasticSearchClient));
+  
 
   // Start the server and listen to the port
   app.listen(port, () => {
