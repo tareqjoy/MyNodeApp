@@ -1,0 +1,71 @@
+{
+  "type": "record",
+  "name": "UserValue",
+  "namespace": "com.mynodeapp",
+  "fields": [
+      {
+          "name": "_id",
+          "type": {
+              "type": "record",
+              "name": "IdWrapper",
+              "fields": [
+                  {
+                      "name": "_id",
+                      "type": [
+                          "null",
+                          "string"
+                      ]
+                  },
+                  {
+                      "name": "copyingData",
+                      "type": [
+                          "null",
+                          "string"
+                      ]
+                  },
+                  {
+                      "name": "_data",
+                      "type": [
+                          "null",
+                          "string"
+                      ]
+                  }
+              ]
+          }
+      },
+      {
+          "name": "documentKey",
+          "type": {
+              "type": "record",
+              "name": "DocumentKeyRecord",
+              "fields": [
+                  {
+                      "name": "_id",
+                      "type": "string"
+                  }
+              ]
+          }
+      },
+      {
+          "name": "fullDocument",
+          "type": {
+              "type": "record",
+              "name": "FullDocumentRecord",
+              "fields": [
+                  {
+                      "name": "username",
+                      "type": "string"
+                  },
+                  {
+                      "name": "name",
+                      "type": "string"
+                  },
+                  {
+                      "name": "email",
+                      "type": "string"
+                  }
+              ]
+          }
+      }
+  ]
+}

@@ -141,91 +141,109 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
    ```
 
 ## Additional setup
-- MongoDB
-  1. Index creation on Post. It will create index on both { userId } & { userId, time }. The shard creation doesn't work.
-      ```sh
-      cd src/post-service
-      npm run setup:db:createIndex
-      ```
+### MongoDB Index & Replica Set
+1. Index creation on Post. It will create index on both { userId } & { userId, time }. The shard creation doesn't work.
+   ```sh
+   cd src/post-service
+   npm run setup:db:createIndex
+   ```
    
-  2. Shard creation on Post { userId, time } (doesn't work) 
+2. Shard creation on Post { userId, time } (doesn't work) 
+   ```sh
+   cd src/post-service
+   npm run setup:db:createShard
+   ```
+
+3. Create replica set: https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-for-testing/#std-label-server-replica-set-deploy-test
+   1. Use this command to create service file. Do it for all 3 replica sets.
       ```sh
-      cd src/post-service
-      npm run setup:db:createShard
+      sudo nano /etc/systemd/system/mongod-rs0-1.service
       ```
+   2. Use this template to create as service. Do it for all 3 replica sets.
+      ```ini
+      [Unit]
+      Description=MongoDB Replica Set - Instance 0
+      After=network.target
 
-   3. Create replica set: https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-for-testing/#std-label-server-replica-set-deploy-test
-        1. Use this command to create service file. Do it for all 3 replica sets.
-            ```sh
-            sudo nano /etc/systemd/system/mongod-rs0-1.service
-            ```
-        2. Use this template to create as service. Do it for all 3 replica sets.
-            ```ini
-            [Unit]
-            Description=MongoDB Replica Set - Instance 0
-            After=network.target
+      [Service]
+      User=mongodb
+      ExecStart=/usr/bin/mongod --replSet rs0 --port 27017 --bind_ip localhost,192.168.0.10 --dbpath /srv/mongodb/rs0-0 --oplogSize 128 --logpath /var/log/mongodb/rs0-0.log --logappend
+      ExecStop=/bin/kill -TERM $MAINPID
+      Restart=always
 
-            [Service]
-            User=mongodb
-            ExecStart=/usr/bin/mongod --replSet rs0 --port 27017 --bind_ip localhost,192.168.0.10 --dbpath /srv/mongodb/rs0-0 --oplogSize 128 --logpath /var/log/mongodb/rs0-0.log --logappend
-            ExecStop=/bin/kill -TERM $MAINPID
-            Restart=always
+      [Install]
+      WantedBy=multi-user.target
+      ```
+   3. Run this command:
+      ```sh
+      sudo systemctl daemon-reload
+      sudo chown -R mongodb:mongodb /srv/mongodb
+      ```
+   4. Run these to start the services:
+      ```sh
+      sudo systemctl start mongod-rs0-0
+      sudo systemctl start mongod-rs0-1
+      sudo systemctl start mongod-rs0-2
+      ```
+### CDC (Mongo to Elasticsearch):
+1. Setup CDC
+   1. Download these jars (Self-hosted option):
+      1. ElasticSearch Sink Connector: https://www.confluent.io/hub/confluentinc/kafka-connect-elasticsearch
+      2. MongoDB Connector: https://www.confluent.io/hub/mongodb/kafka-connect-mongodb
+      3. Kafka Connect Avro Converter: https://www.confluent.io/hub/confluentinc/kafka-connect-avro-converter
+   2. Extract the zips and move the jars from the **lib** directory to the plugin's root directory of the unzipped folder.
+   3. Move them in the kafka plugin directory
+      ```sh
+      sudo mv mongodb-kafka-connect-mongodb /usr/local/share/java 
+      sudo mv confluentinc-kafka-connect-elasticsearch /usr/local/share/java
+      sudo mv confluentinc-kafka-connect-avro-converter /usr/local/share/java
+      ```
+      It will be like this structure: **/usr/local/share/java/mongodb-kafka-connect-mongodb/\<all jars\>**
+   4. Give permission to public:
+      ```
+      sudo chmod 777 /usr/local/share/java/
+      ```
+2. Create CDC system service
+   1. Use this command to create a service file.
+      ```sh
+      sudo nano /etc/systemd/system/mongo-kafka-source.service
+      ```
+   2. Use this template to create as service. Update the conf files location as necessary.
+      ```ini
+      [Unit]
+      Description=Mongodb to Kafka connect
+      After=network.target
 
-            [Install]
-            WantedBy=multi-user.target
-            ```
-         3. Run this command:
-            ```sh
-            sudo systemctl daemon-reload
-            sudo chown -R mongodb:mongodb /srv/mongodb
-            ```
-         4. Run these to start the services:
-            ```sh
-            sudo systemctl start mongod-rs0-0
-            sudo systemctl start mongod-rs0-1
-            sudo systemctl start mongod-rs0-2
-            ```
-- Mongo to Elasticsearch:
-     1. Use this command to create a service file.
-         ```sh
-         sudo nano /etc/systemd/system/mongo-kafka-source.service
-         ```
-     2. Use this template to create as service. Update the conf files location as necessary.
-         ```ini
-         [Unit]
-         Description=Mongodb to Kafka connect
-         After=network.target
+      [Service]
+      ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-source.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-users-connector.properties
+      ExecStop=/bin/kill -TERM $MAINPID
+      Restart=always
 
-         [Service]
-         ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-source.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-users-connector.properties
-         ExecStop=/bin/kill -TERM $MAINPID
-         Restart=always
+      [Install]
+      WantedBy=multi-user.target
+      ```
+   3. Use this command to create a service file.
+      ```sh
+      sudo nano /etc/systemd/system/elasticsearch-kafka-sink.service
+      ```
+   4. Use this template to create as service. Update the conf files location as necessary.
+      ```ini
+      [Unit]
+      Description=Kafka to Elasticsearch connect
+      After=network.target
 
-         [Install]
-         WantedBy=multi-user.target
-         ```
-     3. Use this command to create a service file.
-         ```sh
-         sudo nano /etc/systemd/system/elasticsearch-kafka-sink.service
-         ```
-     4. Use this template to create as service. Update the conf files location as necessary.
-         ```ini
-         [Unit]
-         Description=Kafka to Elasticsearch connect
-         After=network.target
+      [Service]
+      ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-sink.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-users-connector.properties
+      ExecStop=/bin/kill -TERM $MAINPID
+      Restart=always
 
-         [Service]
-         ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-sink.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-users-connector.properties
-         ExecStop=/bin/kill -TERM $MAINPID
-         Restart=always
-
-         [Install]
-         WantedBy=multi-user.target
-         ```
-     5. Run these commands:
-         ```sh
-         sudo systemctl daemon-reload
-         sudo chmod -R 777 /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/
-         sudo mkdir /usr/local/kafka/offsets/
-         sudo chmod -R 777 /usr/local/kafka/offsets
-         ```
+      [Install]
+      WantedBy=multi-user.target
+      ```
+   5. Run these commands:
+      ```sh
+      sudo systemctl daemon-reload
+      sudo chmod -R 777 /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/
+      sudo mkdir /usr/local/kafka/offsets/
+      sudo chmod -R 777 /usr/local/kafka/offsets
+      ```
