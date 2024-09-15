@@ -1,5 +1,5 @@
 export class SinglePost {
-    postId: string
+    postId: string;
     userId?: string;
     username?: string;
     body?: string;
@@ -20,16 +20,32 @@ export class SinglePost {
     }
 }
 
+export class Paging {
+    highTime: number;
+    lastPostId?: string;
+
+    constructor();
+    constructor(highTime: number);
+    constructor(highTime: number, lastPostId: string);
+    constructor(highTime?: number, lastPostId?: string) {
+        this.highTime = highTime || Date.now();
+        this.lastPostId = lastPostId;
+    }
+}
+
 export class PostDetailsRes {
     posts: SinglePost[];
+    paging?: Paging;
 
     constructor();
     constructor(posts: SinglePost[]);
-    constructor(posts?: SinglePost[]) {
+    constructor(posts: SinglePost[], paging?: Paging);
+    constructor(posts?: SinglePost[], paging?: Paging) {
         if (posts) {
             this.posts = posts;
         } else {
             this.posts = [];
         }
+        this.paging = paging;
     }
 }

@@ -16,7 +16,7 @@ export async function connectKafkaConsumer(clientId: string, groupName: string, 
       
     const consumer = fanoutKafka.consumer({ groupId: groupName });
     await consumer.connect();
-    logger.info(`Connected to kafka producer on ${kafka_host_port}, group: ${groupName}`);
+    logger.info(`Connected to kafka consumer on ${kafka_host_port}, group: ${groupName}`);
     
     const topics: string[] = []
     if (typeof topic == "string") {

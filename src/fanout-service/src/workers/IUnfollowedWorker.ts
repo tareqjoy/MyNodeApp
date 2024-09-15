@@ -33,7 +33,7 @@ export const iUnfollowedFanout = async (redisClient: RedisClientType<any, any, a
             endTime = leastRecentPosts[0].score;
         }
 
-        const postByUserReq = new GetPostByUserReq([iUnfollowedKafkaMsg.unfollowsUserId], false, {endTime: endTime, returnOnlyPostId: true});
+        const postByUserReq = new GetPostByUserReq([iUnfollowedKafkaMsg.unfollowsUserId], false, {lowTime: endTime, returnOnlyPostId: true});
         const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
         const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 

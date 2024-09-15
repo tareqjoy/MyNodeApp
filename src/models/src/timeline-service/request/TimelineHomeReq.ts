@@ -1,6 +1,6 @@
 
 import { Type } from 'class-transformer';
-import { IsString, IsNotEmpty, IsNumber, Min, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, Min, IsOptional, IsBoolean, IsInt, Max, IsMongoId } from 'class-validator';
 
 export class TimelineHomeReq {
     @IsString()
@@ -11,7 +11,18 @@ export class TimelineHomeReq {
     @IsNumber()
     @Type(() => Number)
     @Min(1)
-    startTime: number = Date.now();
+    highTime: number = Date.now();
+
+    @IsOptional()
+    @IsMongoId()
+    lastPostId?: string; // Used as tiebreaker when there is multiple posts with same time
+
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    @Min(1)
+    @Max(1000)
+    limit: number = 100;
 
     @IsBoolean()
     @IsOptional()

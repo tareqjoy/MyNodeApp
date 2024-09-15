@@ -30,7 +30,8 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
 
         for(const uid of followersIdsObj.userIds!) {
             const redisKey = `timeline-userId:${uid}`;
-            await redisClient.zAdd(redisKey, {
+            //  When multiple elements have the same score, they are ordered lexicographically
+            await redisClient.zAdd(redisKey, { //zAdd: https://redis.io/docs/latest/commands/zadd/
                 score: newPostKafkaMsg.postTime,
                 value: newPostKafkaMsg.postId
             });
@@ -38,7 +39,7 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
             const setSize = await redisClient.zCard(redisKey);
             if (setSize > maxPostSetSize) {
                 const toRemove =  setSize - maxPostSetSize -1;
-                await redisClient.zRemRangeByRank(redisKey, 0, toRemove);
+                await redisClient.zRemRangeByRank(redisKey, 0, toRemove); // zRemRangeByRank: https://redis.io/docs/latest/commands/zremrangebyrank/
                 logger.trace(`${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`);
             }
 

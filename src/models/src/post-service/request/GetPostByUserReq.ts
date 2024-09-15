@@ -18,13 +18,17 @@ export class GetPostByUserReq {
   @IsNumber()
   @Type(() => Number)
   @Min(1)
-  startTime: number = Date.now();
+  highTime: number = Date.now();
+
+  @IsOptional()
+  @IsMongoId()
+  lastPostId?: string; // Used as tiebreaker when there is multiple posts with same time
 
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
   @Min(1)
-  endTime?: number;
+  lowTime?: number; 
 
   @IsOptional()
   @IsInt()
@@ -56,18 +60,19 @@ export class GetPostByUserReq {
 
   constructor();
   constructor(namesOrIds?: string[], providedUsernames?: boolean);
-  constructor(namesOrIds?: string[], providedUsernames?: boolean, options?: {startTime?: number, endTime?: number, limit?: number, returnAsUsername?: boolean, returnOnlyPostId?: boolean});
-  constructor(namesOrIds?: string[], providedUsernames?: boolean, options?: {startTime?: number, endTime?: number, limit?: number, returnAsUsername?: boolean, returnOnlyPostId?: boolean}) {
+  constructor(namesOrIds?: string[], providedUsernames?: boolean, options?: {highTime?: number, lastPostId?: string, lowTime?: number, limit?: number, returnAsUsername?: boolean, returnOnlyPostId?: boolean});
+  constructor(namesOrIds?: string[], providedUsernames?: boolean, options?: {highTime?: number, lastPostId?: string, lowTime?: number, limit?: number, returnAsUsername?: boolean, returnOnlyPostId?: boolean}) {
       if (providedUsernames) {
         this.usernames = namesOrIds;
       } else {
         this.userIds = namesOrIds;
       }
 
-      this.startTime = options?.startTime || Date.now();
-      this.endTime = options?.endTime; //undefined means no end time, rely on limit
+      this.highTime = options?.highTime || Date.now();
+      this.lowTime = options?.lowTime; //undefined means no lowTime and rely on limit & nextPageToken
       this.limit = options?.limit || 100;
       this.returnAsUsername = options?.returnAsUsername || false;
       this.returnOnlyPostId = options?.returnOnlyPostId || false;
+      this.lastPostId = options?.lastPostId;
   }
 }

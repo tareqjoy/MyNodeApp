@@ -34,7 +34,7 @@ export const iFollowedFanout = async (redisClient: RedisClientType<any, any, any
             endTime = leastRecentPosts[0].score;
         }
 
-        const postByUserReq = new GetPostByUserReq([iFollowedKafkaMsg.followsUserId], false, {endTime: endTime, returnOnlyPostId: true, limit: maxPostSetSize});
+        const postByUserReq = new GetPostByUserReq([iFollowedKafkaMsg.followsUserId], false, {lowTime: endTime, returnOnlyPostId: true, limit: maxPostSetSize});
         const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
         const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 

@@ -52,6 +52,7 @@ async function main() {
           }
 
           if (isProcessed) {
+            logger.trace(`Message is processed by worker. topic: ${topic}. Committing offset`);
             await newPostConsumer.commitOffsets([
               { topic, partition, offset: (Number(message.offset) + 1).toString() },
             ]);
