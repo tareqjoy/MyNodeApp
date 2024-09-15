@@ -100,7 +100,6 @@ metadata:
   name: search-service-config
 data:
   API_PATH_ROOT: /v1/search
-  ELASTIC_SEARCH_INDEX_TO_SEARCH_JSON: '["search.*"]'
 ---
 apiVersion: apps/v1
 kind: Deployment

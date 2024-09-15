@@ -30,3 +30,7 @@ export * from './post-service/request/GetPostByUserReq';
 
 export * from './post-service/response/PostDetailsRes';
 
+export * from './search-service/request/SearchReq';
+
+export * from './search-service/response/SearchRes';
+

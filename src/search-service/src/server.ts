@@ -1,4 +1,5 @@
 import express from 'express';
+import 'reflect-metadata';
 import * as log4js from "log4js";
 import { createSearchRouter } from './routes/SearchRouter';
 import { connectElasticSearch } from '@tareqjoy/clients';
