@@ -3,7 +3,7 @@ import * as log4js from "log4js";
 import mongoose, { Mongoose } from 'mongoose';
 import { PostSchema } from '../db/PostSchema'
 import { Producer } from 'kafkajs';
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse, post } from 'axios';
 import { GetPostByUserReq, TooLargeRequest, GetPostReq, InternalServerError, MessageResponse, PostDetailsRes, SinglePost, UserInternalReq, UserInternalRes, Paging } from '@tareqjoy/models';
 import { CreatePostReq, FollowersRes } from '@tareqjoy/models';
 import { InvalidRequest, NewPostKafkaMsg } from '@tareqjoy/models';
@@ -153,11 +153,23 @@ export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Pr
 
         const projection = getPostReq.returnOnlyPostId? {_id: 1, time: 1}: {};
 
-        const dbPosts = await Post.find(getTimeSortedGetPostIdsByUserListQuery(getPostReq, userMongoIds), projection).sort( { time: -1, _id: -1 }).limit(getPostReq.limit);
+        var lastPostTime = Date.now();
+        if (getPostReq.lastPostId) {
+            const lastPost = await Post.findOne({ _id: getPostReq.lastPostId }, { time: 1});
+            if (lastPost) {
+                lastPostTime = lastPost.time;
+            } else {
+                res.status(400).json(new InvalidRequest("no post found by lastPostId."));
+                return;
+            }
+        }
+
+
+        const dbPosts = await Post.find(getTimeSortedGetPostIdsByUserListQuery(userMongoIds, lastPostTime, getPostReq.lastPostId), projection).sort( { time: -1, _id: -1 }).limit(getPostReq.limit);
 
         var paging: Paging | undefined;
         if (dbPosts.length == getPostReq.limit) {
-            paging = new Paging(dbPosts[dbPosts.length-1].time, dbPosts[dbPosts.length-1].id.toString());
+            paging = new Paging(dbPosts[dbPosts.length-1].id.toString());
         }
         res.status(200).json(await toResPosts(dbPosts, getPostReq.returnOnlyPostId, getPostReq.returnAsUsername, paging));
     });
@@ -165,47 +177,23 @@ export const createPostRouter = (mongoClient: Mongoose, newPostKafkaProducer: Pr
     return router;
 }
 
-function getTimeSortedGetPostIdsByUserListQuery(getPostReq: GetPostByUserReq, userMongoIds: mongoose.Types.ObjectId[]): any {
-    let timeFiler: any;
-    let idFiler: any;
-
+function getTimeSortedGetPostIdsByUserListQuery(userMongoIds: mongoose.Types.ObjectId[], highTime: number, lastPostId?: string): any {
     var query: any = {
         userid: { $in: userMongoIds}
     };
 
-    if (getPostReq.lowTime) {
-        timeFiler = { $lte: getPostReq.highTime, $gte: getPostReq.lowTime };
-        if (getPostReq.lastPostId) {
-            idFiler = { $lt: getPostReq.lastPostId };
-            query = {
-                ...query,
-                $and: [
-                    {time: timeFiler},
-                    {_id: idFiler}
-                ]
-            }
-        } else {
-            query = {
-                ...query,
-                time: timeFiler
-            }
+    if (lastPostId) {
+        query = {
+            ...query,
+            $or: [
+                {time: { $lt: highTime}},
+                {time: highTime, _id: { $lt: lastPostId }}
+            ]
         }
     } else {
-        timeFiler = { $lte: getPostReq.highTime };
-        if (getPostReq.lastPostId) {
-            idFiler = { $lt: getPostReq.lastPostId };
-            query = {
-                ...query,
-                $and: [
-                    {time: timeFiler},
-                    {_id: idFiler}
-                ]
-            }
-        } else {
-            query = {
-                ...query,
-                time: timeFiler
-            }
+        query = {
+            ...query,
+            time: { $lte: highTime}
         }
     }
     logger.info(query);

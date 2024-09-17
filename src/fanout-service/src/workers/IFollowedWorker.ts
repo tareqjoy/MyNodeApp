@@ -26,7 +26,7 @@ export const iFollowedFanout = async (redisClient: RedisClientType<any, any, any
         const redisKey = `timeline-userId:${iFollowedKafkaMsg.userId}`;
         const leastRecentPosts = await redisClient.zRangeWithScores(redisKey, 0, 0);
 
-        var endTime: number | undefined = undefined;
+        var endTime: number = Date.now();
 
         if (leastRecentPosts.length === 0) {
             logger.trace(`${redisKey} is empty in redis`);
@@ -34,13 +34,16 @@ export const iFollowedFanout = async (redisClient: RedisClientType<any, any, any
             endTime = leastRecentPosts[0].score;
         }
 
-        const postByUserReq = new GetPostByUserReq([iFollowedKafkaMsg.followsUserId], false, {lowTime: endTime, returnOnlyPostId: true, limit: maxPostSetSize});
+        const postByUserReq = new GetPostByUserReq([iFollowedKafkaMsg.followsUserId], false, {returnOnlyPostId: true, limit: maxPostSetSize});
         const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
         const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 
         logger.trace(`Received from ${postDetailsResObj.posts.length} posts from post service for userId: ${iFollowedKafkaMsg.followsUserId}`);
 
         for(const post of postDetailsResObj.posts) {
+            if (post.time > endTime) {
+                break;
+            }
             await redisClient.zAdd(redisKey, {
                 score: post.time,
                 value: post.postId

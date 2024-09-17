@@ -25,7 +25,7 @@ export const iUnfollowedFanout = async (redisClient: RedisClientType<any, any, a
         const redisKey = `timeline-userId:${iUnfollowedKafkaMsg.userId}`;
         const leastRecentPosts = await redisClient.zRangeWithScores(redisKey, 0, 0);
 
-        var endTime: number | undefined = undefined;
+        var endTime: number = Date.now();
 
         if (leastRecentPosts.length === 0) {
             logger.trace(`${redisKey} is empty in redis`);
@@ -33,7 +33,7 @@ export const iUnfollowedFanout = async (redisClient: RedisClientType<any, any, a
             endTime = leastRecentPosts[0].score;
         }
 
-        const postByUserReq = new GetPostByUserReq([iUnfollowedKafkaMsg.unfollowsUserId], false, {lowTime: endTime, returnOnlyPostId: true});
+        const postByUserReq = new GetPostByUserReq([iUnfollowedKafkaMsg.unfollowsUserId], false, { returnOnlyPostId: true});
         const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
         const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 
@@ -41,6 +41,9 @@ export const iUnfollowedFanout = async (redisClient: RedisClientType<any, any, a
 
         var removedPostCount = 0;
         for(const post of postDetailsResObj.posts) {
+            if (post.time > endTime) {
+                break;
+            }
             if (await redisClient.zRem(redisKey, post.postId)) {
                 removedPostCount++;
             }

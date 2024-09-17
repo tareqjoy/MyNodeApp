@@ -8,14 +8,8 @@ export class TimelineHomeReq {
     username: string = '';
 
     @IsOptional()
-    @IsNumber()
-    @Type(() => Number)
-    @Min(1)
-    highTime: number = Date.now();
-
-    @IsOptional()
     @IsMongoId()
-    lastPostId?: string; // Used as tiebreaker when there is multiple posts with same time
+    nextToken?: string; 
 
     @IsOptional()
     @IsInt()

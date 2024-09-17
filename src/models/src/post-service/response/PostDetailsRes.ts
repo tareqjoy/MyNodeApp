@@ -21,14 +21,12 @@ export class SinglePost {
 }
 
 export class Paging {
-    highTime: number;
     lastPostId?: string;
 
     constructor();
     constructor(highTime: number);
     constructor(highTime: number, lastPostId: string);
     constructor(highTime?: number, lastPostId?: string) {
-        this.highTime = highTime || Date.now();
         this.lastPostId = lastPostId;
     }
 }

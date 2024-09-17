@@ -1,4 +1,4 @@
-export class TimelinePost {
+export class TimelineHomePost {
     postId: string;
     userId?: string;
     username?: string;
@@ -20,7 +20,7 @@ export class TimelinePost {
     }
 }
 
-export class TimelinePaging {
+export class TimelineHomePaging {
     nextToken: string; //base64 string of a json
 
     constructor();
@@ -30,14 +30,14 @@ export class TimelinePaging {
     }
 }
 
-export class TimelineRes {
-    posts: TimelinePost[];
-    paging?: TimelinePaging;
+export class TimelineHomeRes {
+    posts: TimelineHomePost[];
+    paging?: TimelineHomePaging;
 
     constructor();
-    constructor(posts: TimelinePost[]);
-    constructor(posts: TimelinePost[], paging?: TimelinePaging);
-    constructor(posts?: TimelinePost[], paging?: TimelinePaging) {
+    constructor(posts: TimelineHomePost[]);
+    constructor(posts: TimelineHomePost[], paging?: TimelineHomePaging);
+    constructor(posts?: TimelineHomePost[], paging?: TimelineHomePaging) {
         if (posts) {
             this.posts = posts;
         } else {

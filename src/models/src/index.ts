@@ -3,6 +3,8 @@ export * from './common/InvalidRequest';
 export * from './common/MessageResponse';
 export * from './common/TooLargeRequest';
 
+export * from './timeline-service/common/TimelineHomePagingRaw';
+
 export * from './timeline-service/request/TimelineHomeReq';
 
 export * from './timeline-service/response/TimelineHomeRes';

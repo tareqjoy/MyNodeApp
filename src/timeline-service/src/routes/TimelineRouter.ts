@@ -2,7 +2,7 @@ import express from 'express'
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
 import axios, { options } from 'axios';
-import { FollowersReq, FollowersRes, GetPostByUserReq, GetPostReq, InvalidRequest, Paging, PostDetailsRes, SinglePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
+import { FollowersReq, FollowersRes, GetPostByUserReq, GetPostReq, InvalidRequest, Paging, PostDetailsRes, SinglePost, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
@@ -38,16 +38,29 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
                 res.status(400).json(new InvalidRequest("Invalid username"));
                 return;
             }
+
+            let pagingRaw: TimelineHomePagingRaw | undefined = undefined;
+            if (timelineHomeReq.nextToken) {
+                const rawPagingJson = Buffer.from(timelineHomeReq.nextToken, 'base64').toString('utf-8');
+                pagingRaw = plainToInstance(TimelineHomePagingRaw, rawPagingJson)
+            }
         
             const userId = userInternalResponse.toUserIds[timelineHomeReq.username];
             const redisKey = `timeline-userId:${userId}`;
 
+            let highTime = Date.now();
+            if(pagingRaw) {
+                const redisScore = await redisClient.zScore(redisKey, pagingRaw.id);
+                if(redisScore) {
+                    highTime = redisScore;
+                }
+            }
+  
+
             const redisResults = await redisClient.sendCommand(
-                ['ZRANGE', redisKey, String(timelineHomeReq.highTime), '-inf', 'BYSCORE', 'REV', 'LIMIT', '0', String(timelineHomeReq.limit), 'WITHSCORES']
+                ['ZRANGE', redisKey, String(highTime), '-inf', 'BYSCORE', 'REV', 'LIMIT', '0', String(timelineHomeReq.limit), 'WITHSCORES']
             );
             
-            // TODO: Handle paging by token
-            // { roffset: 5} <- from redis or {mtime: 5, mid: dsdasd} <- from mongodb
             const postIdTimeStrList = redisResults as string[];
 
             const postIdTime = postIdTimeStrList.reduce((acc: {id: string, time: number}[], curr: string, index: number) => {
@@ -56,6 +69,17 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
                   }
                 return acc;
             }, []);
+
+            if (pagingRaw) {
+                const highIds = postIdTime.filter(({id, time}) => {
+                    if (time === highTime) {
+                        return id < pagingRaw.id;
+                    }
+                    return true;
+                });
+
+                const filteredOutCount = postIdTime.length - highIds.length;
+            }
 
             var paging: Paging | undefined;
 
@@ -81,14 +105,13 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
             const morePostToLoad = timelineHomeReq.limit - postsMap.size;
 
             if (morePostToLoad > 0) {
-                const lastPostTime = postsMap.size == 0? (timelineHomeReq.highTime || Date.now()): lowestTime;
                 const lastPostId = redisPostIds.length == 0? undefined: redisPostIds[redisPostIds.length -1];
 
                 const iFollowReq = new FollowersReq(userId, false, false);
                 const iFollowAxiosRes = await axios.post(iFollowUrl, iFollowReq);
                 const iFollowIdsObj = plainToInstance(FollowersRes, iFollowAxiosRes.data);
 
-                const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, {highTime: lastPostTime, lastPostId: lastPostId, limit: morePostToLoad, returnAsUsername: timelineHomeReq.returnAsUsername});
+                const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, { lastPostId: lastPostId, limit: morePostToLoad, returnAsUsername: timelineHomeReq.returnAsUsername});
 
                 const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
                 const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
@@ -99,7 +122,7 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
                 }
             }
 
-            const postsToReturn: SinglePost[] = Array.from(postsMap.values());
+            const postsToReturn: TimelineHomePost[] = Array.from(postsMap.values());
             postsToReturn.sort((a, b) => b.time - a.time);
 
             res.status(200).json(new TimelineHomeRes(postsToReturn, paging));
