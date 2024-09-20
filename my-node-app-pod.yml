@@ -36,7 +36,7 @@ kind: ConfigMap
 metadata:
   name: elastic-search-config
 data:
-  ELASTIC_SEARCH_HOST_PORT: http://localhost:9200
+  ELASTIC_SEARCH_HOST_PORT: http://192.168.0.10:9200
   ELASTIC_SEARCH_USERNAME: elastic
   ELASTIC_SEARCH_PASSWORD: elastic
 ---
@@ -186,6 +186,8 @@ spec:
                 name: neo4j-config
             - configMapRef:
                 name: service-url-config
+            - configMapRef:
+                name: kafka-config
 ---
 apiVersion: apps/v1
 kind: Deployment

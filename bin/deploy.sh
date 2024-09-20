@@ -35,8 +35,8 @@ cd -
 
 echo "Search service ..."
 cd src/search-service/
-docker build -t tareqjoy/seacrh-service:latest .
-docker push tareqjoy/seacrh-service:latest
+docker build -t tareqjoy/search-service:latest .
+docker push tareqjoy/search-service:latest
 cd -
 
 echo "Kubernetes ..."
