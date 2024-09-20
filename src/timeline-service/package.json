@@ -20,7 +20,7 @@
         "class-transformer": "^0.5.1",
         "reflect-metadata": "^0.2.2",
         "@tareqjoy/clients": "^1.0.14",
-        "@tareqjoy/models": "^1.0.47"
+        "@tareqjoy/models": "^1.0.50"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",

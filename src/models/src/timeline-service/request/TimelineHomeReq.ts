@@ -8,7 +8,7 @@ export class TimelineHomeReq {
     username: string = '';
 
     @IsOptional()
-    @IsMongoId()
+    @IsString()
     nextToken?: string; 
 
     @IsOptional()
@@ -17,9 +17,4 @@ export class TimelineHomeReq {
     @Min(1)
     @Max(1000)
     limit: number = 100;
-
-    @IsBoolean()
-    @IsOptional()
-    @Type(() => Boolean)
-    returnAsUsername: boolean = false;
 }

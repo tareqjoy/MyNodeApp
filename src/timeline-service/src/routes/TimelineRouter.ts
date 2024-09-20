@@ -2,7 +2,7 @@ import express from 'express'
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
 import axios, { options } from 'axios';
-import { FollowersReq, FollowersRes, GetPostByUserReq, GetPostReq, InvalidRequest, Paging, PostDetailsRes, SinglePost, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
+import { FollowersReq, FollowersRes, GetPostByUserReq, GetPostReq, InvalidRequest, Paging, PostDetailsRes, SinglePost, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
@@ -41,91 +41,83 @@ export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>
 
             let pagingRaw: TimelineHomePagingRaw | undefined = undefined;
             if (timelineHomeReq.nextToken) {
-                const rawPagingJson = Buffer.from(timelineHomeReq.nextToken, 'base64').toString('utf-8');
-                pagingRaw = plainToInstance(TimelineHomePagingRaw, rawPagingJson)
+                try {
+                    const rawPagingJson = JSON.parse(Buffer.from(timelineHomeReq.nextToken, 'base64').toString('utf-8'));
+                    logger.trace(rawPagingJson);
+                    pagingRaw = plainToInstance(TimelineHomePagingRaw, rawPagingJson);
+                    logger.trace(pagingRaw.type);
+                } catch(error) {
+                    res.status(400).json(new InvalidRequest("Invalid nextToken"));
+                    return;
+                }
             }
         
             const userId = userInternalResponse.toUserIds[timelineHomeReq.username];
             const redisKey = `timeline-userId:${userId}`;
 
-            let highTime = Date.now();
+            let redisCursor = 0;
             if(pagingRaw) {
-                const redisScore = await redisClient.zScore(redisKey, pagingRaw.id);
-                if(redisScore) {
-                    highTime = redisScore;
-                }
+                redisCursor = Number(pagingRaw.id);
             }
-  
-
-            const redisResults = await redisClient.sendCommand(
-                ['ZRANGE', redisKey, String(highTime), '-inf', 'BYSCORE', 'REV', 'LIMIT', '0', String(timelineHomeReq.limit), 'WITHSCORES']
-            );
             
-            const postIdTimeStrList = redisResults as string[];
+            const postsToReturn: TimelineHomePost[] = [];
 
-            const postIdTime = postIdTimeStrList.reduce((acc: {id: string, time: number}[], curr: string, index: number) => {
-                if (index % 2 === 0) {
-                    acc.push({ id: curr, time: Number(postIdTimeStrList[index + 1]) });
-                  }
-                return acc;
-            }, []);
+            if (!(pagingRaw?.type) || (pagingRaw?.type == 'r' && redisCursor >= 0)) {
+                // https://redis.io/docs/latest/commands/scan/
+                // The COUNT might not be respected in the return
+                const redisScanReply = await redisClient.zScan(redisKey, redisCursor, { COUNT: timelineHomeReq.limit} );
 
-            if (pagingRaw) {
-                const highIds = postIdTime.filter(({id, time}) => {
-                    if (time === highTime) {
-                        return id < pagingRaw.id;
-                    }
-                    return true;
+                redisScanReply.members.forEach(redisData => {
+                    postsToReturn.push(new TimelineHomePost(redisData.value, redisData.score));
                 });
 
-                const filteredOutCount = postIdTime.length - highIds.length;
-            }
+                logger.trace("loaded from redis: ", postsToReturn.length);
 
-            var paging: Paging | undefined;
+                if (postsToReturn.length >= timelineHomeReq.limit) {
+                    const pagingObj = new TimelineHomePagingRaw('r', redisScanReply.cursor == 0? '-1': String(redisScanReply.cursor));
+                    const pagingJsonString = JSON.stringify(pagingObj);
+                    const nextPageToken = Buffer.from(pagingJsonString).toString('base64');
 
-            const redisPostIds = postIdTime.map(item => item.id);
-
-            // lastPostTime is inclusive in post service, so there is a chance of overlap of same post in redis and post service
-            // using map to get rid of duplicate post that were posted on same time
-            const postsMap = new Map<string, SinglePost>();
-            var lowestTime = Number.MAX_VALUE;
-            logger.trace("loaded from redis: ", redisPostIds.length);
-
-
-            if (redisPostIds.length > 0) {
-                const postByPostIdReq = new GetPostReq(redisPostIds, timelineHomeReq.returnAsUsername);
-                const postByPostIdAxiosRes = await axios.post(getPostByPostIdUrl, postByPostIdReq);
-                const postDetailsResObj = plainToInstance(PostDetailsRes, postByPostIdAxiosRes.data);
-                for(const post of postDetailsResObj.posts) {
-                    postsMap.set(post.postId, post);
-                    lowestTime = Math.min(lowestTime, post.time);
+                    res.status(200).json(new TimelineHomeRes(postsToReturn, new TimelineHomePaging(nextPageToken)));
+                    return;
                 }
             }
+            // postsToReturn.length < timelineHomeReq.limit
+            let lastPostId = undefined;
+            if (postsToReturn.length > 0) {
+                //partially loaded on redis
+                lastPostId = postsToReturn[postsToReturn.length -1].postId;
+            } else if (pagingRaw?.type == 'm' && pagingRaw?.id) {
+                //requested with 'm' in mind
+                lastPostId = pagingRaw.id;
+            } //else no data from redis, request type was 'r' but redis had 0 data 
 
-            const morePostToLoad = timelineHomeReq.limit - postsMap.size;
+            
+            
+            const iFollowReq = new FollowersReq(userId, false, false);
+            const iFollowAxiosRes = await axios.post(iFollowUrl, iFollowReq);
+            const iFollowIdsObj = plainToInstance(FollowersRes, iFollowAxiosRes.data);
 
-            if (morePostToLoad > 0) {
-                const lastPostId = redisPostIds.length == 0? undefined: redisPostIds[redisPostIds.length -1];
+            const morePostToLoad = timelineHomeReq.limit - postsToReturn.length;
+            const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, { lastPostId: lastPostId, limit: morePostToLoad, returnOnlyPostId: true});
 
-                const iFollowReq = new FollowersReq(userId, false, false);
-                const iFollowAxiosRes = await axios.post(iFollowUrl, iFollowReq);
-                const iFollowIdsObj = plainToInstance(FollowersRes, iFollowAxiosRes.data);
+            const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
+            const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 
-                const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, { lastPostId: lastPostId, limit: morePostToLoad, returnAsUsername: timelineHomeReq.returnAsUsername});
-
-                const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
-                const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
-                paging = postDetailsResObj.paging;
-
-                for(const post of postDetailsResObj.posts) {
-                    postsMap.set(post.postId, post);
-                }
+            for(const post of postDetailsResObj.posts) {
+                postsToReturn.push(new TimelineHomePost(post.postId, post.time));
             }
 
-            const postsToReturn: TimelineHomePost[] = Array.from(postsMap.values());
-            postsToReturn.sort((a, b) => b.time - a.time);
-
-            res.status(200).json(new TimelineHomeRes(postsToReturn, paging));
+            let pageTokenObj : TimelineHomePaging | undefined;
+            if (postDetailsResObj.paging?.lastPostId) {
+                const pageLastPostIdStr = postDetailsResObj.paging?.lastPostId;
+                const pagingObj = new TimelineHomePagingRaw('m', pageLastPostIdStr);
+                const pagingJsonString = JSON.stringify(pagingObj);
+                const nextPageToken = Buffer.from(pagingJsonString).toString('base64');
+                pageTokenObj = new TimelineHomePaging(nextPageToken);
+            }
+            logger.trace("loaded from post service/mongodb: ", postDetailsResObj.posts.length);
+            res.status(200).json(new TimelineHomeRes(postsToReturn, pageTokenObj));
         } catch(error) {
             logger.error("Error while get: ", error);
             res.status(500).json({error: error});

@@ -1,12 +1,12 @@
 
 export class TimelineHomePagingRaw {
-    type: string;
+    type: 'r' | 'm';
     id: string;
 
     constructor();
-    constructor(type: string, id: string);
-    constructor(type?: string, id?: string) {
-        this.type = type || "r";
+    constructor(type: 'r' | 'm', id: string);
+    constructor(type?: 'r' | 'm', id?: string) {
+        this.type = type || 'r';
         this.id = id || "";
     }
 }
