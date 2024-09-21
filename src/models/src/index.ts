@@ -2,6 +2,7 @@ export * from './common/InternalServerError';
 export * from './common/InvalidRequest';
 export * from './common/MessageResponse';
 export * from './common/TooLargeRequest';
+export * from './common/UnauthorizedRequest';
 
 export * from './timeline-service/common/TimelineHomePagingRaw';
 
@@ -39,7 +40,11 @@ export * from './search-service/request/SearchReq';
 
 export * from './search-service/response/SearchRes';
 
+export * from './auth-service/common/AuthInfo';
+
 export * from './auth-service/request/AuthGenerateReq';
 
 export * from './auth-service/response/AuthGenerateRes';
+export * from './auth-service/response/AuthVerifyRes';
+export * from './auth-service/response/AuthRefreshRes';
 

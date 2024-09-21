@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { connectRedis } from '@tareqjoy/clients';
 import bodyParser from "body-parser";
 import * as log4js from "log4js";
-import { createAuthGenerateRouter } from './routes/auth';
+import { createAuthRouter } from './routes/auth';
 import 'source-map-support/register';
 
 const logger = log4js.getLogger();
@@ -11,7 +11,7 @@ logger.level = "trace";
 
 const appport = process.env.PORT || 5007;
 
-const api_path_auth_generate = process.env.API_PATH_AUTH_GENERATE || '/v1/auth/generate';
+const api_path_auth = process.env.API_PATH_AUTH || '/v1/auth';
 
 const app = express();
 
@@ -29,7 +29,7 @@ async function main() {
 
   const redisClient = await connectRedis();
   
-  app.use(api_path_auth_generate, createAuthGenerateRouter(redisClient));
+  app.use(api_path_auth, createAuthRouter(redisClient));
   
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);
