@@ -67,6 +67,10 @@ data:
   API_PATH_DETAIL: /v1/user/detail
   API_PATH_SIGNUP: /v1/user/signup
   API_PATH_USERID: /v1/user/userid
+  JWT_ACCESS_SECRET: really_hard_access_token
+  JWT_REFRESH_SECRET: really_hard_refresh_token
+  JWT_ACCESS_EXPIRES: 15m
+  JWT_REFRESH_EXPIRES: 7d
 ---
 apiVersion: v1
 kind: ConfigMap

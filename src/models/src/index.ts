@@ -9,9 +9,11 @@ export * from './timeline-service/request/TimelineHomeReq';
 
 export * from './timeline-service/response/TimelineHomeRes';
 
-export * from './user-service/request/SignUprReq';
+export * from './user-service/request/SignInReq';
+export * from './user-service/request/SignUpReq';
 export * from './user-service/request/UserInternalReq';
 
+export * from './user-service/response/SignInRes';
 export * from './user-service/response/UserDetailsRes';
 export * from './user-service/response/UserInternalRes';
 

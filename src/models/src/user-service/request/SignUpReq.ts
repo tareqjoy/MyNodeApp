@@ -25,4 +25,13 @@ export class SignUpReq {
   @Min(1900, { message: 'Year must be at least 1900' })
   @Max(new Date().getFullYear() - 10, { message: `Year cannot be greater than ${new Date().getFullYear()}` })
   birthYear: number = 0;
+
+  @IsString()
+  @MinLength(6, { message: 'Password is too short, it should be at least 8 characters long.' })
+  @MaxLength(50, { message: 'Password is too long, it should be no more than 50 characters long.' })
+  // At least 1 uppercase, 1 lowercase, 1 digit, and 1 special character
+  @Matches(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, {
+    message: 'Password is too weak. It should contain at least 1 uppercase, 1 lowercase, 1 digit, and 1 special character.',
+  })
+  password: string = "";
 }

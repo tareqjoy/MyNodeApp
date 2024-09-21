@@ -6,6 +6,7 @@ import { plainToInstance } from 'class-transformer';
 import { SignUpReq } from '@tareqjoy/models';
 import { InternalServerError, InvalidRequest, MessageResponse } from '@tareqjoy/models';
 import { validate } from 'class-validator';
+import argon2 from 'argon2';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -18,6 +19,8 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
             message: "Handling GET request to /signup"
         });
     });
+
+    
     
     router.post('/', async (req, res, next) => {
         logger.trace(`POST / called`);
@@ -39,13 +42,21 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
             res.status(400).json(new InvalidRequest("username or email already exists"));
             return;
         }
-    
+        
+        const hashedPass = await argon2.hash(signUpDto.password, {
+            type: argon2.argon2id,
+            memoryCost: 2 ** 16,
+            timeCost: 4,
+            parallelism: 2
+        });
+        
         const user = new User({
             _id: new mongoose.Types.ObjectId(),
             username: signUpDto.username,
             name: signUpDto.name,
             email: signUpDto.email,
-            birthYear: signUpDto.birthYear
+            birthYear: signUpDto.birthYear,
+            password: hashedPass
         })
     
         user.save().then(result => {
