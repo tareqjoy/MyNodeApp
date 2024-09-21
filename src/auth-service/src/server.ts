@@ -1,23 +1,17 @@
 import express from 'express';
 import 'reflect-metadata';
-import { connectMongo, connectRedis } from '@tareqjoy/clients';
-import { createSignUpRouter} from "./routes/signup";
-import { createUserDetailsRouter } from "./routes/user";
-import { createUserInternalRouter } from "./routes/user-internal";
+import { connectRedis } from '@tareqjoy/clients';
 import bodyParser from "body-parser";
 import * as log4js from "log4js";
-import { createSignInRouter } from './routes/signin';
+import { createAuthGenerateRouter } from './routes/auth';
 import 'source-map-support/register';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
-const appport = process.env.PORT || 5002;
+const appport = process.env.PORT || 5007;
 
-const api_path_detail = process.env.API_PATH_DETAIL || '/v1/user/detail';
-const api_path_signup = process.env.API_PATH_SIGNUP || '/v1/user/signup';
-const api_path_userid = process.env.API_PATH_USERID || '/v1/user/userid';
-const api_path_signin = process.env.API_PATH_SIGN_IN || '/v1/user/signin';
+const api_path_auth_generate = process.env.API_PATH_AUTH_GENERATE || '/v1/auth/generate';
 
 const app = express();
 
@@ -34,12 +28,8 @@ async function main() {
   app.use(bodyParser.json());
 
   const redisClient = await connectRedis();
-  const mongoClient = await connectMongo();
   
-  app.use(api_path_detail, createUserDetailsRouter(mongoClient));
-  app.use(api_path_signup, createSignUpRouter(mongoClient));
-  app.use(api_path_userid, createUserInternalRouter(mongoClient, redisClient));
-  app.use(api_path_signin, createSignInRouter(mongoClient));
+  app.use(api_path_auth_generate, createAuthGenerateRouter(redisClient));
   
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);
@@ -69,9 +59,6 @@ async function main() {
       } else {
         logger.info(`Redis was not connected at the first place`);
       }
-
-      await mongoClient.disconnect();
-      logger.info(`MongoDB disconnected`);
       
       process.exit(0);
     } catch (error) {

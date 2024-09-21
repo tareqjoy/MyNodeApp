@@ -1,3 +1,5 @@
+import { AuthGenerateRes } from "../../auth-service/response/AuthGenerateRes";
+
 export class SignInUserInfo {
     userId: string;
     username: string;
@@ -11,18 +13,13 @@ export class SignInUserInfo {
 }
 
 export class SignInRes {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: string;
-    tokenType: string = "Bearer";
+    auth: AuthGenerateRes;
     user: SignInUserInfo;
     
     constructor();
-    constructor(accessToken: string, refreshToken: string, expiresIn: string, user: SignInUserInfo);
-    constructor(accessToken?: string, refreshToken?: string, expiresIn?: string, user?: SignInUserInfo) {
-        this.accessToken = accessToken || "";
-        this.refreshToken = refreshToken || "";
-        this.expiresIn = expiresIn || "0s";
+    constructor(auth: AuthGenerateRes, user: SignInUserInfo);
+    constructor(auth?: AuthGenerateRes, user?: SignInUserInfo) {
+        this.auth = auth || new AuthGenerateRes();
         this.user = user || new SignInUserInfo();
     }
 }

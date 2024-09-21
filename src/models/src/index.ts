@@ -39,3 +39,7 @@ export * from './search-service/request/SearchReq';
 
 export * from './search-service/response/SearchRes';
 
+export * from './auth-service/request/AuthGenerateReq';
+
+export * from './auth-service/response/AuthGenerateRes';
+
