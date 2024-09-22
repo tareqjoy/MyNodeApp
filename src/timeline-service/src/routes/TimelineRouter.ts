@@ -2,7 +2,7 @@ import express from 'express'
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
 import axios, { options } from 'axios';
-import { FollowersReq, FollowersRes, GetPostByUserReq, GetPostReq, InvalidRequest, Paging, PostDetailsRes, SinglePost, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
+import { FollowersReq, FollowersRes, GetPostByUserReq, InvalidRequest, PostDetailsRes, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
@@ -11,7 +11,6 @@ logger.level = "trace";
 
 const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
 const iFollowUrl: string = process.env.I_FOLLOW_URL || "http://127.0.0.1:5003/v1/follower/i-follow/";
-const getPostByPostIdUrl: string = process.env.GET_POST_BY_POST_ID_URL || "http://127.0.0.1:5005/v1/post/get/";
 const getPostByUserUrl: string = process.env.GET_POST_BY_USER_URL || "http://127.0.0.1:5005/v1/post/get-by-user/";
 
 const router = express.Router();

@@ -1,7 +1,7 @@
 import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { IsAtLeastOneFieldRequired } from '../../constraints/IsAtLeastOneFieldRequired';
 
-export class SignInReq {
+export class UserSignInReq {
   @IsString()
   @Matches(/^[^\s]+$/, { message: 'Username cannot contain spaces' })
   @Matches(/^[a-zA-Z0-9_]+$/, { message: 'Username can only contain alphanumeric characters and underscores' })
@@ -20,4 +20,12 @@ export class SignInReq {
 
   @IsAtLeastOneFieldRequired(['username', 'email'])
   anyField?: string; // This is a dummy field for the validation to work
+
+  constructor();
+  constructor(uid: {username?: string, email?: string}, password: string);
+  constructor(uid?: {username?: string, email?: string}, password?: string) {
+    this.username = uid?.username;
+    this.email = uid?.email;
+    this.password = password || "";
+  }
 }

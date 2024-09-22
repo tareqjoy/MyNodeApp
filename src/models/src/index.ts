@@ -10,11 +10,11 @@ export * from './timeline-service/request/TimelineHomeReq';
 
 export * from './timeline-service/response/TimelineHomeRes';
 
-export * from './user-service/request/SignInReq';
+export * from './user-service/request/UserSignInReq';
 export * from './user-service/request/SignUpReq';
 export * from './user-service/request/UserInternalReq';
 
-export * from './user-service/response/SignInRes';
+export * from './user-service/response/UserSignInRes';
 export * from './user-service/response/UserDetailsRes';
 export * from './user-service/response/UserInternalRes';
 
@@ -42,9 +42,9 @@ export * from './search-service/response/SearchRes';
 
 export * from './auth-service/common/AuthInfo';
 
-export * from './auth-service/request/AuthGenerateReq';
+export * from './auth-service/request/AuthSignInReq';
 
-export * from './auth-service/response/AuthGenerateRes';
+export * from './auth-service/response/AuthSignInRes';
 export * from './auth-service/response/AuthVerifyRes';
 export * from './auth-service/response/AuthRefreshRes';
 

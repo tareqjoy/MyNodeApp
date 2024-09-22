@@ -1,5 +1,5 @@
 
-export class AuthGenerateRes {
+export class AuthSignInRes {
     accessToken: string;
     refreshToken: string;
     expiresInSec: number;
