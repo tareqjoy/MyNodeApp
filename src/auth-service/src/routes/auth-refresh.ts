@@ -1,12 +1,9 @@
 import express from 'express'
 import * as log4js from "log4js";
-import { plainToInstance } from 'class-transformer';
-import { AuthSignInReq, AuthSignInRes, AuthInfo, AuthRefreshRes, AuthVerifyRes, UserSignInReq, UserSignInRes } from '@tareqjoy/models';
-import { InternalServerError, InvalidRequest, UnauthorizedRequest } from '@tareqjoy/models';
+import { AuthInfo, AuthRefreshRes,} from '@tareqjoy/models';
+import { InvalidRequest, UnauthorizedRequest } from '@tareqjoy/models';
 import { RedisClientType } from 'redis';
-import { validate } from 'class-validator';
 import jwt from 'jsonwebtoken';
-import axios, { AxiosError } from 'axios';
 
 const logger = log4js.getLogger();
 logger.level = "trace";

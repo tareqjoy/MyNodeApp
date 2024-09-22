@@ -1,5 +1,4 @@
-import { Type } from "class-transformer";
-import { IsMongoId, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsMongoId, IsNotEmpty, IsString } from "class-validator";
 
 export class IFollowedKafkaMsg {
     @IsString()

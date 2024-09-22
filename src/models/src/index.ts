@@ -43,6 +43,7 @@ export * from './search-service/response/search-res';
 export * from './auth-service/common/auth-info';
 
 export * from './auth-service/request/auth-signIn-req';
+export * from './auth-service/request/auth-signout-req';
 
 export * from './auth-service/response/auth-signIn-res';
 export * from './auth-service/response/auth-verify-res';

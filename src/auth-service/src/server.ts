@@ -9,6 +9,7 @@ import { createSignInRouter } from './routes/auth-signin';
 import { getApiPath } from '@tareqjoy/utils';
 import { createVerifyRouter } from './routes/auth-verify';
 import { createRefreshRouter } from './routes/auth-refresh';
+import { createSignOutRouter } from './routes/auth-signout';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -36,6 +37,7 @@ async function main() {
   app.use(getApiPath(api_path_auth_root, 'signin'), createSignInRouter(redisClient));
   app.use(getApiPath(api_path_auth_root, 'verify'), createVerifyRouter());
   app.use(getApiPath(api_path_auth_root, 'refresh'), createRefreshRouter(redisClient));
+  app.use(getApiPath(api_path_auth_root, 'signout'), createSignOutRouter(redisClient));
 
   
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
