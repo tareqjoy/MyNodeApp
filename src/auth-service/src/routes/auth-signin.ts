@@ -23,7 +23,7 @@ const ATTR_HEADER_DEVICE_ID = "device-id";
 const userSignInUrl: string = process.env.USER_SERVICE_SIGN_IN_URL || "http://127.0.0.1:5002/v1/user/signin/";
 
 export const createSignInRouter = (redisClient: RedisClientType<any, any, any>) => {
-    router.post('/', async (req, res, next) => {
+    router.get('/', async (req, res, next) => {
         logger.trace(`POST /signin called`);
 
         const deviceId = req.headers[ATTR_HEADER_DEVICE_ID];
