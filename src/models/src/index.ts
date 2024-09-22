@@ -1,50 +1,50 @@
-export * from './common/InternalServerError';
-export * from './common/InvalidRequest';
-export * from './common/MessageResponse';
-export * from './common/TooLargeRequest';
-export * from './common/UnauthorizedRequest';
+export * from './common/internal-server-error';
+export * from './common/invalid-request';
+export * from './common/message-response';
+export * from './common/too-large-request';
+export * from './common/unauthorized-request';
 
-export * from './timeline-service/common/TimelineHomePagingRaw';
+export * from './timeline-service/common/timeline-home-paging-raw';
 
-export * from './timeline-service/request/TimelineHomeReq';
+export * from './timeline-service/request/timeline-home-req';
 
-export * from './timeline-service/response/TimelineHomeRes';
+export * from './timeline-service/response/timeline-home-res';
 
-export * from './user-service/request/UserSignInReq';
-export * from './user-service/request/SignUpReq';
-export * from './user-service/request/UserInternalReq';
+export * from './user-service/request/user-signin-req';
+export * from './user-service/request/signup-req';
+export * from './user-service/request/user-internal-req';
 
-export * from './user-service/response/UserSignInRes';
-export * from './user-service/response/UserDetailsRes';
-export * from './user-service/response/UserInternalRes';
+export * from './user-service/response/user-signIn-res';
+export * from './user-service/response/user-details-res';
+export * from './user-service/response/user-internal-res';
 
-export * from './follow-service/request/FollowersReq';
-export * from './follow-service/request/FollowReq';
-export * from './follow-service/request/UnfollowReq';
+export * from './follow-service/request/followers-req';
+export * from './follow-service/request/follow-req';
+export * from './follow-service/request/unfollow-req';
 
-export * from './follow-service/response/FollowersRes';
-export * from './follow-service/response/FollowRes';
-export * from './follow-service/response/UnfollowRes';
+export * from './follow-service/response/followers-res';
+export * from './follow-service/response/follow-res';
+export * from './follow-service/response/unfollow-res';
 
-export * from './fanout-service/request/NewPostKafkaMsg';
-export * from './fanout-service/request/IFollowedKafkaMsg';
-export * from './fanout-service/request/IUnfollowedKafkaMsg';
+export * from './fanout-service/request/new-post-kafka-msg';
+export * from './fanout-service/request/i-followed-kafka-msg';
+export * from './fanout-service/request/i-unfollowed-kafka-msg';
 
-export * from './post-service/request/CreatePostReq';
-export * from './post-service/request/GetPostReq';
-export * from './post-service/request/GetPostByUserReq';
+export * from './post-service/request/create-post-req';
+export * from './post-service/request/get-post-req';
+export * from './post-service/request/get-post-by-user-req';
 
-export * from './post-service/response/PostDetailsRes';
+export * from './post-service/response/post-details-res';
 
-export * from './search-service/request/SearchReq';
+export * from './search-service/request/search-req';
 
-export * from './search-service/response/SearchRes';
+export * from './search-service/response/search-res';
 
-export * from './auth-service/common/AuthInfo';
+export * from './auth-service/common/auth-info';
 
-export * from './auth-service/request/AuthSignInReq';
+export * from './auth-service/request/auth-signIn-req';
 
-export * from './auth-service/response/AuthSignInRes';
-export * from './auth-service/response/AuthVerifyRes';
-export * from './auth-service/response/AuthRefreshRes';
+export * from './auth-service/response/auth-signIn-res';
+export * from './auth-service/response/auth-verify-res';
+export * from './auth-service/response/auth-refresh-res';
 

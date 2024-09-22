@@ -1,5 +1,5 @@
 import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { IsAtLeastOneFieldRequired } from '../../constraints/IsAtLeastOneFieldRequired';
+import { IsAtLeastOneFieldRequired } from '../../constraints/atleast-one-field-required';
 
 export class UserSignInReq {
   @IsString()

@@ -15,8 +15,8 @@ const getPostByUserUrl: string = process.env.GET_POST_BY_USER_URL || "http://127
 
 const router = express.Router();
 
-export const createTimelineRouter = (redisClient: RedisClientType<any, any, any>) => {
-    router.post('/home', async (req, res, next) => {
+export const createHomeRouter = (redisClient: RedisClientType<any, any, any>) => {
+    router.post('/', async (req, res, next) => {
         logger.trace(`POST /home called`);
 
         const timelineHomeReq = plainToInstance(TimelineHomeReq, req.body);

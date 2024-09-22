@@ -5,10 +5,10 @@ import bodyParser from "body-parser";
 import * as log4js from "log4js";
 
 import 'source-map-support/register';
-import { createSignInRouter } from './routes/AuthSignIn';
+import { createSignInRouter } from './routes/auth-signin';
 import { getApiPath } from '@tareqjoy/utils';
-import { createVerifyRouter } from './routes/AuthVerify';
-import { createRefreshRouter } from './routes/AuthRefresh';
+import { createVerifyRouter } from './routes/auth-verify';
+import { createRefreshRouter } from './routes/auth-refresh';
 
 const logger = log4js.getLogger();
 logger.level = "trace";

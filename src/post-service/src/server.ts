@@ -1,9 +1,12 @@
 import express from 'express';
 import 'reflect-metadata';
 import bodyParser from "body-parser";
-import { createPostRouter } from "./routes/PostRouter";
 import { connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
 import * as log4js from "log4js";
+import { createCreateRouter } from './routes/create';
+import { getApiPath } from '@tareqjoy/utils';
+import { createGetRouter } from './routes/get';
+import { createGetByUserRouter } from './routes/get-by-user';
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'post';
 
@@ -29,7 +32,10 @@ async function main() {
 
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
-  app.use(api_path_root, createPostRouter(mongoClient, kafkaNewPostProducer));
+
+  app.use(getApiPath(api_path_root, 'create'), createCreateRouter(mongoClient, kafkaNewPostProducer));
+  app.use(getApiPath(api_path_root, 'get'), createGetRouter(mongoClient));
+  app.use(getApiPath(api_path_root, 'get-by-user'), createGetByUserRouter(mongoClient));
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);

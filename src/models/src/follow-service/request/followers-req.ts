@@ -1,5 +1,5 @@
 import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsMongoId } from 'class-validator';
-import { IsAtLeastOneFieldRequired } from '../../constraints/IsAtLeastOneFieldRequired';
+import { IsAtLeastOneFieldRequired } from '../../constraints/atleast-one-field-required';
 import { Type } from 'class-transformer';
 
 export class FollowersReq {

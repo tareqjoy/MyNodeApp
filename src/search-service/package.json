@@ -11,8 +11,9 @@
   "author": "Tareq Joy",
   "license": "ISC",
   "dependencies": {
-    "@tareqjoy/clients": "^1.0.18",
-    "@tareqjoy/models": "^1.0.50",
+    "@tareqjoy/clients": "^1.0.21",
+    "@tareqjoy/models": "^1.0.58",
+    "@tareqjoy/utils": "file:../utils",
     "reflect-metadata": "^0.2.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",

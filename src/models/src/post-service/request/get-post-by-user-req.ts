@@ -1,6 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsInt, IsMongoId, IsNotEmpty, IsNumber, IsOptional, Max, Min } from 'class-validator';
-import { IsAtLeastOneFieldRequired } from '../../constraints/IsAtLeastOneFieldRequired';
+import { IsAtLeastOneFieldRequired } from '../../constraints/atleast-one-field-required';
 
 export class GetPostByUserReq {
   @IsOptional()

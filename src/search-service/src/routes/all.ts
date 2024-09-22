@@ -1,6 +1,5 @@
 import { Client } from '@elastic/elasticsearch';
 import express from 'express'
-import { Request, Response } from 'express';
 import * as log4js from "log4js";
 import { SearchReq, InvalidRequest, SearchRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
@@ -14,8 +13,8 @@ const es_index_posts = process.env.ELASTIC_SEARCH_INDEX_TO_SEARCH_JSON || 'searc
 
 const router = express.Router();
 
-export const createSearchRouter = (client: Client) => {
-    router.post('/all', async (req, res, next) => {
+export const createAllRouter = (client: Client) => {
+    router.post('/', async (req, res, next) => {
         logger.trace(`POST /all called`);
 
         const searchReq = plainToInstance(SearchReq, req.body);

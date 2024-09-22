@@ -1,10 +1,11 @@
 import express from 'express';
 import 'reflect-metadata';
 import bodyParser from "body-parser";
-import { createTimelineRouter } from "./routes/TimelineRouter";
+import { createHomeRouter } from "./routes/home";
 import { connectRedis } from '@tareqjoy/clients';
 
 import * as log4js from "log4js";
+import { getApiPath } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -28,7 +29,7 @@ async function main() {
 
   const redisClient = await connectRedis();
 
-  app.use(api_path_root, createTimelineRouter(redisClient));
+  app.use(getApiPath(api_path_root, 'home'), createHomeRouter(redisClient));
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);

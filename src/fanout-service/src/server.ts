@@ -5,9 +5,9 @@ import * as log4js from "log4js";
 
 import { connectKafkaConsumer, connectRedis } from '@tareqjoy/clients';
 import { createFanoutRouter } from "./routes/fanout";
-import { newPostFanout } from "./workers/NewPostWorker"
-import { iFollowedFanout } from './workers/IFollowedWorker';
-import { iUnfollowedFanout } from './workers/IUnfollowedWorker';
+import { newPostFanout } from "./workers/new-post-worker"
+import { iFollowedFanout } from './workers/i-followed-worker';
+import { iUnfollowedFanout } from './workers/i-unfollowed-worker';
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'fanout';
 const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';

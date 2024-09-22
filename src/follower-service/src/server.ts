@@ -1,7 +1,12 @@
 import express from 'express';
-import { createFollowerRouter } from "./routes/FollowerRouter";
+import 'reflect-metadata';
 import { connectNeo4jDriver, connectKafkaProducer } from "@tareqjoy/clients";
 import * as log4js from "log4js";
+import { createFollowRouter } from './routes/follow';
+import { getApiPath } from '@tareqjoy/utils';
+import { createUnfollowRouter } from './routes/unfollow';
+import { createIFollowRouter } from './routes/i-follow';
+import { createWhoFollowsMeRouter } from './routes/who-follows-me';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -24,13 +29,15 @@ class HttpError extends Error {
   }
 }
 
-
 async function main() {
   const neo4jDriver = await connectNeo4jDriver();
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   app.use(bodyParser.json());
 
-  app.use(api_path_root, createFollowerRouter(neo4jDriver, kafkaNewPostProducer));
+  app.use(getApiPath(api_path_root, 'follow'), createFollowRouter(neo4jDriver, kafkaNewPostProducer));
+  app.use(getApiPath(api_path_root, 'unfollow'), createUnfollowRouter(neo4jDriver, kafkaNewPostProducer));
+  app.use(getApiPath(api_path_root, 'i-follow'), createIFollowRouter(neo4jDriver));
+  app.use(getApiPath(api_path_root, 'who-follows-me'), createWhoFollowsMeRouter(neo4jDriver));
 
   // Start the server and listen to the port
   app.listen(port, () => {

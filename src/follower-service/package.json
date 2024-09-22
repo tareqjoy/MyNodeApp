@@ -17,8 +17,9 @@
         "express": "^4.19.2",
         "log4js": "^6.9.1",
         "reflect-metadata": "^0.2.2",
-        "@tareqjoy/clients": "^1.0.12",
-        "@tareqjoy/models": "^1.0.31"
+        "@tareqjoy/clients": "^1.0.21",
+        "@tareqjoy/models": "^1.0.58",
+        "@tareqjoy/utils": "file:../utils"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",
