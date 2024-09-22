@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",                    // Specify ECMAScript target version
+        "module": "NodeNext",   
+        "rootDir": "src", 
+        "outDir": "dist",
+        "baseUrl": ".",
+        "paths": {
+            "*": ["src/*"] 
+          },
+        "moduleResolution": "NodeNext",
+        "strict": true,
+        "declaration": true,
+        "skipLibCheck": true,
+        "types": ["node"],
+        "lib": ["ESNext"],
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
+    },
+    "include": ["src"],
+    "exclude": ["node_modules", "dist"]
+  }
+  
