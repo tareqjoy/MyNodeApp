@@ -1,6 +1,6 @@
 import express from 'express'
 import { Mongoose } from 'mongoose';
-import { UserSchema } from '../schema/UserSchema'
+import { UserSchema } from '../schema/user-schema'
 import * as log4js from "log4js";
 import { plainToInstance } from 'class-transformer';
 import { UserSignInReq, UserSignInRes } from '@tareqjoy/models';

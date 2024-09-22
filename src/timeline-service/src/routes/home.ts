@@ -1,7 +1,7 @@
 import express from 'express'
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
-import axios, { options } from 'axios';
+import axios from 'axios';
 import { FollowersReq, FollowersRes, GetPostByUserReq, InvalidRequest, PostDetailsRes, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
