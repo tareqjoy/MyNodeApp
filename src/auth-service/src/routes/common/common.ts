@@ -30,9 +30,9 @@ export function validateAccessToken(authHeader: any, jwt_access_secret: string):
     } catch(err) {
         if (err instanceof Error) {
             if (err.name === 'TokenExpiredError') {
-                return new ValidateResponse(403, new UnauthorizedRequest('Access token expired'));
+                return new ValidateResponse(401, new UnauthorizedRequest('Access token expired'));
             }
         }
-        return new ValidateResponse(400, new InvalidRequest(`Invalid access token`));
+        return new ValidateResponse(401, new UnauthorizedRequest(`Invalid access token`));
     }
 }

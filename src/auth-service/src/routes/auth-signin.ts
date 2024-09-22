@@ -23,7 +23,7 @@ const ATTR_HEADER_DEVICE_ID = "device-id";
 const userSignInUrl: string = process.env.USER_SERVICE_SIGN_IN_URL || "http://127.0.0.1:5002/v1/user/signin/";
 
 export const createSignInRouter = (redisClient: RedisClientType<any, any, any>) => {
-    router.get('/', async (req, res, next) => {
+    router.post('/', async (req, res, next) => {
         logger.trace(`POST /signin called`);
 
         const deviceId = req.headers[ATTR_HEADER_DEVICE_ID];
@@ -51,12 +51,12 @@ export const createSignInRouter = (redisClient: RedisClientType<any, any, any>) 
 
             const redisKey = `refresh-token:${userSignInResObj.userId}:${deviceId}`;
             await redisClient.set(redisKey, refreshToken, {EX: jwt_refresh_expires_sec });
-     
+
             res.status(200).json(new AuthSignInRes(accessToken, refreshToken, jwt_access_expires_sec));
         } catch(error) {
             if(error instanceof AxiosError) {
-                if (error.response?.status == 403) {
-                    res.status(403).json(new UnauthorizedRequest(error.response.data));
+                if (error.response?.status == 401) {
+                    res.status(401).json(new UnauthorizedRequest(error.response.data));
                     return;
                 } else if (error.response?.status == 404) {
                     res.status(404).json(new InvalidRequest(error.response.data));

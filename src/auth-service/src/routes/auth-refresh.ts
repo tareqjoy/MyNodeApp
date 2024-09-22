@@ -13,7 +13,6 @@ const router = express.Router();
 const jwt_access_secret = process.env.JWT_ACCESS_SECRET || 'test_access_secret_key_00x';
 const jwt_access_expires_sec = Number(process.env.JWT_ACCESS_EXPIRES_SEC || '300'); //5min
 const jwt_refresh_secret = process.env.JWT_REFRESH_SECRET || 'test_refresh_secret_key_00x';
-const jwt_refresh_expires_sec = Number(process.env.JWT_REFRESH_EXPIRES_SEC || '1296000'); //15days
 
 const ATTR_HEADER_DEVICE_ID = "device-id";
 const ATTR_HEADER_AUTHORIZATION = "authorization";
@@ -46,7 +45,7 @@ export const createRefreshRouter = (redisClient: RedisClientType<any, any, any>)
         } catch(err) {
             if (err instanceof Error) {
                 if (err.name === 'TokenExpiredError') {
-                    res.status(403).json(new UnauthorizedRequest("Access token expired"));
+                    res.status(401).json(new UnauthorizedRequest("Access token expired"));
                     return;
                 }
             }
