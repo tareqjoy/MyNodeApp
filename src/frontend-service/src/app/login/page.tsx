@@ -22,7 +22,7 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const redirect_uri  = searchParams.get('redirect_uri');
+  
     try {
       const deviceId = 'some-unique-device-id';
 
@@ -40,10 +40,17 @@ const LoginPage = () => {
         setAccessToken(authSignInResObj.accessToken);
         setRefreshToken(authSignInResObj.refreshToken);
 
-        console.log(`redirect uri: ${redirect_uri}`)
-        if(redirect_uri) {
-          const url = new URL(redirect_uri as string);
-          window.location.href = url.toString();
+        const callerPage  = searchParams.get('callerPage');
+        console.log(`redirect uri: ${callerPage}`)
+        if(callerPage) {
+          const urlParams = new URLSearchParams(searchParams);
+          urlParams.delete('callerPage');
+
+          const remainingParams = urlParams.toString();
+
+          const redirectUrl = `${callerPage}${remainingParams ? '?' + remainingParams: ''}`;
+
+          router.push(redirectUrl);
         } else {
           router.push('/profile');
         }

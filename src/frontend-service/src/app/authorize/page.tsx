@@ -4,6 +4,9 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
+import { axiosAuthClient } from '@/lib/auth';
+import { AuthorizeClientReq, AuthorizeClientRes } from '@tareqjoy/models';
+import { plainToInstance } from 'class-transformer';
 
 const AuthorizePage = () => {
   const [authorized, setAuthorized] = useState(false);
@@ -11,17 +14,30 @@ const AuthorizePage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  useVerifyAccessToken(undefined, '/login');
+  const authorizeClientUrl: string = process.env.AUTH_CLIENT_URL || "http://127.0.0.1:5007/v1/auth/authorize/";
+
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const oldParam  = searchParams.toString();
+  const callerQueryParam = oldParam ? `${oldParam}&callerPage=${encodeURIComponent(currentUrl)}` : `callerPage=${encodeURIComponent(currentUrl)}`;
+
+  useVerifyAccessToken(undefined, `/login?${callerQueryParam}`);
   // Function to handle form submission
   const handleAuthorize = async () => {
-    const redirect_uri  = searchParams.get('redirect_uri');
+    
     try {
-      // Generate a device-id (in a real-world app, you'd get this from somewhere)
-      
-      if (!localStorage.getItem('accessToken')) {
-        router.push(`/login?${searchParams}`);
+      if (searchParams.get('client_id') && searchParams.get('redirect_uri')) {
+        const authClientReq = new AuthorizeClientReq(searchParams.get('client_id')!);
+        const resp = await axiosAuthClient.post(authorizeClientUrl, authClientReq);
+
+        const authResObj = plainToInstance(AuthorizeClientRes, resp.data);
+
+        if (resp.status == 200) {
+          window.location.href = `${decodeURIComponent(searchParams.get('redirect_uri')!)}?code=${authResObj.code}`;
+        }
+      } else {
+        router.push(`/profile`);
       }
-      // Prepare the data to send in the body
+
 
     } catch (error) {
       // Handle errors (like invalid login)
@@ -30,7 +46,7 @@ const AuthorizePage = () => {
   };
 
   const handleCancel = () => {
-    setDismissed(true);
+    router.push(`/profile`);
   };
 
   return (

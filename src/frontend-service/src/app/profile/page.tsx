@@ -4,26 +4,27 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
+import { axiosAuthClient, deleteAccessToken, deleteRefreshToken } from '@/lib/auth';
+
+const authSignOutUrl: string = process.env.AUTH_SIGN_OUT_URL || "http://127.0.0.1:5007/v1/auth/signout/";
+const deviceId = 'some-unique-device-id';
 
 const ProfilePage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  useVerifyAccessToken(undefined, 'login');
+  useVerifyAccessToken(undefined, '/login');
 
   // Function to handle form submission
   const handleLogOut = async () => {
-    const redirect_uri  = searchParams.get('redirect_uri');
-    try {
-      // Generate a device-id (in a real-world app, you'd get this from somewhere)
-      
-      if (!localStorage.getItem('accessToken')) {
-        router.push(`/login?${searchParams}`);
-      }
-      // Prepare the data to send in the body
 
+    try {
+      const resp = await axiosAuthClient.post(authSignOutUrl, {}, {headers: {'Device-ID': deviceId}});
+      deleteAccessToken();
+      deleteRefreshToken();
+      window.location.reload();
     } catch (error) {
-      // Handle errors (like invalid login)
+
       console.error('Auth failed:', error);
     }
   };

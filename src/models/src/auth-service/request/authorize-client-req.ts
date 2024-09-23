@@ -5,7 +5,9 @@ export class AuthorizeClientReq {
     @IsNotEmpty()
     clientId?: string;
 
-    @IsString()
-    @IsNotEmpty()
-    clientSecret?: string;
+    constructor();
+    constructor(clientId: string);
+    constructor(clientId?: string) {
+        this.clientId = clientId;
+    }
 };

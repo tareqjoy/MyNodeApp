@@ -28,12 +28,20 @@ export function setAccessToken(accessToken: string) {
   localStorage.setItem('accessToken', accessToken);
 }
 
+export function deleteAccessToken() {
+  localStorage.removeItem('accessToken');
+}
+
 export function getRefreshToken(): string | null {
     return localStorage.getItem('refreshToken');
 }
 
 export function setRefreshToken(refreshToken: string) {
   localStorage.setItem('refreshToken', refreshToken);
+}
+
+export function deleteRefreshToken() {
+  localStorage.removeItem('refreshToken');
 }
 
 export const axiosAuthClient = axios.create({
