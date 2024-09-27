@@ -7,16 +7,12 @@ import { RedisClientType } from 'redis';
 import { validate } from 'class-validator';
 import jwt from 'jsonwebtoken';
 import axios, { AxiosError } from 'axios';
+import { genAccessRefreshToken } from './common/common';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
 const router = express.Router();
-
-const jwt_access_secret = process.env.JWT_ACCESS_SECRET || 'test_access_secret_key_00x';
-const jwt_access_expires_sec = Number(process.env.JWT_ACCESS_EXPIRES_SEC || '300'); //5min
-const jwt_refresh_secret = process.env.JWT_REFRESH_SECRET || 'test_refresh_secret_key_00x';
-const jwt_refresh_expires_sec = Number(process.env.JWT_REFRESH_EXPIRES_SEC || '1296000'); //15days
 
 const ATTR_HEADER_DEVICE_ID = "device-id";
 
@@ -45,14 +41,9 @@ export const createSignInRouter = (redisClient: RedisClientType<any, any, any>) 
             const postByUserAxiosRes = await axios.post(userSignInUrl, userSignInReq);
             const userSignInResObj = plainToInstance(UserSignInRes, postByUserAxiosRes.data);
 
-            const authInfo = new AuthInfo(userSignInResObj.userId);
-            const accessToken = jwt.sign({...authInfo}, jwt_access_secret, { expiresIn: jwt_access_expires_sec });
-            const refreshToken = jwt.sign({...authInfo}, jwt_refresh_secret, { expiresIn: jwt_refresh_expires_sec });
+            const authResp = await genAccessRefreshToken(redisClient, userSignInResObj.userId, deviceId)
 
-            const redisKey = `refresh-token:${userSignInResObj.userId}:${deviceId}`;
-            await redisClient.set(redisKey, refreshToken, {EX: jwt_refresh_expires_sec });
-
-            res.status(200).json(new AuthSignInRes(accessToken, refreshToken, jwt_access_expires_sec));
+            res.status(200).json(authResp);
         } catch(error) {
             if(error instanceof AxiosError) {
                 if (error.response?.status == 401) {

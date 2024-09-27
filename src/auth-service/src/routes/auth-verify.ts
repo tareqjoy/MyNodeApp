@@ -8,8 +8,6 @@ logger.level = "trace";
 
 const router = express.Router();
 
-const jwt_access_secret = process.env.JWT_ACCESS_SECRET || 'test_access_secret_key_00x';
-
 const ATTR_HEADER_AUTHORIZATION = "authorization";
 
 
@@ -17,7 +15,7 @@ export const createVerifyRouter = () => {
     router.post('/', async (req, res, next) => {
         logger.trace(`POST /verify called`);
 
-        const validateRet = validateAccessToken(req.headers[ATTR_HEADER_AUTHORIZATION], jwt_access_secret);
+        const validateRet = validateAccessToken(req.headers[ATTR_HEADER_AUTHORIZATION]);
         res.status(validateRet.statusCode).json(validateRet.msg);
     });
     

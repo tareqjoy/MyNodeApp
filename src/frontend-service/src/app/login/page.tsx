@@ -37,8 +37,8 @@ const LoginPage = () => {
       if (signInRes.status == 200) {
         const authSignInResObj = plainToInstance(AuthSignInRes, signInRes.data);
 
-        setAccessToken(authSignInResObj.accessToken);
-        setRefreshToken(authSignInResObj.refreshToken);
+        setAccessToken(authSignInResObj.access_token);
+        setRefreshToken(authSignInResObj.refresh_token);
 
         const callerPage  = searchParams.get('callerPage');
         console.log(`redirect uri: ${callerPage}`)

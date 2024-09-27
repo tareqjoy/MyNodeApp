@@ -1,6 +1,7 @@
 import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { IsAtLeastOneFieldRequired } from '../../constraints/atleast-one-field-required';
 
+//RFC recommendation: https://www.rfc-editor.org/rfc/rfc6749#section-4.3.2
 export class UserSignInReq {
   @IsString()
   @Matches(/^[^\s]+$/, { message: 'Username cannot contain spaces' })

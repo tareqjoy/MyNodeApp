@@ -26,7 +26,7 @@ const AuthorizePage = () => {
     
     try {
       if (searchParams.get('client_id') && searchParams.get('redirect_uri')) {
-        const authClientReq = new AuthorizeClientReq(searchParams.get('client_id')!);
+        const authClientReq = new AuthorizeClientReq(searchParams.get('client_id')!, searchParams.get('redirect_uri')!, "code");
         const resp = await axiosAuthClient.post(authorizeClientUrl, authClientReq);
 
         const authResObj = plainToInstance(AuthorizeClientRes, resp.data);

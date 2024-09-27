@@ -12,8 +12,6 @@ logger.level = "trace";
 
 const router = express.Router();
 
-const jwt_access_secret = process.env.JWT_ACCESS_SECRET || 'test_access_secret_key_00x';
-
 const ATTR_HEADER_DEVICE_ID = "device-id";
 const ATTR_HEADER_AUTHORIZATION = "authorization";
 
@@ -42,7 +40,7 @@ export const createSignOutRouter = (redisClient: RedisClientType<any, any, any>)
         }
 
         try {
-            const validateRet = validateAccessToken(authHeader, jwt_access_secret);
+            const validateRet = validateAccessToken(authHeader);
 
             if (validateRet.statusCode == 200) {
                 const authInfo = validateRet.msg as AuthInfo;

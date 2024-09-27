@@ -40,7 +40,7 @@ async function main() {
   app.use(bodyParser.json());
 
   const redisClient = await connectRedis();
-  
+  app.use(express.urlencoded({extended: true}));
   app.use(getApiPath(api_path_auth_root, 'signin'), createSignInRouter(redisClient));
   app.use(getApiPath(api_path_auth_root, 'verify'), createVerifyRouter());
   app.use(getApiPath(api_path_auth_root, 'refresh'), createRefreshRouter(redisClient));

@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { AuthRefreshRes } from '@tareqjoy/models'
+import { AuthRefreshReq, AuthRefreshRes } from '@tareqjoy/models'
 import { plainToInstance } from 'class-transformer';
 
 const authRefreshUrl: string = process.env.AUTH_REFRESH_URL || "http://127.0.0.1:5007/v1/auth/refresh/";
@@ -99,11 +99,12 @@ axiosAuthClient.interceptors.response.use(
         isRefreshing = true;
   
         try {
-          const refreshResp = await axiosPublicClient.post(authRefreshUrl, {},
-            {headers: {'Authorization': `Bearer ${refreshToken}`, 'Device-ID': 'some-unique-device-id'}}
+          const refreshReq = new AuthRefreshReq(refreshToken);
+          const refreshResp = await axiosPublicClient.post(authRefreshUrl, refreshReq,
+            {headers: {'Device-ID': 'some-unique-device-id'}}
           ); 
           const authRefreshResObj = plainToInstance(AuthRefreshRes, refreshResp.data);
-          const newAccessToken = authRefreshResObj.accessToken;
+          const newAccessToken = authRefreshResObj.access_token;
 
           setAccessToken(newAccessToken);
   
