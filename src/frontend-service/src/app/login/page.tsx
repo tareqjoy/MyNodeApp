@@ -1,14 +1,13 @@
 'use client'
 import 'reflect-metadata';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { axiosAuthClient, axiosPublicClient, setAccessToken, setRefreshToken } from '@/lib/auth';
-import axios from 'axios';
+import { axiosPublicClient, setAccessToken, setRefreshToken } from '@/lib/auth';
 import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
 
-const authSignInUrl: string = process.env.AUTH_REFRESH_URL || "http://127.0.0.1:5007/v1/auth/signin/";
+const authSignInUrl: string = process.env.AUTH_SIGN_IN_URL || "http://127.0.0.1:5007/v1/auth/signin/";
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');

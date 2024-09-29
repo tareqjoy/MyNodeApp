@@ -8,7 +8,9 @@ const useVerifyAccessToken = (redirectPath?: string, errorRedirectPath?: string)
   const router = useRouter();
 
   useEffect(() => {
+    console.log("called ne");
     const verifyAccessToken = async () => {
+      
       try {
         const resp = await axiosAuthClient.post(authVerifyUrl, {}); // Adjust the URL as needed
         if (resp.status === 200) {

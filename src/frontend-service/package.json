@@ -5,13 +5,19 @@
   "scripts": {
     "dev": "next dev -p 5000",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 5000",
     "lint": "next lint"
   },
   "dependencies": {
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.2.13"
+    "next": "14.2.13",
+    "@tareqjoy/models": "1.0.60",
+    "class-validator": "^0.14.1",
+    "class-transformer": "^0.5.1",
+    "reflect-metadata": "^0.2.2",
+    "axios": "^1.7.4",
+    "cookie":"^0.6.0"
   },
   "devDependencies": {
     "typescript": "^5.6.2",
@@ -22,12 +28,6 @@
     "tailwindcss": "^3.4.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.13",
-    "axios": "^1.7.4",
-    "@tareqjoy/models": "file:../models",
-    "cookie":"^0.6.0",
-    "@types/cookie":"^0.6.0",
-    "class-validator": "^0.14.1",
-    "class-transformer": "^0.5.1",
-    "reflect-metadata": "^0.2.2"
+    "@types/cookie":"^0.6.0"
   }
 }

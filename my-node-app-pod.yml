@@ -46,10 +46,16 @@ metadata:
   name: service-url-config
 data:
   USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
+  USER_SERVICE_SIGN_IN_URL: http://192.168.49.2:80/v1/user/signin/
   WHO_FOLLOWS_ME_URL: http://192.168.49.2:80/v1/follower/who-follows-me/
   I_FOLLOW_URL: http://192.168.49.2:80/v1/follower/i-follow/
   GET_POST_BY_USER_URL: http://192.168.49.2:80/v1/post/get-by-user/
   GET_POST_BY_POST_ID_URL: http://192.168.49.2:80/v1/post/get/
+  AUTH_REFRESH_URL: http://192.168.49.2:80/v1/auth/refresh/
+  AUTH_VERIFY_URL: http://192.168.49.2:80/v1/auth/verify/
+  AUTH_AUTHORIZE_URL: http://192.168.49.2:80/v1/auth/authorize/
+  AUTH_SIGN_IN_URL: http://192.168.49.2:80/v1/auth/signin/
+  AUTH_SIGN_OUT_URL: http://192.168.49.2:80/v1/auth/signout/
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -104,6 +110,25 @@ metadata:
   name: search-service-config
 data:
   API_PATH_ROOT: /v1/search
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-config
+data:
+  API_PATH_ROOT: /v1/auth
+  JWT_ACCESS_SECRET: test_access_secret_key_00x
+  JWT_REFRESH_SECRET: test_refresh_secret_key_00x
+  JWT_ACCESS_EXPIRES_SEC: "30"
+  JWT_REFRESH_EXPIRES_SEC: "1296000"
+  AUTH_CODE_EXPIRES_SEC: "120"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-service-config
+data:
+  PLACEHOLDER: PLACEHOLDER
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -277,6 +302,60 @@ spec:
             - configMapRef:
                 name: elastic-search-config
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service-container
+          image: tareqjoy/auth-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: auth-service-config
+            - configMapRef:
+                name: redis-config
+            - configMapRef:
+                name: service-url-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend-service
+  template:
+    metadata:
+      labels:
+        app: frontend-service
+    spec:
+      containers:
+        - name: frontend-service-container
+          image: tareqjoy/frontend-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: frontend-service-config
+            - configMapRef:
+                name: service-url-config
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -359,6 +438,34 @@ spec:
       port: 3006
       targetPort: 5006
       nodePort: 30006
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - protocol: TCP
+      port: 3007
+      targetPort: 5007
+      nodePort: 30007
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend-service
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 5000
+      nodePort: 30000
   type: NodePort
 ---
 apiVersion: autoscaling/v2
@@ -475,6 +582,44 @@ spec:
           type: Utilization
           averageUtilization: 50
 ---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: auth-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: auth-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend-service
+  minReplicas: 1
+  maxReplicas: 1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -525,3 +670,17 @@ spec:
                   name: search-service
                   port:
                     number: 3006
+            - path: /v1/auth/
+              pathType: Prefix
+              backend:
+                service:
+                  name: auth-service
+                  port:
+                    number: 3007
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: frontend-service
+                  port:
+                    number: 3000

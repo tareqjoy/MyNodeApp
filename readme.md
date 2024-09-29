@@ -113,6 +113,9 @@
    npm run build
    npm version patch
    npm publish --access public
+
+   npm install --global lerna
+   lerna bootstrap
    ```
 ## How To Test
 API Testing:

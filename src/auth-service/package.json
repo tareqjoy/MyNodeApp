@@ -4,17 +4,20 @@
     "description": "",
     "main": "dist/server.js",
     "scripts": {
+        "clean": "rimraf dist", 
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "tsc -p . && node dist/server.js",
-        "build": "tsc -p ."
+        "start": "node dist/server.js",
+        "dev": "ts-node src/server.ts",
+        "format": "prettier --write 'src/**/*.{ts,tsx}'",
+        "build": "tsc"
     },
     "author": "Tareq Joy",
     "license": "ISC",
     "dependencies": {
         "axios": "^1.7.7",
-        "@tareqjoy/clients": "^1.0.17",
-        "@tareqjoy/models": "file:../models",
-        "@tareqjoy/utils": "file:../utils",
+        "@tareqjoy/clients": "^1.0.22",
+        "@tareqjoy/models": "^1.0.60",
+        "@tareqjoy/utils": "^1.0.3",
         "@types/jsonwebtoken": "^9.0.7",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.1",
@@ -25,13 +28,17 @@
         "reflect-metadata": "^0.2.2",
         "source-map-support": "^0.5.21",
         "cors":"^2.8.5",
-        "@types/cors":"^2.8.17",
-        "uuid":"^10.0.0",
-        "@types/uuid":"^10.0.0"
+        "uuid":"^10.0.0"
     },
     "devDependencies": {
+        "@types/uuid":"^10.0.0",
+        "@types/cors":"^2.8.17",
         "@types/express": "^4.17.21",
+        "@types/node": "^22.7.4",
         "nodemon": "^3.1.4",
-        "typescript": "^5.5.4"
+        "typescript": "^5.5.4",
+        "ts-node": "10.9.2",
+        "prettier": "^3.3.3",
+        "rimraf": "^6.0.1"
     }
 }

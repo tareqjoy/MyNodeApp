@@ -39,6 +39,18 @@ docker build -t tareqjoy/search-service:latest .
 docker push tareqjoy/search-service:latest
 cd -
 
+echo "Auth service ..."
+cd src/auth-service/
+docker build -t tareqjoy/auth-service:latest .
+docker push tareqjoy/auth-service:latest
+cd -
+
+echo "Frontend service ..."
+cd src/frontend-service/
+docker build -t tareqjoy/frontend-service:latest .
+docker push tareqjoy/frontend-service:latest
+cd -
+
 echo "Kubernetes ..."
 kubectl apply -f my-node-app-pod.yml --force
 kubectl rollout restart deployment -n default
