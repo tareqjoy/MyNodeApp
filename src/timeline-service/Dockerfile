@@ -12,7 +12,7 @@ COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/package-lock.json ./package-lock.json
 RUN npm install --omit=dev
-EXPOSE 3000
+EXPOSE 5001
 RUN chown -R node /usr/src/app
 USER node
 CMD ["npm", "start"]
