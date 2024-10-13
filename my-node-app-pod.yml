@@ -353,8 +353,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: frontend-service-config
-            - configMapRef:
-                name: service-url-config
 ---
 apiVersion: v1
 kind: Service
@@ -624,6 +622,12 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "http://192.168.49.2"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
 spec:
   rules:
       - http:

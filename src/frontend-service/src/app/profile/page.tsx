@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
 import { axiosAuthClient, deleteAccessToken, deleteRefreshToken } from '@/lib/auth';
 
-const authSignOutUrl: string = process.env.AUTH_SIGN_OUT_URL || "http://127.0.0.1:5007/v1/auth/signout/";
+const authSignOutUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_OUT_URL || "http://127.0.0.1:5007/v1/auth/signout/";
 const deviceId = 'some-unique-device-id';
 
 const ProfilePage = () => {

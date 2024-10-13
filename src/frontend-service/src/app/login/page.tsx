@@ -7,7 +7,7 @@ import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
 
-const authSignInUrl: string = process.env.AUTH_SIGN_IN_URL || "http://127.0.0.1:5007/v1/auth/signin/";
+const authSignInUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL || "http://127.0.0.1:5007/v1/auth/signin/";
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');

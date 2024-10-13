@@ -70,8 +70,9 @@
          ```
      4.  Default username: **neo4j**, default password: **neo4j**
      5.  Set password: `sudo neo4j-admin dbms set-initial-password 12345678` or `cypher-shell`
-
-   
+10. Flink with file download: https://nightlies.apache.org/flink/flink-docs-release-1.14/docs/try-flink/local_installation/
+    1. use this directory to install: **/usr/local/flink/**
+    2. See in UI: http://localhost:8081/
 ## How To Run
    1. Run the following commands. If any error occurs, see the Prerequisites section to setup.
        ```sh

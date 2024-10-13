@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { axiosAuthClient } from '@/lib/auth';
 
-const authVerifyUrl: string = process.env.AUTH_VERIFY_URL || "http://127.0.0.1:5007/v1/auth/verify/";
+const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "http://127.0.0.1:5007/v1/auth/verify/";
 
 const useVerifyAccessToken = (redirectPath?: string, errorRedirectPath?: string) => {
   const router = useRouter();

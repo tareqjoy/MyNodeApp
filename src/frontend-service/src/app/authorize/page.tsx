@@ -13,7 +13,7 @@ const AuthorizePage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const authorizeClientUrl: string = process.env.AUTH_AUTHORIZE_URL || "http://127.0.0.1:5007/v1/auth/authorize/";
+  const authorizeClientUrl: string = process.env.NEXT_PUBLIC_AUTH_AUTHORIZE_URL || "http://127.0.0.1:5007/v1/auth/authorize/";
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const oldParam  = searchParams.toString();

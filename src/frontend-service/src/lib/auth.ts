@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'ax
 import { AuthRefreshReq, AuthRefreshRes } from '@tareqjoy/models'
 import { plainToInstance } from 'class-transformer';
 
-const authRefreshUrl: string = process.env.AUTH_REFRESH_URL || "http://127.0.0.1:5007/v1/auth/refresh/";
+const authRefreshUrl: string = process.env.NEXT_PUBLIC_AUTH_REFRESH_URL || "http://127.0.0.1:5007/v1/auth/refresh/";
 
 interface EnhancedAxiosRequestConfig extends InternalAxiosRequestConfig {
     _retry?: boolean; 
