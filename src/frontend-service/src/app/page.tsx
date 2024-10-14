@@ -1,7 +1,5 @@
 import { redirect, RedirectType } from "next/navigation";
 
-const HomePage = () => {
+export default function HomePage() {
   redirect('/login', RedirectType.replace);
 };
-
-export default HomePage;

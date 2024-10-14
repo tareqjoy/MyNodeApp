@@ -1,3 +1,4 @@
+'use client'
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { AuthRefreshReq, AuthRefreshRes } from '@tareqjoy/models'
 import { plainToInstance } from 'class-transformer';

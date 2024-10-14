@@ -38,8 +38,8 @@ export const createSignInRouter = (redisClient: RedisClientType<any, any, any>) 
 
         try {
             const userSignInReq = new UserSignInReq({username: authSignInObj.username, email: authSignInObj.email}, authSignInObj.password);
-            const postByUserAxiosRes = await axios.post(userSignInUrl, userSignInReq);
-            const userSignInResObj = plainToInstance(UserSignInRes, postByUserAxiosRes.data);
+            const userSignInRes = await axios.post(userSignInUrl, userSignInReq);
+            const userSignInResObj = plainToInstance(UserSignInRes, userSignInRes.data);
 
             const authResp = await genAccessRefreshToken(redisClient, userSignInResObj.userId, deviceId)
 

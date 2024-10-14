@@ -1,13 +1,13 @@
 'use client'
 import 'reflect-metadata';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
 import { axiosAuthClient } from '@/lib/auth';
 import { AuthorizeClientReq, AuthorizeClientRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 
-const AuthorizePage = () => {
+export default function AuthorizePage() {
   const [authorized, setAuthorized] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const searchParams = useSearchParams();
@@ -15,11 +15,18 @@ const AuthorizePage = () => {
 
   const authorizeClientUrl: string = process.env.NEXT_PUBLIC_AUTH_AUTHORIZE_URL || "http://127.0.0.1:5007/v1/auth/authorize/";
 
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const oldParam  = searchParams.toString();
-  const callerQueryParam = oldParam ? `${oldParam}&callerPage=${encodeURIComponent(currentUrl)}` : `callerPage=${encodeURIComponent(currentUrl)}`;
 
-  useVerifyAccessToken(undefined, `/login?${callerQueryParam}`);
+  useEffect(() => {
+    const isAuthed = async () => {
+      if(!await useVerifyAccessToken()) {
+        const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+        const oldParam  = searchParams.toString();      
+        const callerQueryParam = oldParam ? `${oldParam}&callerPage=${encodeURIComponent(currentUrl)}` : `callerPage=${encodeURIComponent(currentUrl)}`;
+        router.push(`/login?${callerQueryParam}`)
+      } 
+    };
+    isAuthed();
+  });
   // Function to handle form submission
   const handleAuthorize = async () => {
     
@@ -61,5 +68,3 @@ const AuthorizePage = () => {
     </div>
   );
 };
-
-export default AuthorizePage;
