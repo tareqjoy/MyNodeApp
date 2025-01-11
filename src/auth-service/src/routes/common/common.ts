@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { RedisClientType } from 'redis';
 
 export const jwt_access_secret = process.env.JWT_ACCESS_SECRET || 'test_access_secret_key_00x';
-export const jwt_access_expires_sec = Number(process.env.JWT_ACCESS_EXPIRES_SEC || '30'); //5min
+export const jwt_access_expires_sec = Number(process.env.JWT_ACCESS_EXPIRES_SEC || '900'); //15min
 export const jwt_refresh_secret = process.env.JWT_REFRESH_SECRET || 'test_refresh_secret_key_00x';
 export const jwt_refresh_expires_sec = Number(process.env.JWT_REFRESH_EXPIRES_SEC || '1296000'); //15days
 

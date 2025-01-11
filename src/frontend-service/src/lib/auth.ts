@@ -17,6 +17,10 @@ function onRefreshed(token: string) {
   subscribers = [];
 }
 
+function onError() {
+  subscribers = [];
+}
+
 function addSubscriber(callback: (token: string) => void) {
   subscribers.push(callback);
 }
@@ -43,6 +47,31 @@ export function setRefreshToken(refreshToken: string) {
 
 export function deleteRefreshToken() {
   localStorage.removeItem('refreshToken');
+}
+
+
+export function setUserId(userId: string) {
+  localStorage.setItem('userId', userId);
+}
+
+export function setUserName(username: string) {
+  localStorage.setItem('username', username);
+}
+
+export function getUserId(): string | null {
+  return localStorage.getItem('userId');
+}
+
+export function getUserName(): string | null  {
+  return localStorage.getItem('username');
+}
+
+export function deleteUserId() {
+  localStorage.removeItem('userId');
+}
+
+export function deleteUserName() {
+  localStorage.removeItem('username');
 }
 
 export const axiosAuthClient = axios.create({
@@ -75,17 +104,17 @@ axiosAuthClient.interceptors.response.use(
     (response: AxiosResponse) => response, // If response is successful, return it
     async (error: AxiosError) => {
       const originalRequest = error.config as EnhancedAxiosRequestConfig;
-      console.log("intercepting after error response..");
+      console.debug("axiosAuthClient: intercepting after error response..");
       // If the error is 401 (Unauthorized) and not already retrying
       if (error.response?.status === 401 && !originalRequest?._retry) {
-        console.log("got 401");
+        console.debug("axiosAuthClient: got 401, so will try to get accesstoken using refresh token");
         const refreshToken = getRefreshToken();
         if (!refreshToken) {
           return Promise.reject(new AxiosError('Refresh token is missing', 'NO_REFRESH_TOKEN'));
         }
-        console.log(`got refresh token: ${refreshToken}`);
+        console.debug(`axiosAuthClient: got refresh token: ${refreshToken}`);
         if (isRefreshing) {
-          console.log(`already refreshing, skipping further`);
+          console.log(`axiosAuthClient: already refreshing, adding as subscriber waiting for the new accesstoken`);
           // If another refresh request is in progress, queue the request until it's completed
           return new Promise((resolve) => {
             addSubscriber((token: string) => {
@@ -94,7 +123,7 @@ axiosAuthClient.interceptors.response.use(
             });
           });
         }
-        console.log(`will call for new accesstoken`);
+        console.debug(`axiosAuthClient: this request will try to fetch accesstoken`);
         // Start refreshing token
         originalRequest._retry = true;
         isRefreshing = true;
@@ -107,22 +136,29 @@ axiosAuthClient.interceptors.response.use(
           const authRefreshResObj = plainToInstance(AuthRefreshRes, refreshResp.data);
           const newAccessToken = authRefreshResObj.access_token;
 
+          console.debug(`axiosAuthClient: yay! found new accesstoken & saving into local db: ${newAccessToken}`);
+
           setAccessToken(newAccessToken);
   
           // Retry the failed request with the new access token
+          console.debug(`axiosAuthClient: updating header with the new acesstoken`);
           axiosAuthClient.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
           originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
   
+          console.debug(`axiosAuthClient: updating the ${subscribers.length} subscribed awaiting requests with the new acesstoken`);
           // Execute queued requests
           onRefreshed(newAccessToken);
           isRefreshing = false;
   
           return axiosAuthClient(originalRequest); // Retry original request with new token
         } catch (err) {
+          console.error("axiosAuthClient: error while getting new accesstoken");
+          console.warn(`axiosAuthClient: ignoring the ${subscribers.length} awaiting subscribed requests`);
+          onRefreshed("");
           return Promise.reject(err);
         }
       }
-  
+      console.debug("axiosAuthClient: not 401, not doing any accesstoken related work");
       return Promise.reject(error);
     }
   );

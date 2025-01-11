@@ -624,7 +624,7 @@ metadata:
   name: ingress
   annotations:
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "http://192.168.49.2"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE"
     nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"

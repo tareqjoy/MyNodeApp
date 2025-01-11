@@ -9,7 +9,7 @@ import { getApiPath } from '@tareqjoy/utils';
 import { createVerifyRouter } from './routes/auth-verify';
 import { createRefreshRouter } from './routes/auth-refresh';
 import { createSignOutRouter } from './routes/auth-signout';
-import cors from 'cors';
+
 import { createAuthorizeClientRouter } from './routes/authorize-client';
 
 const logger = log4js.getLogger();
@@ -31,12 +31,6 @@ class HttpError extends Error {
 }
 
 async function main() {
-  app.use(cors({
-    origin: 'http://localhost:5000',
-    methods: ['POST'],
-    allowedHeaders: ['Content-Type', 'Device-ID', 'Authorization']
-  }));
-
   app.use(bodyParser.json());
 
   const redisClient = await connectRedis();

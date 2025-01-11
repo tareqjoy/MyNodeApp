@@ -2,13 +2,14 @@
 import 'reflect-metadata';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { axiosPublicClient, setAccessToken, setRefreshToken } from '@/lib/auth';
+import { axiosAuthClient, axiosPublicClient, setAccessToken, setRefreshToken, setUserId } from '@/lib/auth';
 import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
 import Loading from './loading';
 
-const authSignInUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL || "http://127.0.0.1:5007/v1/auth/signin/";
+const authSignInUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL || "http://127.0.0.1:80/v1/auth/signin/";
+const userIdUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://127.0.0.1:80/v1/user/userid/";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,17 +20,41 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const searchParams = useSearchParams();
-
-  useEffect(() => {
+  const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "http://127.0.0.1:80/v1/auth/verify/";
+ 
     const isAuthed = async () => {
-      if(await useVerifyAccessToken()) {
+      console.log("isAuthed: isAuthed called");
+
+      console.log("isAuthed: calling verify");
+      let hasAccess = false;
+      try {
+        const resp = await axiosAuthClient.post(authVerifyUrl, {}); 
+        
+        if (resp.status === 200) {
+          console.log(`useVerifyAccessToken: returned 200 from: ${authVerifyUrl}`);
+          hasAccess=true;
+        } else {
+          console.log(`useVerifyAccessToken: returned ${resp.status} from: ${authVerifyUrl}`);
+     
+        }
+      } catch (error) {
+        console.error('useVerifyAccessToken: Caught error while verifying access token');
+
+      }
+
+      console.log("isAuthed: called verify: data -> "+hasAccess);
+      if(hasAccess) {
+        console.log("isAuthed: going to profile");
         router.push('/profile');
       } else {
+        console.log("isAuthed: showing login form");
         setShowLoginForm(true);
       }
+
+
     };
     isAuthed();
-  }, [showLoginForm]);
+
 
   if(!showLoginForm) {
     return (<Loading />)
@@ -55,6 +80,10 @@ export default function LoginPage() {
 
         setAccessToken(authSignInResObj.access_token);
         setRefreshToken(authSignInResObj.refresh_token);
+        setUsername(username);
+
+        const usernameRes = await axiosAuthClient.post(userIdUrl, {username: username});
+        setUserId(usernameRes.data.toUserIds[username]);
 
         const callerPage  = searchParams.get('callerPage');
         console.log(`redirect uri: ${callerPage}`)

@@ -251,3 +251,14 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
       sudo mkdir /usr/local/kafka/offsets/
       sudo chmod -R 777 /usr/local/kafka/offsets
       ```
+### Local Nginx:
+   1. Install Nginx: https://ubuntu.com/tutorials/install-and-configure-nginx#1-overview
+   2. Copy the config file:
+      ```sh
+      sudo cp /home/tareqjoy/workspace/MyNodeApp/assets/nginx_cors.conf /etc/nginx/snippets/nginx_cors.conf
+      sudo cp /home/tareqjoy/workspace/MyNodeApp/assets/nginx.conf /etc/nginx/sites-enabled/default
+      ```
+   3. restart nginx process:
+      ```sh
+      sudo systemctl restart nginx
+      ```
