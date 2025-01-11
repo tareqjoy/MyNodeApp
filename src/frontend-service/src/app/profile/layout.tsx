@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import Loading from './loading';
 
-const authSignOutUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_OUT_URL || "http://127.0.0.1:80/v1/auth/signout/";
-const userDetailsUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://127.0.0.1:80/v1/user/detail/";
+const authSignOutUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_OUT_URL || "http://localhost:80/v1/auth/signout/";
+const userDetailsUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://localhost:80/v1/user/detail/";
 
 const deviceId = 'some-unique-device-id';
 

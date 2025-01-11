@@ -8,8 +8,8 @@ import { plainToInstance } from 'class-transformer';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
 import Loading from './loading';
 
-const authSignInUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL || "http://127.0.0.1:80/v1/auth/signin/";
-const userIdUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://127.0.0.1:80/v1/user/userid/";
+const authSignInUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL || "http://localhost:80/v1/auth/signin/";
+const userIdUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://localhost:80/v1/user/userid/";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const searchParams = useSearchParams();
-  const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "http://127.0.0.1:80/v1/auth/verify/";
+  const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "http://localhost:80/v1/auth/verify/";
  
     const isAuthed = async () => {
       console.log("isAuthed: isAuthed called");
