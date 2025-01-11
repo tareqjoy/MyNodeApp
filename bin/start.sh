@@ -15,6 +15,8 @@ sudo systemctl start elasticsearch.service && systemctl --no-pager status elasti
 sudo systemctl start kibana.service && systemctl --no-pager status kibana.service
 sudo systemctl start mongo-kafka-source.service && systemctl --no-pager status mongo-kafka-source.service
 sudo systemctl start elasticsearch-kafka-sink.service && systemctl --no-pager status elasticsearch-kafka-sink.service
+sudo systemctl start prometheus && sudo systemctl --no-page status prometheus
+sudo systemctl start grafana-server && sudo systemctl --no-page status grafana-server 
 minikube start
 
 echo "Done ..."

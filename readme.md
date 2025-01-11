@@ -4,7 +4,8 @@
 1. Docker Engine: https://docs.docker.com/engine/install/ubuntu/
 2. Kubernetes: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 3. Minikube: https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download
-4. MongoDB: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
+4. MongoDB: 
+   https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
    1. Create replica set: https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-for-testing/#std-label-server-replica-set-deploy-test
    2. get hostname: `hostname -I` and add the hostname in the replica set as well
 5. Apache Zookeeper & Kafka: https://anishmahapatra.medium.com/how-to-set-up-kafka-on-ubuntu-6f68f6f37b3e
@@ -73,6 +74,11 @@
 10. Flink with file download: https://nightlies.apache.org/flink/flink-docs-release-1.14/docs/try-flink/local_installation/
     1. use this directory to install: **/usr/local/flink/**
     2. See in UI: http://localhost:8081/
+11. Grafana with apt-get: https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
+    1.  Grafana will start at: http://localhost:3000. username: **admin** & password: **admin**
+    2.  See additional details to continue
+12. Prometheus: run the script here `<workspace>/bin/installation/prometheus.sh`. For more details: https://reintech.io/blog/installing-configuring-prometheus-ubuntu-22
+    1.  Prometheus will run on http://localhost:9090/
 ## How To Run
    1. Run the following commands. If any error occurs, see the Prerequisites section to setup.
        ```sh
@@ -259,4 +265,9 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
    3. restart nginx process:
       ```sh
       sudo systemctl restart nginx
+      ```
+### Grafana
+   1. Install kafka monitoring
+      ```sh
+      grafana-cli plugins install hamedkarbasi93-kafka-datasource
       ```

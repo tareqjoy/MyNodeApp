@@ -13,6 +13,8 @@ sudo systemctl stop kibana.service && systemctl --no-pager status kibana.service
 sudo systemctl stop elasticsearch.service && systemctl --no-pager status elasticsearch.service
 sudo systemctl stop mongo-kafka-source.service && systemctl --no-pager status mongo-kafka-source.service
 sudo systemctl stop elasticsearch-kafka-sink.service && systemctl --no-pager status elasticsearch-kafka-sink.service
+sudo systemctl stop grafana-server && sudo systemctl --no-page status grafana-server 
+sudo systemctl stop prometheus && sudo systemctl --no-page status prometheus
 minikube stop
 
 echo "Done ..."
