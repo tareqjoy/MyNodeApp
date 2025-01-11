@@ -111,9 +111,7 @@
     ``` 
 2. Update library:
    ```sh
-   npm run build
-   npm version patch
-   npm publish --access public
+   npm run build && npm version patch && npm publish --access public
 
    npm install --global lerna
    lerna bootstrap

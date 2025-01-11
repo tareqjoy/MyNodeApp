@@ -13,7 +13,7 @@ export default function AuthorizePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const authorizeClientUrl: string = process.env.NEXT_PUBLIC_AUTH_AUTHORIZE_URL || "http://127.0.0.1:80/v1/auth/authorize/";
+  const authorizeClientUrl: string = process.env.NEXT_PUBLIC_AUTH_AUTHORIZE_URL || "http://localhost:80/v1/auth/authorize/";
 
 
   useEffect(() => {
