@@ -271,3 +271,5 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
       ```sh
       grafana-cli plugins install hamedkarbasi93-kafka-datasource
       ```
+
+ -javaagent:/opt/jmx_exporter/jmx_prometheus_javaagent.jar=7071:/opt/jmx_exporter/kafka-metrics.yml
