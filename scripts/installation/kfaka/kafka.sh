@@ -15,7 +15,6 @@ sudo mv /tmp/kafka /usr/local/kafka/
 sudo mkdir -p /data/kafka/
 sudo mkdir -p /var/log/kafka/
 
-
 # giving ownership
 sudo chown -R kafka:kafka /usr/local/kafka/
 sudo chown kafka:kafka /data/kafka/
@@ -23,10 +22,11 @@ sudo chown kafka:kafka /var/log/kafka/
 
 # setting up service file
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVICE_FILE="kafka.service"
 DEST_DIR="/etc/systemd/system"
-yes | sudo cp -rf "${SCRIPT_DIR}/${SERVICE_FILE}" "${DEST_DIR}/"
-sudo chmod 644 "${DEST_DIR}/${SERVICE_FILE}"
+yes | sudo cp -rf "${SCRIPT_DIR}/kafka.service" "${DEST_DIR}/"
+yes | sudo cp -rf "${SCRIPT_DIR}/zookeeper.service" "${DEST_DIR}/"
+sudo chmod 644 "${DEST_DIR}/kafka.service"
+sudo chmod 644 "${DEST_DIR}/zookeeper.service"
 systemctl daemon-reload
 
 # copying config file
