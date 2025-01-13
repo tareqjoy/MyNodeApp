@@ -32,7 +32,7 @@ async function main() {
   app.use(getApiPath(api_path_root, 'home'), authorize, createHomeRouter(redisClient));
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const error = new HttpError('hawk', 404);
+    const error = new HttpError('Not found', 404);
     next(error);
   });
 

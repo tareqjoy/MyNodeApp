@@ -5,6 +5,7 @@ import axios from 'axios';
 import { FollowersReq, FollowersRes, GetPostByUserReq, InvalidRequest, PostDetailsRes, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { ATTR_HEADER_USER_ID } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -19,6 +20,10 @@ export const createHomeRouter = (redisClient: RedisClientType<any, any, any>) =>
     router.post('/', async (req, res, next) => {
         logger.trace(`POST /home called`);
 
+        if(!req.headers || !req.headers[ATTR_HEADER_USER_ID]) {
+            res.status(400).json(new InvalidRequest(`$${ATTR_HEADER_USER_ID} header missing`));
+        }
+
         const timelineHomeReq = plainToInstance(TimelineHomeReq, req.body);
         const errors = await validate(timelineHomeReq);
 
@@ -28,16 +33,6 @@ export const createHomeRouter = (redisClient: RedisClientType<any, any, any>) =>
         }
 
         try {
-            const userInternalReq = new UserInternalReq(timelineHomeReq.username, true);
-            const userIdResponse = await axios.post(userServiceHostUrl, userInternalReq);
-    
-            const userInternalResponse = plainToInstance(UserInternalRes, userIdResponse.data);
-    
-            if (!userInternalResponse.toUserIds || !userInternalResponse.toUserIds[timelineHomeReq.username]) {
-                res.status(400).json(new InvalidRequest("Invalid username"));
-                return;
-            }
-
             let pagingRaw: TimelineHomePagingRaw | undefined = undefined;
             if (timelineHomeReq.nextToken) {
                 try {
@@ -51,7 +46,7 @@ export const createHomeRouter = (redisClient: RedisClientType<any, any, any>) =>
                 }
             }
         
-            const userId = userInternalResponse.toUserIds[timelineHomeReq.username];
+            const userId: string = req.headers[ATTR_HEADER_USER_ID] as string;
             const redisKey = `timeline-userId:${userId}`;
 
             let redisCursor = 0;
