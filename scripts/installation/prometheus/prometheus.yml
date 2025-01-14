@@ -32,6 +32,11 @@ scrape_configs:
     scrape_interval: 10s
     static_configs:
       - targets: [ 'localhost:7071' ]
+  - job_name: 'v1/auth'
+    scrape_interval: 10s
+    metrics_path: /v1/auth/metrics
+    static_configs:
+      - targets: [ 'localhost:80' ]
 
 
 

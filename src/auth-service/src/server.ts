@@ -5,7 +5,7 @@ import bodyParser from "body-parser";
 import * as log4js from "log4js";
 import 'source-map-support/register';
 import { createSignInRouter } from './routes/auth-signin';
-import { getApiPath } from '@tareqjoy/utils';
+import { commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
 import { createVerifyRouter } from './routes/auth-verify';
 import { createRefreshRouter } from './routes/auth-refresh';
 import { createSignOutRouter } from './routes/auth-signout';
@@ -32,6 +32,7 @@ class HttpError extends Error {
 
 async function main() {
   app.use(bodyParser.json());
+  app.use(commonServiceMetricsMiddleware(api_path_auth_root));
 
   const redisClient = await connectRedis();
   app.use(express.urlencoded({extended: true}));
@@ -54,7 +55,6 @@ async function main() {
       path: req.url
     })
   });
-  
   
   // Start the server and listen to the port
   app.listen(appport, () => {
