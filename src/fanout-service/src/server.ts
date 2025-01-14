@@ -8,6 +8,7 @@ import { createFanoutRouter } from "./routes/fanout";
 import { newPostFanout } from "./workers/new-post-worker"
 import { iFollowedFanout } from './workers/i-followed-worker';
 import { iUnfollowedFanout } from './workers/i-unfollowed-worker';
+import { commonServiceMetricsMiddleware } from '@tareqjoy/utils';
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'fanout';
 const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
@@ -33,6 +34,8 @@ class HttpError extends Error {
 }
 
 async function main() {
+  app.use(commonServiceMetricsMiddleware(api_path_root));
+
   const newPostConsumer = await connectKafkaConsumer(kafka_client_id, kafka_fanout_group, 
     [kafka_new_post_fanout_topic, kafka_i_followed_fanout_topic, kafka_i_unfollowed_fanout_topic]
   );

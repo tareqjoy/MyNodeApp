@@ -1,4 +1,5 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # create user
 sudo useradd --no-create-home --shell /bin/false kafka
 
@@ -21,17 +22,14 @@ sudo chown kafka:kafka /data/kafka/
 sudo chown kafka:kafka /var/log/kafka/
 
 # setting up service file
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEST_DIR="/etc/systemd/system"
-yes | sudo cp -rf "${SCRIPT_DIR}/kafka.service" "${DEST_DIR}/"
-yes | sudo cp -rf "${SCRIPT_DIR}/zookeeper.service" "${DEST_DIR}/"
-sudo chmod 644 "${DEST_DIR}/kafka.service"
-sudo chmod 644 "${DEST_DIR}/zookeeper.service"
+yes | sudo cp -rf "${SCRIPT_DIR}/kafka.service" "/etc/systemd/system/"
+yes | sudo cp -rf "${SCRIPT_DIR}/zookeeper.service" "/etc/systemd/system/"
+sudo chmod 644 "/etc/systemd/system/kafka.service"
+sudo chmod 644 "/etc/systemd/system/zookeeper.service"
 systemctl daemon-reload
 
 # copying config file
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="server.properties"
-DEST_DIR="/usr/local/kafka/config/"
-yes | sudo cp -rf "${SCRIPT_DIR}/${CONFIG_FILE}" "${DEST_DIR}/"
+yes | sudo cp -rf "${SCRIPT_DIR}/${CONFIG_FILE}" "/usr/local/kafka/config/"
 

@@ -32,6 +32,36 @@ scrape_configs:
     scrape_interval: 10s
     static_configs:
       - targets: [ 'localhost:7071' ]
+  - job_name: 'v1/timeline'
+    scrape_interval: 10s
+    metrics_path: /v1/timeline/metrics
+    static_configs:
+      - targets: [ 'localhost:80' ]
+  - job_name: 'v1/user'
+    scrape_interval: 10s
+    metrics_path: /v1/user/metrics
+    static_configs:
+      - targets: [ 'localhost:80' ]
+  - job_name: 'v1/follower'
+    scrape_interval: 10s
+    metrics_path: /v1/follower/metrics
+    static_configs:
+      - targets: [ 'localhost:80' ]
+  - job_name: 'v1/fanout'
+    scrape_interval: 10s
+    metrics_path: /v1/fanout/metrics
+    static_configs:
+      - targets: [ 'localhost:80' ]
+  - job_name: 'v1/post'
+    scrape_interval: 10s
+    metrics_path: /v1/post/metrics
+    static_configs:
+      - targets: [ 'localhost:80' ]
+  - job_name: 'v1/search'
+    scrape_interval: 10s
+    metrics_path: /v1/search/metrics
+    static_configs:
+      - targets: [ 'localhost:80' ]
   - job_name: 'v1/auth'
     scrape_interval: 10s
     metrics_path: /v1/auth/metrics

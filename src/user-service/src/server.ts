@@ -8,16 +8,14 @@ import bodyParser from "body-parser";
 import * as log4js from "log4js";
 import { createSignInRouter } from './routes/signin';
 import 'source-map-support/register';
+import { commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
 const appport = process.env.PORT || 5002;
 
-const api_path_detail = process.env.API_PATH_DETAIL || '/v1/user/detail';
-const api_path_signup = process.env.API_PATH_SIGNUP || '/v1/user/signup';
-const api_path_userid = process.env.API_PATH_USERID || '/v1/user/userid';
-const api_path_signin = process.env.API_PATH_SIGN_IN || '/v1/user/signin';
+const api_path_root = process.env.API_PATH_ROOT || '/v1/user';
 
 const app = express();
 
@@ -32,14 +30,15 @@ class HttpError extends Error {
 
 async function main() {
   app.use(bodyParser.json());
+  app.use(commonServiceMetricsMiddleware(api_path_root));
 
   const redisClient = await connectRedis();
   const mongoClient = await connectMongo();
   
-  app.use(api_path_detail, createUserDetailsRouter(mongoClient));
-  app.use(api_path_signup, createSignUpRouter(mongoClient));
-  app.use(api_path_userid, createUserInternalRouter(mongoClient, redisClient));
-  app.use(api_path_signin, createSignInRouter(mongoClient));
+  app.use(getApiPath(api_path_root, 'detail'), createUserDetailsRouter(mongoClient));
+  app.use(getApiPath(api_path_root, 'signup'), createSignUpRouter(mongoClient));
+  app.use(getApiPath(api_path_root, 'userid'), createUserInternalRouter(mongoClient, redisClient));
+  app.use(getApiPath(api_path_root, 'signin'), createSignInRouter(mongoClient));
   
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);

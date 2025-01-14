@@ -5,7 +5,7 @@ import { createHomeRouter } from "./routes/home";
 import { connectRedis } from '@tareqjoy/clients';
 
 import * as log4js from "log4js";
-import { getApiPath, authorize } from '@tareqjoy/utils';
+import { getApiPath, authorize, commonServiceMetricsMiddleware } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -26,6 +26,7 @@ class HttpError extends Error {
 
 async function main() {
   app.use(bodyParser.json());
+  app.use(commonServiceMetricsMiddleware(api_path_root));
 
   const redisClient = await connectRedis();
 

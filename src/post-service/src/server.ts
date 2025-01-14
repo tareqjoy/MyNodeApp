@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import { connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
 import * as log4js from "log4js";
 import { createCreateRouter } from './routes/create';
-import { getApiPath } from '@tareqjoy/utils';
+import { commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
 import { createGetRouter } from './routes/get';
 import { createGetByUserRouter } from './routes/get-by-user';
 
@@ -29,6 +29,7 @@ class HttpError extends Error {
 
 async function main() {
   app.use(bodyParser.json());
+  app.use(commonServiceMetricsMiddleware(api_path_root));
 
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();

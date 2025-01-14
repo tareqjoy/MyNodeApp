@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { connectNeo4jDriver, connectKafkaProducer } from "@tareqjoy/clients";
 import * as log4js from "log4js";
 import { createFollowRouter } from './routes/follow';
-import { getApiPath } from '@tareqjoy/utils';
+import { commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
 import { createUnfollowRouter } from './routes/unfollow';
 import { createIFollowRouter } from './routes/i-follow';
 import { createWhoFollowsMeRouter } from './routes/who-follows-me';
@@ -30,6 +30,7 @@ class HttpError extends Error {
 }
 
 async function main() {
+  app.use(commonServiceMetricsMiddleware(api_path_root));
   const neo4jDriver = await connectNeo4jDriver();
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   app.use(bodyParser.json());
