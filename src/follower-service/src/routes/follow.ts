@@ -83,7 +83,11 @@ export const createFollowRouter = (neo4jDriver: Driver, kafkaProducer: Producer)
             res.status(200).json(new FollowRes());
         } catch(error) {
             await session.close();
-            logger.error("Error while follow: ", error);
+            if (axios.isAxiosError(error)) {
+                logger.error(`Error while follow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+            } else {
+                logger.error("Error while follow: ", error);
+            }
             res.status(500).json(new InternalServerError());
         }
     });

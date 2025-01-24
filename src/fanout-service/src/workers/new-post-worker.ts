@@ -4,6 +4,7 @@ import * as log4js from "log4js";
 import { RedisClientType } from 'redis'
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
+import { workerOperationCount } from "../metrics/metrics";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -28,6 +29,7 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
 
         logger.trace(`Received from follower service: ${followersIdsObj.userIds}`);
 
+        let totalRemovedPostCount = 0;
         for(const uid of followersIdsObj.userIds!) {
             const redisKey = `timeline-userId:${uid}`;
             //  When multiple elements have the same score, they are ordered lexicographically
@@ -39,6 +41,7 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
             const setSize = await redisClient.zCard(redisKey);
             if (setSize > maxPostSetSize) {
                 const toRemove =  setSize - maxPostSetSize -1;
+                totalRemovedPostCount += toRemove;
                 await redisClient.zRemRangeByRank(redisKey, 0, toRemove); // zRemRangeByRank: https://redis.io/docs/latest/commands/zremrangebyrank/
                 logger.trace(`${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`);
             }
@@ -46,9 +49,16 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
             logger.trace(`Posted to redis of ${redisKey}`);
         }
 
+        workerOperationCount.labels(newPostFanout.name, 'post_fanout_user_count').inc(followersIdsObj.userIds!.length);
+        workerOperationCount.labels(newPostFanout.name, 'post_removed_from_redis').inc(totalRemovedPostCount);
+
         return true;
     } catch(error) {
-        logger.error("error while fanout: ", error);
+        if (axios.isAxiosError(error)) {
+            logger.error(`Error while new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+        } else {
+            logger.error("Error while new-post: ", error);
+        }
     }
     return false;
 } 

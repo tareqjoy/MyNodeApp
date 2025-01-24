@@ -4,6 +4,7 @@ import * as log4js from "log4js";
 import { RedisClientType } from 'redis'
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
+import { workerOperationCount } from "../metrics/metrics";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -52,16 +53,23 @@ export const iFollowedFanout = async (redisClient: RedisClientType<any, any, any
 
         logger.trace(`${postDetailsResObj.posts.length} posts posted to redis key of ${redisKey}`);
 
+        workerOperationCount.labels(iFollowedFanout.name, 'new_post_loaded_to_redis').inc(postDetailsResObj.posts.length);
+
         const setSize = await redisClient.zCard(redisKey);
         if (setSize > maxPostSetSize) {
             const toRemove =  setSize - maxPostSetSize -1;
             await redisClient.zRemRangeByRank(redisKey, 0, toRemove);
             logger.trace(`${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`);
+            workerOperationCount.labels(iFollowedFanout.name, 'old_post_removed_from_redis').inc(toRemove);
         }
 
         return true;
     } catch(error) {
-        logger.error("error while fanout: ", error);
+        if (axios.isAxiosError(error)) {
+            logger.error(`Error while i-follow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+        } else {
+            logger.error("Error while i-follow: ", error);
+        }
     }
     return false;
 } 

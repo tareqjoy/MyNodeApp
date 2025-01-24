@@ -9,6 +9,7 @@ import { newPostFanout } from "./workers/new-post-worker"
 import { iFollowedFanout } from './workers/i-followed-worker';
 import { iUnfollowedFanout } from './workers/i-unfollowed-worker';
 import { commonServiceMetricsMiddleware } from '@tareqjoy/utils';
+import { workerDurationHistogram, workerStatCount } from './metrics/metrics';
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || 'fanout';
 const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
@@ -43,29 +44,37 @@ async function main() {
   await newPostConsumer.run({
     eachMessage: async({ topic, partition, message }) => {
         logger.trace("Kafka message received: ", {topic, partition, offset: message.offset, value: message.value?.toString()});
-        
+        var isProcessed = false;
         if (message.value != undefined) {
-          var isProcessed = false;
-          if (topic === kafka_new_post_fanout_topic) {
-            isProcessed = await newPostFanout(redisClient, message.value?.toString());
-          } else if (topic === kafka_i_followed_fanout_topic) {
-            isProcessed = await iFollowedFanout(redisClient, message.value?.toString());
-          } else if (topic === kafka_i_unfollowed_fanout_topic) {
-            isProcessed = await iUnfollowedFanout(redisClient, message.value?.toString());
-          }
+          const enfFn = workerDurationHistogram.labels(topic).startTimer();
+          const startTimestampMs = Date.now();
+          try {
+            if (topic === kafka_new_post_fanout_topic) {
+              isProcessed = await newPostFanout(redisClient, message.value?.toString());
+            } else if (topic === kafka_i_followed_fanout_topic) {
+              isProcessed = await iFollowedFanout(redisClient, message.value?.toString());
+            } else if (topic === kafka_i_unfollowed_fanout_topic) {
+              isProcessed = await iUnfollowedFanout(redisClient, message.value?.toString());
+            }
+  
+            if (isProcessed) {
+              logger.trace(`Message is processed by worker. topic: ${topic}. Committing offset`);
+              await newPostConsumer.commitOffsets([
+                { topic, partition, offset: (Number(message.offset) + 1).toString() },
+              ]);
+            } else {
+              logger.warn(`Message is not processed by worker. topic: ${topic}`);
+            }
+            const durationInS = enfFn();
 
-          if (isProcessed) {
-            logger.trace(`Message is processed by worker. topic: ${topic}. Committing offset`);
-            await newPostConsumer.commitOffsets([
-              { topic, partition, offset: (Number(message.offset) + 1).toString() },
-            ]);
-          } else {
-            logger.warn(`Message is not processed by worker. topic: ${topic}`);
+            logger.warn(`took ${durationInS}s to process the message`);
+          } catch(error) {
+            logger.error("error while executing task", error);
           }
-
         } else {
           logger.warn(`Message value undefined`);
         }
+        workerStatCount.labels(topic, isProcessed? 'successful' : 'unsuccessful').inc();
     },
     autoCommit: false
   });

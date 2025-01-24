@@ -4,6 +4,7 @@ import * as log4js from "log4js";
 import { RedisClientType } from 'redis'
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
+import { workerOperationCount } from "../metrics/metrics";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -50,10 +51,15 @@ export const iUnfollowedFanout = async (redisClient: RedisClientType<any, any, a
         }
 
         logger.trace(`${removedPostCount} posts removed from redis key of ${redisKey}`);
+        workerOperationCount.labels(iUnfollowedFanout.name, 'post_removed_from_redis').inc(removedPostCount);
 
         return true;
     } catch(error) {
-        logger.error("error while fanout: ", error);
+        if (axios.isAxiosError(error)) {
+            logger.error(`Error while i-unfollow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+        } else {
+            logger.error("Error while i-unfollow: ", error);
+        }
     }
     return false;
 } 
