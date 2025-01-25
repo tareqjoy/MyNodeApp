@@ -61,7 +61,7 @@ export const createAllRouter = (client: Client) => {
     
             res.status(200).json(new SearchRes({userIds: searchIds.get(es_index_users), postIds: searchIds.get(es_index_posts)}));
         }  catch(error) {
-            logger.error("Error while get: ", error);
+            logger.error("Error while /all: ", error);
             res.status(500).json({error: error});
         }
     });

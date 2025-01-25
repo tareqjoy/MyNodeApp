@@ -66,9 +66,9 @@ export const iFollowedFanout = async (redisClient: RedisClientType<any, any, any
         return true;
     } catch(error) {
         if (axios.isAxiosError(error)) {
-            logger.error(`Error while i-follow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+            logger.error(`Error while i-follow worker: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
         } else {
-            logger.error("Error while i-follow: ", error);
+            logger.error("Error while i-follow worker: ", error);
         }
     }
     return false;

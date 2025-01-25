@@ -63,7 +63,7 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
             res.status(200).json(new MessageResponse("Signed up"));
         })
         .catch(err => {
-            logger.error("Error while sign up", err);
+            logger.error("Error while /signup", err);
             res.status(500).json(new InternalServerError());
         });
     });

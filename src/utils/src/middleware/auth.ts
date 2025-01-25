@@ -1,5 +1,5 @@
 // middlewares/authenticate.ts
-import { AuthInfo } from '@tareqjoy/models';
+import { AuthInfo, InternalServerError } from '@tareqjoy/models';
 import axios from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { ATTR_HEADER_USER_ID } from '../constant/constant';
@@ -40,8 +40,13 @@ export const authorize = async (req: Request, res: Response, next: NextFunction)
         logger.debug("failed to verify access token");
         return res.status(401).json({ error: 'Invalid or expired token' });
     } catch (error) {
-        console.error('Error validating token:', error);
-        return res.status(500).json({ error: 'Auth service validation failed' });
+        if (axios.isAxiosError(error)) {
+            logger.error(`Error while middleware authZ: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+        } else {
+            logger.error("Error while middleware authZ: ", error);
+        }
+        res.status(500).json(new InternalServerError());
+        return;
     }
 };
 

@@ -2,7 +2,7 @@ import express from 'express'
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
 import axios from 'axios';
-import { FollowersReq, FollowersReqInternal, FollowersRes, GetPostByUserReq, InvalidRequest, PostDetailsRes, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
+import { FollowersReqInternal, FollowersRes, GetPostByUserReq, InternalServerError, InvalidRequest, PostDetailsRes, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { ATTR_HEADER_USER_ID, getInternalFullPath } from '@tareqjoy/utils';
@@ -113,11 +113,11 @@ export const createHomeRouter = (redisClient: RedisClientType<any, any, any>) =>
             res.status(200).json(new TimelineHomeRes(postsToReturn, pageTokenObj));
         } catch(error) {
             if (axios.isAxiosError(error)) {
-                logger.error(`Error while new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+                logger.error(`Error while /new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
             } else {
-                logger.error("Error while new-post: ", error);
+                logger.error("Error while /new-post: ", error);
             }
-            res.status(500).json({error: 'Internal Server Error'});
+            res.status(500).json(new InternalServerError());
         }
     
     });

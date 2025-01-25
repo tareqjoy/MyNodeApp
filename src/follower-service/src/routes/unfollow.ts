@@ -91,9 +91,9 @@ export const createUnfollowRouter = (neo4jDriver: Driver, kafkaProducer: Produce
             res.status(200).json(new UnfollowRes());
         } catch(error) {
             if (axios.isAxiosError(error)) {
-                logger.error(`Error while unfollow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+                logger.error(`Error while /unfollow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
             } else {
-                logger.error("Error while unfollow: ", error);
+                logger.error("Error while /unfollow: ", error);
             }
             
             res.status(500).json(new InternalServerError());

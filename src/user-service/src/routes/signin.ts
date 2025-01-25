@@ -45,7 +45,7 @@ export const createSignInRouter = (mongoClient: Mongoose) => {
             const userInfo = new UserSignInRes(dbUser.id.toString(), dbUser.username); 
             res.status(200).json(userInfo);
         } catch(error) {
-            logger.error("Error while sign in", error);
+            logger.error("Error while /signin", error);
             res.status(500).json(new InternalServerError());
         }
     });

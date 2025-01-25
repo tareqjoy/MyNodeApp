@@ -56,9 +56,9 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
         return true;
     } catch(error) {
         if (axios.isAxiosError(error)) {
-            logger.error(`Error while new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+            logger.error(`Error while new-post worker: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
         } else {
-            logger.error("Error while new-post: ", error);
+            logger.error("Error while new-post worker: ", error);
         }
     }
     return false;

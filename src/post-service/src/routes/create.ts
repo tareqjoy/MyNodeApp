@@ -68,7 +68,11 @@ export const createCreateRouter = (mongoClient: Mongoose, newPostKafkaProducer: 
     
             res.status(200).json(new MessageResponse("Posted"));
         } catch (error) {
-            logger.error("Error while posting: ", error);
+            if (axios.isAxiosError(error)) {
+                logger.error(`Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+            } else {
+                logger.error("Error while /create: ", error);
+            }
             res.status(500).json(new InternalServerError());
         }
         

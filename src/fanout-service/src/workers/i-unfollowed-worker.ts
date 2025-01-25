@@ -56,9 +56,9 @@ export const iUnfollowedFanout = async (redisClient: RedisClientType<any, any, a
         return true;
     } catch(error) {
         if (axios.isAxiosError(error)) {
-            logger.error(`Error while i-unfollow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+            logger.error(`Error while i-unfollow worker: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
         } else {
-            logger.error("Error while i-unfollow: ", error);
+            logger.error("Error while i-unfollow worker: ", error);
         }
     }
     return false;

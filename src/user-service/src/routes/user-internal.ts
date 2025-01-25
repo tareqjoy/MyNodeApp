@@ -78,7 +78,7 @@ export const createUserInternalRouter = (mongoClient: Mongoose, redisClient: Red
 
             res.status(200).json(new UserInternalRes(toUsername, toUserId));
         } catch(error) {
-            logger.error("Error while finding user", error);
+            logger.error("Error while /user-internal", error);
             res.status(500).json(new InternalServerError());
         }
     });

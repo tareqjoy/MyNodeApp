@@ -58,7 +58,7 @@ export const createSignOutRouter = (redisClient: RedisClientType<any, any, any>)
             }
 
         } catch(error) {
-            logger.error("Error while sign out", error);
+            logger.error("Error while /signout", error);
             res.status(500).json(new InternalServerError());
         }
     });

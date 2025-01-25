@@ -23,7 +23,7 @@ export const createUserDetailsRouter = (mongoClient: Mongoose) => {
                 res.status(200).json(new UserDetailsRes(String(doc._id), doc.username, doc.name, doc.email, doc.birthYear));
             }
         }).catch(err => {
-            logger.error("Error while finding user", err);
+            logger.error("Error while /:username", err);
             res.status(500).json(new InternalServerError());
         });
     });

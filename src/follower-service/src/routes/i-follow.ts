@@ -7,6 +7,7 @@ import { parseAndExecuteQuery } from './common/common';
 import { ATTR_HEADER_USER_ID } from '@tareqjoy/utils';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import axios from 'axios';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -29,7 +30,11 @@ export const createIFollowRouter = (neo4jDriver: Driver, isInternalEndpoint: boo
             const session = neo4jDriver.session();
             await parseAndExecuteQuery(isInternalEndpoint, userServiceHostUrl, req, res, session, followersQ);
         } catch(error) {
-            logger.error("Error while follow: ", error);
+            if (axios.isAxiosError(error)) {
+                logger.error(`Error while /i-follow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+            } else {
+                logger.error("Error while /i-follow: ", error);
+            }
             res.status(500).json(new InternalServerError());
         } finally {
             await session.close();

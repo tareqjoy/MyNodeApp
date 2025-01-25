@@ -93,15 +93,14 @@ export const createAuthorizeClientRouter = (redisClient: RedisClientType<any, an
             if(error instanceof AxiosError) {
                 if (error.response?.status == 403) {
                     res.status(401).json(new UnauthorizedRequest(error.response.data));
-                    return;
-                } else if (error.response?.status == 404) {
-                    res.status(404).json(new InvalidRequest(error.response.data));
-                    return;
+                } else {
+                    logger.error(`Error while /authorize-client: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+                    res.status(500).json(new InternalServerError());
                 }
-
+            } else {
+                logger.error("Error while /authorize-client", error);
+                res.status(500).json(new InternalServerError());
             }
-            logger.error("Error while sign in", error);
-            res.status(500).json(new InternalServerError());
         }
     });
     
