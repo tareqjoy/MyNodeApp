@@ -9,19 +9,19 @@ import { CreatePostReq } from '@tareqjoy/models';
 import { InvalidRequest, NewPostKafkaMsg } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { ATTR_HEADER_USER_ID } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
 const kafka_new_post_fanout_topic = process.env.KAFKA_NEW_POST_FANOUT_TOPIC || 'new-post';
-const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
 
 const router = express.Router();
 
 export const createCreateRouter = (mongoClient: Mongoose, newPostKafkaProducer: Producer) => {
     router.post('/', async (req, res, next) => {
         logger.trace(`POST /create called`);
-        
+        const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
         try {
             const createPostReq = plainToInstance(CreatePostReq, req.body);
             const errors = await validate(createPostReq);
@@ -31,22 +31,12 @@ export const createCreateRouter = (mongoClient: Mongoose, newPostKafkaProducer: 
                 return;
             }
     
-            const pUserInternalReq = new UserInternalReq(createPostReq.username, true);
-            const pUserIdAxiosResponse = await axios.post(userServiceHostUrl, pUserInternalReq);
-    
-            const pUserResObj = plainToInstance(UserInternalRes, pUserIdAxiosResponse.data);
-    
-            if (!pUserResObj.toUserIds || !pUserResObj.toUserIds[createPostReq.username]) {
-                res.status(400).json(new InvalidRequest("Invalid username"));
-                return;
-            }
-    
             const Post = mongoClient.model('Post', PostSchema);
         
             
             const post = new Post({
                 _id: new mongoose.Types.ObjectId(),
-                userid: pUserResObj.toUserIds[createPostReq.username],
+                userid: loggedInUserId,
                 body: createPostReq.body,
                 time: createPostReq.postTime
             })

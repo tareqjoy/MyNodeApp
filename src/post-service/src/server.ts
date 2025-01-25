@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import { connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
 import * as log4js from "log4js";
 import { createCreateRouter } from './routes/create';
-import { authorize, commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
+import { authorize, commonServiceMetricsMiddleware, getApiPath, getInternalApiPath } from '@tareqjoy/utils';
 import { createGetRouter } from './routes/get';
 import { createGetByUserRouter } from './routes/get-by-user';
 
@@ -34,6 +34,10 @@ async function main() {
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
 
+  //Only for internal use, should be protected from public access
+  app.use(getInternalApiPath(api_path_root, 'get-by-user'), createGetByUserRouter(mongoClient));
+
+  //For public use
   app.use(getApiPath(api_path_root, 'create'), authorize, createCreateRouter(mongoClient, kafkaNewPostProducer));
   app.use(getApiPath(api_path_root, 'get'), authorize, createGetRouter(mongoClient));
   app.use(getApiPath(api_path_root, 'get-by-user'), authorize, createGetByUserRouter(mongoClient));

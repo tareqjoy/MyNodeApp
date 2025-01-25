@@ -2,7 +2,6 @@ import express from 'express'
 import * as log4js from "log4js";
 import mongoose, { Mongoose } from 'mongoose';
 import { PostSchema } from '../db/PostSchema'
-import { Producer } from 'kafkajs';
 import axios from 'axios';
 import { GetPostByUserReq, UserInternalReq, UserInternalRes, Paging, InternalServerError } from '@tareqjoy/models';
 import { InvalidRequest } from '@tareqjoy/models';
@@ -15,9 +14,8 @@ logger.level = "trace";
 
 const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
 
-const router = express.Router();
-
 export const createGetByUserRouter = (mongoClient: Mongoose) => {
+    const router = express.Router();
     router.post('/', async (req, res, next) => {
         logger.trace(`POST /get-by-user called`);
         try {

@@ -5,6 +5,7 @@ import { RedisClientType } from 'redis'
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";
+import { getInternalFullPath } from "@tareqjoy/utils";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -36,7 +37,7 @@ export const iFollowedFanout = async (redisClient: RedisClientType<any, any, any
         }
 
         const postByUserReq = new GetPostByUserReq([iFollowedKafkaMsg.followsUserId], false, {returnOnlyPostId: true, limit: maxPostSetSize});
-        const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
+        const postByUserAxiosRes = await axios.post(getInternalFullPath(getPostByUserUrl), postByUserReq);
         const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 
         logger.trace(`Received from ${postDetailsResObj.posts.length} posts from post service for userId: ${iFollowedKafkaMsg.followsUserId}`);

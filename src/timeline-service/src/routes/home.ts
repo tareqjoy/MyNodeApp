@@ -94,7 +94,7 @@ export const createHomeRouter = (redisClient: RedisClientType<any, any, any>) =>
             const morePostToLoad = timelineHomeReq.limit - postsToReturn.length;
             const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, { lastPostId: lastPostId, limit: morePostToLoad, returnOnlyPostId: true});
 
-            const postByUserAxiosRes = await axios.post(getPostByUserUrl, postByUserReq);
+            const postByUserAxiosRes = await axios.post(getInternalFullPath(getPostByUserUrl), postByUserReq);
             const postDetailsResObj = plainToInstance(PostDetailsRes, postByUserAxiosRes.data);
 
             for(const post of postDetailsResObj.posts) {
