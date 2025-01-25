@@ -8,7 +8,7 @@ import bodyParser from "body-parser";
 import * as log4js from "log4js";
 import { createSignInRouter } from './routes/signin';
 import 'source-map-support/register';
-import { commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
+import { authorize, commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -34,8 +34,11 @@ async function main() {
 
   const redisClient = await connectRedis();
   const mongoClient = await connectMongo();
+
+  //For public AuthZ use
+  app.use(getApiPath(api_path_root, 'detail'), authorize, createUserDetailsRouter(mongoClient));
   
-  app.use(getApiPath(api_path_root, 'detail'), createUserDetailsRouter(mongoClient));
+  //For public non-AuthZ use
   app.use(getApiPath(api_path_root, 'signup'), createSignUpRouter(mongoClient));
   app.use(getApiPath(api_path_root, 'userid'), createUserInternalRouter(mongoClient, redisClient));
   app.use(getApiPath(api_path_root, 'signin'), createSignInRouter(mongoClient));
