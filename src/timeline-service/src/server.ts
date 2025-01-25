@@ -1,19 +1,23 @@
-import express from 'express';
-import 'reflect-metadata';
+import express from "express";
+import "reflect-metadata";
 import bodyParser from "body-parser";
 import { createHomeRouter } from "./routes/home";
-import { connectRedis } from '@tareqjoy/clients';
+import { connectRedis } from "@tareqjoy/clients";
 
 import * as log4js from "log4js";
-import { getApiPath, authorize, commonServiceMetricsMiddleware } from '@tareqjoy/utils';
+import {
+  getApiPath,
+  authorize,
+  commonServiceMetricsMiddleware,
+} from "@tareqjoy/utils";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
 const appport = process.env.PORT || 5001;
-const api_path_root = process.env.API_PATH_ROOT || '/v1/timeline';
+const api_path_root = process.env.API_PATH_ROOT || "/v1/timeline";
 
-export const app=express(); 
+export const app = express();
 
 class HttpError extends Error {
   statusCode: number;
@@ -31,36 +35,49 @@ async function main() {
   const redisClient = await connectRedis();
 
   app.use(
-    getApiPath(api_path_root, 'home'),
+    getApiPath(api_path_root, "home"),
     authorize,
-    createHomeRouter(redisClient)
+    createHomeRouter(redisClient),
   );
 
-  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const error = new HttpError('Not found', 404);
-    next(error);
-  });
+  app.use(
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      const error = new HttpError("Not found", 404);
+      next(error);
+    },
+  );
 
-  app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.status(error.statusCode || 500);
-    res.json({
-      message: req.url
-    })
-  });
+  app.use(
+    (
+      error: any,
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      res.status(error.statusCode || 500);
+      res.json({
+        message: req.url,
+      });
+    },
+  );
 
   // Start the server and listen to the port
   app.listen(appport, () => {
     logger.info(`Server is running on port ${appport}`);
   });
 
-  process.on('SIGINT', async () => {
+  process.on("SIGINT", async () => {
     try {
-      logger.info('Caught interrupt signal, shutting down...');
+      logger.info("Caught interrupt signal, shutting down...");
       await redisClient.quit();
       logger.info(`Redis disconnected`);
       process.exit(0);
     } catch (error) {
-      logger.error('Error during disconnect:', error);
+      logger.error("Error during disconnect:", error);
     }
   });
 }

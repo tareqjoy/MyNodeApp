@@ -1,6 +1,6 @@
-import { Transform, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsMongoId, IsOptional } from 'class-validator';
-import { IsAtLeastOneFieldRequired } from '../../constraints/atleast-one-field-required';
+import { Transform, Type } from "class-transformer";
+import { IsArray, IsBoolean, IsMongoId, IsOptional } from "class-validator";
+import { IsAtLeastOneFieldRequired } from "../../constraints/atleast-one-field-required";
 
 export class GetPostReq {
   @IsOptional()
@@ -8,22 +8,22 @@ export class GetPostReq {
   postId?: string;
 
   @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) 
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
-  @IsMongoId({each: true})
+  @IsMongoId({ each: true })
   postIds?: string[];
 
   @IsBoolean()
   @IsOptional()
   returnAsUsername: boolean = false;
 
-  @IsAtLeastOneFieldRequired(['postIds', 'postId'])
+  @IsAtLeastOneFieldRequired(["postIds", "postId"])
   anyField?: string; // This is a dummy field for the validation to work
 
   getNormalizedPostIds(): string[] {
     const norms: Set<string> = new Set();
     if (this.postIds) {
-      this.postIds.forEach(id => norms.add(id));
+      this.postIds.forEach((id) => norms.add(id));
     }
     if (this.postId) {
       norms.add(this.postId);
@@ -35,16 +35,16 @@ export class GetPostReq {
   constructor(idOrIds?: string | string[]);
   constructor(idOrIds?: string | string[], returnAsUsername?: boolean);
   constructor(idOrIds?: string | string[], returnAsUsername?: boolean) {
-      if (idOrIds) {
-        if (Array.isArray(idOrIds)) {
-          this.postIds = idOrIds;
-        } else {
-          this.postId = idOrIds;
-        }
+    if (idOrIds) {
+      if (Array.isArray(idOrIds)) {
+        this.postIds = idOrIds;
+      } else {
+        this.postId = idOrIds;
       }
+    }
 
-      if (returnAsUsername) {
-        this.returnAsUsername = returnAsUsername;
-      }
+    if (returnAsUsername) {
+      this.returnAsUsername = returnAsUsername;
+    }
   }
 }

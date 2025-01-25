@@ -1,7 +1,7 @@
 export class MessageResponse {
-    message = "Success";
+  message = "Success";
 
-    constructor(message: string) {
-        this.message = message;
-    }
+  constructor(message: string) {
+    this.message = message;
+  }
 }

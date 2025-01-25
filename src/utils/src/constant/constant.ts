@@ -1,2 +1,2 @@
 // Headers
-export const ATTR_HEADER_USER_ID = 'X-User-Id';
+export const ATTR_HEADER_USER_ID = "X-User-Id";

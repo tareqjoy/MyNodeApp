@@ -1,3 +1,3 @@
 export class UnfollowRes {
-    message = "Unfollowed";
+  message = "Unfollowed";
 }

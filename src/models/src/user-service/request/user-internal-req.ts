@@ -1,6 +1,6 @@
-import { Transform } from 'class-transformer';
-import { IsArray, IsMongoId, IsOptional } from 'class-validator';
-import { IsAtLeastOneFieldRequired } from '../../constraints/atleast-one-field-required';
+import { Transform } from "class-transformer";
+import { IsArray, IsMongoId, IsOptional } from "class-validator";
+import { IsAtLeastOneFieldRequired } from "../../constraints/atleast-one-field-required";
 
 export class UserInternalReq {
   @IsOptional()
@@ -18,17 +18,16 @@ export class UserInternalReq {
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : [value])) // Normalize to an array
   @IsArray()
-  @IsMongoId({each: true})
+  @IsMongoId({ each: true })
   userIds?: string[];
 
-
-  @IsAtLeastOneFieldRequired(['username', 'usernames', 'userId', 'userIds'])
+  @IsAtLeastOneFieldRequired(["username", "usernames", "userId", "userIds"])
   anyField?: string; // This is a dummy field for the validation to work
 
   getNormalizedUsernames(): string[] {
     const norms: Set<string> = new Set();
     if (this.usernames) {
-      this.usernames.forEach(uname => norms.add(uname));
+      this.usernames.forEach((uname) => norms.add(uname));
     }
     if (this.username) {
       norms.add(this.username);
@@ -39,7 +38,7 @@ export class UserInternalReq {
   getNormalizedIds(): string[] {
     const norms: Set<string> = new Set();
     if (this.userIds) {
-      this.userIds.forEach(uid => norms.add(uid));
+      this.userIds.forEach((uid) => norms.add(uid));
     }
     if (this.userId) {
       norms.add(this.userId);

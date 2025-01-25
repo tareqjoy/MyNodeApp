@@ -1,4 +1,9 @@
-import { registerDecorator, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from "class-validator";
 
 @ValidatorConstraint({ async: false })
 export class IsNotEqualToConstraint implements ValidatorConstraintInterface {
@@ -13,7 +18,10 @@ export class IsNotEqualToConstraint implements ValidatorConstraintInterface {
   }
 }
 
-export function IsNotEqualTo(property: string, validationOptions?: ValidationOptions) {
+export function IsNotEqualTo(
+  property: string,
+  validationOptions?: ValidationOptions,
+) {
   return function (object: Object, propertyName: string) {
     registerDecorator({
       target: object.constructor,

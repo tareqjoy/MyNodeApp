@@ -1,23 +1,32 @@
-import { Transform, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsInt, IsMongoId, IsNotEmpty, IsNumber, IsOptional, Max, Min } from 'class-validator';
-import { IsAtLeastOneFieldRequired } from '../../constraints/atleast-one-field-required';
+import { Transform, Type } from "class-transformer";
+import {
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  Max,
+  Min,
+} from "class-validator";
+import { IsAtLeastOneFieldRequired } from "../../constraints/atleast-one-field-required";
 
 export class GetPostByUserReq {
   @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) 
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
   usernames?: string[];
 
   @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value])) 
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
-  @IsMongoId({each: true})
+  @IsMongoId({ each: true })
   userIds?: string[];
-
 
   @IsOptional()
   @IsMongoId()
-  lastPostId?: string; 
+  lastPostId?: string;
 
   @IsOptional()
   @IsInt()
@@ -34,7 +43,7 @@ export class GetPostByUserReq {
   @IsOptional()
   returnAsUsername: boolean = false; // not needed when returnOnlyPostId = true as userId/name will not be returned anyway as response
 
-  @IsAtLeastOneFieldRequired(['usernames', 'userIds'])
+  @IsAtLeastOneFieldRequired(["usernames", "userIds"])
   anyField?: string; // This is a dummy field for the validation to work
 
   getNormalizedUserIds(): string[] {
@@ -49,17 +58,35 @@ export class GetPostByUserReq {
 
   constructor();
   constructor(namesOrIds?: string[], providedUsernames?: boolean);
-  constructor(namesOrIds?: string[], providedUsernames?: boolean, options?: {lastPostId?: string, limit?: number, returnAsUsername?: boolean, returnOnlyPostId?: boolean});
-  constructor(namesOrIds?: string[], providedUsernames?: boolean, options?: {lastPostId?: string, limit?: number, returnAsUsername?: boolean, returnOnlyPostId?: boolean}) {
-      if (providedUsernames) {
-        this.usernames = namesOrIds;
-      } else {
-        this.userIds = namesOrIds;
-      }
+  constructor(
+    namesOrIds?: string[],
+    providedUsernames?: boolean,
+    options?: {
+      lastPostId?: string;
+      limit?: number;
+      returnAsUsername?: boolean;
+      returnOnlyPostId?: boolean;
+    },
+  );
+  constructor(
+    namesOrIds?: string[],
+    providedUsernames?: boolean,
+    options?: {
+      lastPostId?: string;
+      limit?: number;
+      returnAsUsername?: boolean;
+      returnOnlyPostId?: boolean;
+    },
+  ) {
+    if (providedUsernames) {
+      this.usernames = namesOrIds;
+    } else {
+      this.userIds = namesOrIds;
+    }
 
-      this.limit = options?.limit || 100;
-      this.returnAsUsername = options?.returnAsUsername || false;
-      this.returnOnlyPostId = options?.returnOnlyPostId || false;
-      this.lastPostId = options?.lastPostId;
+    this.limit = options?.limit || 100;
+    this.returnAsUsername = options?.returnAsUsername || false;
+    this.returnOnlyPostId = options?.returnOnlyPostId || false;
+    this.lastPostId = options?.lastPostId;
   }
 }

@@ -1,15 +1,17 @@
-import mongoose, { Mongoose } from 'mongoose';
+import mongoose, { Mongoose } from "mongoose";
 
 import * as log4js from "log4js";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
-const mongoUrl = process.env.MONGODB_URL || "mongodb://admin:admin@192.168.0.10:27017,192.168.0.10:27018,192.168.0.10:27019/mydatabase?replicaSet=rs0";
+const mongoUrl =
+  process.env.MONGODB_URL ||
+  "mongodb://admin:admin@192.168.0.10:27017,192.168.0.10:27018,192.168.0.10:27019/mydatabase?replicaSet=rs0";
 
 const mongoOptions = {
-    maxPoolSize: 100,
-    minPoolSize: 10
+  maxPoolSize: 100,
+  minPoolSize: 10,
 };
 
 export async function connectMongo(): Promise<Mongoose> {
@@ -17,4 +19,3 @@ export async function connectMongo(): Promise<Mongoose> {
   logger.info(`Connected to MongoDB`);
   return mongoClient!;
 }
-

@@ -1,105 +1,134 @@
-import express from 'express'
-import { Driver } from 'neo4j-driver';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
-import { Request, Response } from 'express';
-import { Producer } from 'kafkajs';
+import express from "express";
+import { Driver } from "neo4j-driver";
+import { plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
+import { Request, Response } from "express";
+import { Producer } from "kafkajs";
 import * as log4js from "log4js";
-import { UnfollowReq, UserInternalReq, UserInternalRes, IUnfollowedKafkaMsg } from '@tareqjoy/models';
-import { UnfollowRes } from '@tareqjoy/models';
-import { InvalidRequest, InternalServerError } from '@tareqjoy/models';
-import axios from 'axios';
-import { ATTR_HEADER_USER_ID } from '@tareqjoy/utils';
+import {
+  UnfollowReq,
+  UserInternalReq,
+  UserInternalRes,
+  IUnfollowedKafkaMsg,
+} from "@tareqjoy/models";
+import { UnfollowRes } from "@tareqjoy/models";
+import { InvalidRequest, InternalServerError } from "@tareqjoy/models";
+import axios from "axios";
+import { ATTR_HEADER_USER_ID } from "@tareqjoy/utils";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
-const kafka_i_unfollowed_fanout_topic = process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || 'i-unfollowed';
-const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
+const kafka_i_unfollowed_fanout_topic =
+  process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || "i-unfollowed";
+const userServiceHostUrl: string =
+  process.env.USER_SERVICE_USERID_URL ||
+  "http://127.0.0.1:5002/v1/user/userid/";
 
 const router = express.Router();
 
-export const createUnfollowRouter = (neo4jDriver: Driver, kafkaProducer: Producer) => {
-    router.post('/', async (req: Request, res: Response) => {
-        logger.trace(`POST /unfollow called`);
-        const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
-        const session =  neo4jDriver.session();
-        try {
-            const unfollowPostDto = plainToInstance(UnfollowReq, req.body);
-            const errors = await validate(unfollowPostDto);
+export const createUnfollowRouter = (
+  neo4jDriver: Driver,
+  kafkaProducer: Producer,
+) => {
+  router.post("/", async (req: Request, res: Response) => {
+    logger.trace(`POST /unfollow called`);
+    const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
+    const session = neo4jDriver.session();
+    try {
+      const unfollowPostDto = plainToInstance(UnfollowReq, req.body);
+      const errors = await validate(unfollowPostDto);
 
-            if (errors.length > 0) {
-                logger.error(`Invalid request. ${Object.values(errors![0].constraints || "")}`)
+      if (errors.length > 0) {
+        logger.error(
+          `Invalid request. ${Object.values(errors![0].constraints || "")}`,
+        );
+      }
 
-            }
+      if (errors.length > 0) {
+        res.status(400).json(new InvalidRequest(errors));
+        return;
+      }
 
-            if (errors.length > 0) {
-                res.status(400).json(new InvalidRequest(errors));
-                return;
-            }
+      const userInternalReq = new UserInternalReq(
+        [unfollowPostDto.unfollowsUsername],
+        true,
+      );
+      const userIdResponse = await axios.post(
+        userServiceHostUrl,
+        userInternalReq,
+      );
 
+      const userInternalResponse = plainToInstance(
+        UserInternalRes,
+        userIdResponse.data,
+      );
 
-            const userInternalReq = new UserInternalReq([unfollowPostDto.unfollowsUsername], true);
-            const userIdResponse = await axios.post(userServiceHostUrl, userInternalReq);
+      if (
+        !userInternalResponse.toUserIds ||
+        !userInternalResponse.toUserIds[unfollowPostDto.unfollowsUsername]
+      ) {
+        res.status(400).json(new InvalidRequest("Invalid username"));
+        return;
+      }
 
-            const userInternalResponse = plainToInstance(UserInternalRes, userIdResponse.data);
+      const unfollowsId =
+        userInternalResponse.toUserIds[unfollowPostDto.unfollowsUsername];
 
-            if (!userInternalResponse.toUserIds || !userInternalResponse.toUserIds[unfollowPostDto.unfollowsUsername]) {
-                res.status(400).json(new InvalidRequest("Invalid username"));
-                return;
-            }
+      if (loggedInUserId == unfollowsId) {
+        res.status(400).json(new InvalidRequest("Cannot unfollow self"));
+        return;
+      }
 
-            const unfollowsId = userInternalResponse.toUserIds[unfollowPostDto.unfollowsUsername];
-
-            if(loggedInUserId == unfollowsId) {
-                res.status(400).json(new InvalidRequest("Cannot unfollow self"));
-                return;
-            }
-
-            const ifFollows = await session.run(`
+      const ifFollows = await session.run(
+        `
                 MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
                 RETURN COUNT(r) > 0 AS exists
                 `,
-                { userId1: loggedInUserId, userId2: unfollowsId }
-              );
+        { userId1: loggedInUserId, userId2: unfollowsId },
+      );
 
-            if (!ifFollows.records[0].get('exists') as boolean) {   
-                res.status(400).json(new InvalidRequest("Already not following"));   
-                return;
-            }
+      if (!ifFollows.records[0].get("exists") as boolean) {
+        res.status(400).json(new InvalidRequest("Already not following"));
+        return;
+      }
 
-            await session.run(
-                `
+      await session.run(
+        `
                 MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
                 DELETE r
                 `,
-                { userId1: loggedInUserId, userId2: unfollowsId }
-            );
+        { userId1: loggedInUserId, userId2: unfollowsId },
+      );
 
-            const kafkaMsg = new IUnfollowedKafkaMsg(loggedInUserId, unfollowsId);
-            logger.debug(`publishing Kafka: topic: ${kafka_i_unfollowed_fanout_topic}`);
-            await kafkaProducer.send({
-                topic: kafka_i_unfollowed_fanout_topic,
-                messages: [
-                    {
-                        key: loggedInUserId,
-                        value: JSON.stringify(kafkaMsg)
-                    }
-                ]
-            })
+      const kafkaMsg = new IUnfollowedKafkaMsg(loggedInUserId, unfollowsId);
+      logger.debug(
+        `publishing Kafka: topic: ${kafka_i_unfollowed_fanout_topic}`,
+      );
+      await kafkaProducer.send({
+        topic: kafka_i_unfollowed_fanout_topic,
+        messages: [
+          {
+            key: loggedInUserId,
+            value: JSON.stringify(kafkaMsg),
+          },
+        ],
+      });
 
-            res.status(200).json(new UnfollowRes());
-        } catch(error) {
-            if (axios.isAxiosError(error)) {
-                logger.error(`Error while /unfollow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
-            } else {
-                logger.error("Error while /unfollow: ", error);
-            }
-            
-            res.status(500).json(new InternalServerError());
-        } finally{
-            await session.close();
-        }
-    });
-    return router;
-}
+      res.status(200).json(new UnfollowRes());
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        logger.error(
+          `Error while /unfollow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+        );
+      } else {
+        logger.error("Error while /unfollow: ", error);
+      }
+
+      res.status(500).json(new InternalServerError());
+    } finally {
+      await session.close();
+    }
+  });
+  return router;
+};

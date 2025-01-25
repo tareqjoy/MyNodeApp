@@ -1,3 +1,3 @@
 export class FollowRes {
-    message = "Followed";
+  message = "Followed";
 }
