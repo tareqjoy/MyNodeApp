@@ -3,31 +3,26 @@ import { IsAtLeastOneFieldRequired } from '../../constraints/atleast-one-field-r
 import { Type } from 'class-transformer';
 
 export class FollowersReq {
-    @IsString()
+    @IsBoolean()
     @IsOptional()
-    username?: string;
+    returnAsUsername: boolean = false;
+}
 
+
+export class FollowersReqInternal {
     @IsString()
     @IsMongoId()
     @IsOptional()
-    userId?: string;
-
-    @IsAtLeastOneFieldRequired(['username', 'userId'])
-    anyField?: string; // This is a dummy field for the validation to work
+    userId: string;
 
     @IsBoolean()
     @IsOptional()
     returnAsUsername: boolean = false;
 
     constructor();
-    constructor(nameOrId?: string, providedUsername?: boolean, returnAsUsername?: boolean);
-    constructor(nameOrId?: string, providedUsername?: boolean, returnAsUsername?: boolean) {
-        if (providedUsername && providedUsername === true) {
-            this.username = nameOrId;
-        } else {
-            this.userId = nameOrId;
-        }
-        
+    constructor(userId: string, returnAsUsername?: boolean);
+    constructor(userId?: string, returnAsUsername?: boolean) {
+        this.userId = userId || '';
         this.returnAsUsername = returnAsUsername || false;
     }
 }

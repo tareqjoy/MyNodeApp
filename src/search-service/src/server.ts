@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import * as log4js from "log4js";
 import { createAllRouter } from './routes/all';
 import { connectElasticSearch } from '@tareqjoy/clients';
-import { commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
+import { authorize, commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -32,9 +32,8 @@ async function main() {
 
   const elasticSearchClient =  await connectElasticSearch();
 
-  app.use(getApiPath(api_path_root, 'all'), createAllRouter(elasticSearchClient));
+  app.use(getApiPath(api_path_root, 'all'), authorize, createAllRouter(elasticSearchClient));
   
-
   // Start the server and listen to the port
   app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);

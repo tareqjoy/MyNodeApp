@@ -30,7 +30,11 @@ async function main() {
 
   const redisClient = await connectRedis();
 
-  app.use(getApiPath(api_path_root, 'home'), authorize, createHomeRouter(redisClient));
+  app.use(
+    getApiPath(api_path_root, 'home'),
+    authorize,
+    createHomeRouter(redisClient)
+  );
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);

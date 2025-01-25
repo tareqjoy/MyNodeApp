@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { connectNeo4jDriver, connectKafkaProducer } from "@tareqjoy/clients";
 import * as log4js from "log4js";
 import { createFollowRouter } from './routes/follow';
-import { commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
+import { authorize, commonServiceMetricsMiddleware, getApiPath, getInternalApiPath } from '@tareqjoy/utils';
 import { createUnfollowRouter } from './routes/unfollow';
 import { createIFollowRouter } from './routes/i-follow';
 import { createWhoFollowsMeRouter } from './routes/who-follows-me';
@@ -35,10 +35,16 @@ async function main() {
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   app.use(bodyParser.json());
 
-  app.use(getApiPath(api_path_root, 'follow'), createFollowRouter(neo4jDriver, kafkaNewPostProducer));
-  app.use(getApiPath(api_path_root, 'unfollow'), createUnfollowRouter(neo4jDriver, kafkaNewPostProducer));
-  app.use(getApiPath(api_path_root, 'i-follow'), createIFollowRouter(neo4jDriver));
-  app.use(getApiPath(api_path_root, 'who-follows-me'), createWhoFollowsMeRouter(neo4jDriver));
+  //Only for internal use, should be protected from public access
+  app.use(getInternalApiPath(api_path_root, 'i-follow'), createIFollowRouter(neo4jDriver, true));
+  app.use(getInternalApiPath(api_path_root, 'who-follows-me'), createWhoFollowsMeRouter(neo4jDriver, true));
+
+  //For public use
+  app.use(getApiPath(api_path_root, 'follow'), authorize, createFollowRouter(neo4jDriver, kafkaNewPostProducer));
+  app.use(getApiPath(api_path_root, 'unfollow'), authorize, createUnfollowRouter(neo4jDriver, kafkaNewPostProducer));
+  app.use(getApiPath(api_path_root, 'i-follow'), authorize, createIFollowRouter(neo4jDriver, false));
+  app.use(getApiPath(api_path_root, 'who-follows-me'), authorize, createWhoFollowsMeRouter(neo4jDriver, false));
+
 
   // Start the server and listen to the port
   app.listen(port, () => {

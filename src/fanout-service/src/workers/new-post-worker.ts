@@ -1,10 +1,11 @@
-import { FollowersReq, FollowersRes, InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
+import { FollowersReqInternal, FollowersRes, InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
 import axios from "axios";
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis'
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";
+import { getInternalFullPath } from "@tareqjoy/utils";
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -21,9 +22,9 @@ export const newPostFanout = async (redisClient: RedisClientType<any, any, any>,
             logger.warn(`Bad data found from Kafka: ${new InvalidRequest(errors)}`)
             return true;
         }
-        const followsMeReq = new FollowersReq(newPostKafkaMsg.userId, false, false);
+        const followsMeReq = new FollowersReqInternal(newPostKafkaMsg.userId);
         
-        const whoFollowsAxiosRes = await axios.post(whoFollowsMeUrl, followsMeReq);
+        const whoFollowsAxiosRes = await axios.post(getInternalFullPath(whoFollowsMeUrl), followsMeReq);
 
         const followersIdsObj = plainToInstance(FollowersRes, whoFollowsAxiosRes.data);
 

@@ -2,15 +2,14 @@ import express from 'express'
 import * as log4js from "log4js";
 import { RedisClientType } from 'redis';
 import axios from 'axios';
-import { FollowersReq, FollowersRes, GetPostByUserReq, InvalidRequest, PostDetailsRes, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
+import { FollowersReq, FollowersReqInternal, FollowersRes, GetPostByUserReq, InvalidRequest, PostDetailsRes, TimelineHomePaging, TimelineHomePagingRaw, TimelineHomePost, TimelineHomeReq, TimelineHomeRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { ATTR_HEADER_USER_ID } from '@tareqjoy/utils';
+import { ATTR_HEADER_USER_ID, getInternalFullPath } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
 
-const userServiceHostUrl: string = process.env.USER_SERVICE_USERID_URL || "http://127.0.0.1:5002/v1/user/userid/";
 const iFollowUrl: string = process.env.I_FOLLOW_URL || "http://127.0.0.1:5003/v1/follower/i-follow/";
 const getPostByUserUrl: string = process.env.GET_POST_BY_USER_URL || "http://127.0.0.1:5005/v1/post/get-by-user/";
 
@@ -88,8 +87,8 @@ export const createHomeRouter = (redisClient: RedisClientType<any, any, any>) =>
 
             
             
-            const iFollowReq = new FollowersReq(userId, false, false);
-            const iFollowAxiosRes = await axios.post(iFollowUrl, iFollowReq);
+            const iFollowReq = new FollowersReqInternal(userId);
+            const iFollowAxiosRes = await axios.post(getInternalFullPath(iFollowUrl), iFollowReq);
             const iFollowIdsObj = plainToInstance(FollowersRes, iFollowAxiosRes.data);
 
             const morePostToLoad = timelineHomeReq.limit - postsToReturn.length;
@@ -113,8 +112,12 @@ export const createHomeRouter = (redisClient: RedisClientType<any, any, any>) =>
             logger.trace("loaded from post service/mongodb: ", postDetailsResObj.posts.length);
             res.status(200).json(new TimelineHomeRes(postsToReturn, pageTokenObj));
         } catch(error) {
-            logger.error("Error while get: ", error);
-            res.status(500).json({error: error});
+            if (axios.isAxiosError(error)) {
+                logger.error(`Error while new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
+            } else {
+                logger.error("Error while new-post: ", error);
+            }
+            res.status(500).json({error: 'Internal Server Error'});
         }
     
     });

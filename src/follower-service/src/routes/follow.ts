@@ -9,6 +9,7 @@ import { FollowReq, IFollowedKafkaMsg, UserInternalReq, UserInternalRes } from '
 import { FollowRes } from '@tareqjoy/models';
 import { InvalidRequest, InternalServerError } from '@tareqjoy/models';
 import axios from 'axios';
+import { ATTR_HEADER_USER_ID } from '@tareqjoy/utils';
 
 const logger = log4js.getLogger();
 logger.level = "trace";
@@ -21,6 +22,7 @@ const router = express.Router();
 export const createFollowRouter = (neo4jDriver: Driver, kafkaProducer: Producer) => {
     router.post('/', async (req: Request, res: Response) => {
         logger.trace(`POST /follow called`);
+        const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
         const session =  neo4jDriver.session();
         try {
             const followPostDto = plainToInstance(FollowReq, req.body);
@@ -31,24 +33,28 @@ export const createFollowRouter = (neo4jDriver: Driver, kafkaProducer: Producer)
                 return;
             }
 
-            const userInternalReq = new UserInternalReq([followPostDto.username, followPostDto.followsUsername], true);
+            const userInternalReq = new UserInternalReq([followPostDto.followsUsername], true);
             const userIdResponse = await axios.post(userServiceHostUrl, userInternalReq);
 
             const userInternalResponse = plainToInstance(UserInternalRes, userIdResponse.data);
 
-            if (!userInternalResponse.toUserIds || !userInternalResponse.toUserIds[followPostDto.username] || !userInternalResponse.toUserIds[followPostDto.followsUsername]) {
+            if (!userInternalResponse.toUserIds || !userInternalResponse.toUserIds[followPostDto.followsUsername]) {
                 res.status(400).json(new InvalidRequest("Invalid username"));
                 return;
             }
 
-            const usernameId = userInternalResponse.toUserIds[followPostDto.username];
             const followsId = userInternalResponse.toUserIds[followPostDto.followsUsername];
+
+            if(loggedInUserId == followsId) {
+                res.status(400).json(new InvalidRequest("Cannot follow self"));
+                return;
+            }
 
             const alreadyFollows = await session.run(`
                 MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
                 RETURN COUNT(r) > 0 AS exists
                 `,
-                { userId1: usernameId, userId2: followsId }
+                { userId1: loggedInUserId, userId2: followsId }
               );
 
             if (alreadyFollows.records[0].get('exists') as boolean) {   
@@ -63,18 +69,16 @@ export const createFollowRouter = (neo4jDriver: Driver, kafkaProducer: Producer)
                 MERGE (a)-[r:FOLLOW]->(b)
                   ON CREATE SET r.followSince = $followSince, r.isMuted = $isMuted
                 `,
-                { userId: usernameId, followsId: followsId, followSince: followPostDto.followTime, isMuted: false }
+                { userId: loggedInUserId, followsId: followsId, followSince: followPostDto.followTime, isMuted: false }
             );
-            
-            await session.close();
 
-            const kafkaMsg = new IFollowedKafkaMsg(usernameId, followsId);
+            const kafkaMsg = new IFollowedKafkaMsg(loggedInUserId, followsId);
             logger.debug(`publishing Kafka: topic: ${kafka_i_followed_fanout_topic}`);
             await kafkaProducer.send({
                 topic: kafka_i_followed_fanout_topic,
                 messages: [
                     {
-                        key: usernameId,
+                        key: loggedInUserId,
                         value: JSON.stringify(kafkaMsg)
                     }
                 ]
@@ -82,13 +86,14 @@ export const createFollowRouter = (neo4jDriver: Driver, kafkaProducer: Producer)
 
             res.status(200).json(new FollowRes());
         } catch(error) {
-            await session.close();
             if (axios.isAxiosError(error)) {
                 logger.error(`Error while follow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`);
             } else {
                 logger.error("Error while follow: ", error);
             }
             res.status(500).json(new InternalServerError());
+        } finally{
+            await session.close();
         }
     });
 

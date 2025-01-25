@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import { connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
 import * as log4js from "log4js";
 import { createCreateRouter } from './routes/create';
-import { commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
+import { authorize, commonServiceMetricsMiddleware, getApiPath } from '@tareqjoy/utils';
 import { createGetRouter } from './routes/get';
 import { createGetByUserRouter } from './routes/get-by-user';
 
@@ -34,9 +34,9 @@ async function main() {
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
 
-  app.use(getApiPath(api_path_root, 'create'), createCreateRouter(mongoClient, kafkaNewPostProducer));
-  app.use(getApiPath(api_path_root, 'get'), createGetRouter(mongoClient));
-  app.use(getApiPath(api_path_root, 'get-by-user'), createGetByUserRouter(mongoClient));
+  app.use(getApiPath(api_path_root, 'create'), authorize, createCreateRouter(mongoClient, kafkaNewPostProducer));
+  app.use(getApiPath(api_path_root, 'get'), authorize, createGetRouter(mongoClient));
+  app.use(getApiPath(api_path_root, 'get-by-user'), authorize, createGetByUserRouter(mongoClient));
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const error = new HttpError('Not found', 404);
