@@ -651,6 +651,13 @@ spec:
                   name: follower-service
                   port:
                     number: 3003
+            - path: /internal/v1/follower/
+              pathType: Prefix
+              backend:
+                service:
+                  name: follower-service
+                  port:
+                    number: 3003
             - path: /v1/fanout/
               pathType: Prefix
               backend:
@@ -659,6 +666,13 @@ spec:
                   port:
                     number: 3004
             - path: /v1/post/
+              pathType: Prefix
+              backend:
+                service:
+                  name: post-service
+                  port:
+                    number: 3005
+            - path: /internal/v1/post/
               pathType: Prefix
               backend:
                 service:
