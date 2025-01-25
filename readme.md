@@ -77,7 +77,7 @@
 11. Grafana with apt-get: https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
     1.  Grafana will start at: http://localhost:3000. username: **admin** & password: **admin**
     2.  See additional details to continue
-12. Prometheus: run the script here `<workspace>/bin/installation/prometheus.sh`. For more details: https://reintech.io/blog/installing-configuring-prometheus-ubuntu-22
+12. Prometheus: run the script here `<workspace>/scripts/installation/prometheus.sh`. For more details: https://reintech.io/blog/installing-configuring-prometheus-ubuntu-22
     1.  Prometheus will run on http://localhost:9090/
 ## How To Run
    1. Run the following commands. If any error occurs, see the Prerequisites section to setup.

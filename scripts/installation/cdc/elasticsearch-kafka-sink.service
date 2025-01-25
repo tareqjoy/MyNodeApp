@@ -1,0 +1,11 @@
+[Unit]
+Description=Kafka to Elasticsearch connect
+After=network.target
+
+[Service]
+ExecStart=/usr/local/kafka/bin/connect-standalone.sh /etc/cdc-config/mynodeapp/connect-standalone-sink.properties /etc/cdc-config/mynodeapp/elasticsearch-sink-posts-connector.properties /etc/cdc-config/mynodeapp/elasticsearch-sink-users-connector.properties
+ExecStop=/bin/kill -TERM $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

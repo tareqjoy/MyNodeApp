@@ -1,0 +1,11 @@
+[Unit]
+Description=Mongodb to Kafka connect
+After=network.target
+
+[Service]
+ExecStart=/usr/local/kafka/bin/connect-standalone.sh /etc/cdc-config/mynodeapp/connect-standalone-source.properties /etc/cdc-config/mynodeapp/mongodb-source-posts-connector.properties /etc/cdc-config/mynodeapp/mongodb-source-users-connector.properties
+ExecStop=/bin/kill -TERM $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
