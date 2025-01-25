@@ -46,8 +46,7 @@ async function main() {
         logger.trace("Kafka message received: ", {topic, partition, offset: message.offset, value: message.value?.toString()});
         var isProcessed = false;
         if (message.value != undefined) {
-          const enfFn = workerDurationHistogram.labels(topic).startTimer();
-          const startTimestampMs = Date.now();
+          const timerEndFn = workerDurationHistogram.labels(topic).startTimer();
           try {
             if (topic === kafka_new_post_fanout_topic) {
               isProcessed = await newPostFanout(redisClient, message.value?.toString());
@@ -65,9 +64,9 @@ async function main() {
             } else {
               logger.warn(`Message is not processed by worker. topic: ${topic}`);
             }
-            const durationInS = enfFn();
+            const durationInS = timerEndFn();
 
-            logger.warn(`took ${durationInS}s to process the message`);
+            logger.trace(`took ${durationInS}s to process the message`);
           } catch(error) {
             logger.error("error while executing task", error);
           }
