@@ -7,6 +7,7 @@ import {
   authorize,
   commonServiceMetricsMiddleware,
   getApiPath,
+  getExpressLogger,
 } from "@tareqjoy/utils";
 
 const logger = log4js.getLogger();
@@ -32,6 +33,7 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
+  app.use(getExpressLogger());
 
   const elasticSearchClient = await connectElasticSearch();
 

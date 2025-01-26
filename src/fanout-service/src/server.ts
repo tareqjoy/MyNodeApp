@@ -8,7 +8,7 @@ import { createFanoutRouter } from "./routes/fanout";
 import { newPostFanout } from "./workers/new-post-worker";
 import { iFollowedFanout } from "./workers/i-followed-worker";
 import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
-import { commonServiceMetricsMiddleware } from "@tareqjoy/utils";
+import { commonServiceMetricsMiddleware, getExpressLogger } from "@tareqjoy/utils";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
@@ -39,6 +39,7 @@ class HttpError extends Error {
 
 async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
+  app.use(getExpressLogger());
 
   const newPostConsumer = await connectKafkaConsumer(
     kafka_client_id,

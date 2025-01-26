@@ -7,6 +7,7 @@ import {
   authorize,
   commonServiceMetricsMiddleware,
   getApiPath,
+  getExpressLogger,
   getInternalApiPath,
 } from "@tareqjoy/utils";
 import { createUnfollowRouter } from "./routes/unfollow";
@@ -36,6 +37,8 @@ class HttpError extends Error {
 
 async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
+  app.use(getExpressLogger());
+
   const neo4jDriver = await connectNeo4jDriver();
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   app.use(bodyParser.json());

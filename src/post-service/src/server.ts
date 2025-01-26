@@ -8,6 +8,7 @@ import {
   authorize,
   commonServiceMetricsMiddleware,
   getApiPath,
+  getExpressLogger,
   getInternalApiPath,
 } from "@tareqjoy/utils";
 import { createGetRouter } from "./routes/get";
@@ -35,6 +36,7 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
+  app.use(getExpressLogger());
 
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
