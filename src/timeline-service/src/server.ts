@@ -4,16 +4,17 @@ import bodyParser from "body-parser";
 import { createHomeRouter } from "./routes/home";
 import { connectRedis } from "@tareqjoy/clients";
 
-import * as log4js from "log4js";
 import {
   getApiPath,
   authorize,
   commonServiceMetricsMiddleware,
   getExpressLogger,
+  initWinstonLogger,
+  getLogger,
 } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+initWinstonLogger("timeline-service");
+const logger = getLogger(__filename);
 
 const appport = process.env.PORT || 5001;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/timeline";

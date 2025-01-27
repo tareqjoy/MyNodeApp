@@ -1,14 +1,13 @@
 import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";
-import * as log4js from "log4js";
 
 import { connectKafkaConsumer, connectRedis } from "@tareqjoy/clients";
 import { createFanoutRouter } from "./routes/fanout";
 import { newPostFanout } from "./workers/new-post-worker";
 import { iFollowedFanout } from "./workers/i-followed-worker";
 import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
-import { commonServiceMetricsMiddleware, getExpressLogger } from "@tareqjoy/utils";
+import { commonServiceMetricsMiddleware, getExpressLogger, getLogger, initWinstonLogger } from "@tareqjoy/utils";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
@@ -20,8 +19,8 @@ const kafka_i_unfollowed_fanout_topic =
   process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || "i-unfollowed";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+initWinstonLogger("fanout-service");
+const logger = getLogger(__filename);
 
 const appport = process.env.PORT || 5004;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/fanout";
@@ -53,7 +52,7 @@ async function main() {
   const redisClient = await connectRedis();
   await newPostConsumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      logger.trace("Kafka message received: ", {
+      logger.silly("Kafka message received: ", {
         topic,
         partition,
         offset: message.offset,
@@ -81,7 +80,7 @@ async function main() {
           }
 
           if (isProcessed) {
-            logger.trace(
+            logger.silly(
               `Message is processed by worker. topic: ${topic}. Committing offset`,
             );
             await newPostConsumer.commitOffsets([
@@ -96,7 +95,7 @@ async function main() {
           }
           const durationInS = timerEndFn();
 
-          logger.trace(`took ${durationInS}s to process the message`);
+          logger.silly(`took ${durationInS}s to process the message`);
         } catch (error) {
           logger.error("error while executing task", error);
         }

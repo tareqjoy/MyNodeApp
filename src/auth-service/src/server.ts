@@ -4,15 +4,13 @@ import { connectRedis } from "@tareqjoy/clients";
 import bodyParser from "body-parser";
 import "source-map-support/register";
 import { createSignInRouter } from "./routes/auth-signin";
-import { commonServiceMetricsMiddleware, getApiPath, getExpressLogger, getLogger, initWinstonLogger } from "@tareqjoy/utils";
+import { commonServiceMetricsMiddleware, getApiPath, getExpressLogger, getFileLogger, } from "@tareqjoy/utils";
 import { createVerifyRouter } from "./routes/auth-verify";
 import { createRefreshRouter } from "./routes/auth-refresh";
 import { createSignOutRouter } from "./routes/auth-signout";
 import { createAuthorizeClientRouter } from "./routes/authorize-client";
 
-initWinstonLogger("auth-service");
-
-const logger = getLogger(__filename);
+const logger =  getFileLogger(__filename);
 
 const appport = process.env.PORT || 5007;
 
@@ -32,7 +30,7 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_auth_root));
-  app.use(getExpressLogger());
+  app.use(await getExpressLogger());
 
   const redisClient = await connectRedis();
   app.use(express.urlencoded({ extended: true }));

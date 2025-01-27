@@ -1,6 +1,5 @@
 import express from "express";
 import "reflect-metadata";
-import * as log4js from "log4js";
 import { createAllRouter } from "./routes/all";
 import { connectElasticSearch } from "@tareqjoy/clients";
 import {
@@ -8,10 +7,12 @@ import {
   commonServiceMetricsMiddleware,
   getApiPath,
   getExpressLogger,
+  getLogger,
+  initWinstonLogger,
 } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+initWinstonLogger("search-service");
+const logger = getLogger(__filename);
 
 const api_path_root = process.env.API_PATH_ROOT || "/v1/search";
 

@@ -1,7 +1,6 @@
 import express from "express";
 import "reflect-metadata";
 import { connectNeo4jDriver, connectKafkaProducer } from "@tareqjoy/clients";
-import * as log4js from "log4js";
 import { createFollowRouter } from "./routes/follow";
 import {
   authorize,
@@ -9,13 +8,15 @@ import {
   getApiPath,
   getExpressLogger,
   getInternalApiPath,
+  getLogger,
+  initWinstonLogger,
 } from "@tareqjoy/utils";
 import { createUnfollowRouter } from "./routes/unfollow";
 import { createIFollowRouter } from "./routes/i-follow";
 import { createWhoFollowsMeRouter } from "./routes/who-follows-me";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+initWinstonLogger("follower-service");
+const logger = getLogger(__filename);
 
 const api_path_root = process.env.API_PATH_ROOT || "/v1/follower";
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "follower";
@@ -46,33 +47,33 @@ async function main() {
   //Only for internal use, should be protected from public access
   app.use(
     getInternalApiPath(api_path_root, "i-follow"),
-    createIFollowRouter(neo4jDriver, true),
+    createIFollowRouter(neo4jDriver, true)
   );
   app.use(
     getInternalApiPath(api_path_root, "who-follows-me"),
-    createWhoFollowsMeRouter(neo4jDriver, true),
+    createWhoFollowsMeRouter(neo4jDriver, true)
   );
 
   //For public use
   app.use(
     getApiPath(api_path_root, "follow"),
     authorize,
-    createFollowRouter(neo4jDriver, kafkaNewPostProducer),
+    createFollowRouter(neo4jDriver, kafkaNewPostProducer)
   );
   app.use(
     getApiPath(api_path_root, "unfollow"),
     authorize,
-    createUnfollowRouter(neo4jDriver, kafkaNewPostProducer),
+    createUnfollowRouter(neo4jDriver, kafkaNewPostProducer)
   );
   app.use(
     getApiPath(api_path_root, "i-follow"),
     authorize,
-    createIFollowRouter(neo4jDriver, false),
+    createIFollowRouter(neo4jDriver, false)
   );
   app.use(
     getApiPath(api_path_root, "who-follows-me"),
     authorize,
-    createWhoFollowsMeRouter(neo4jDriver, false),
+    createWhoFollowsMeRouter(neo4jDriver, false)
   );
 
   // Start the server and listen to the port

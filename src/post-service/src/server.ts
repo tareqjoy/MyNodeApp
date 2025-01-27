@@ -2,7 +2,6 @@ import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";
 import { connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
-import * as log4js from "log4js";
 import { createCreateRouter } from "./routes/create";
 import {
   authorize,
@@ -10,14 +9,16 @@ import {
   getApiPath,
   getExpressLogger,
   getInternalApiPath,
+  getLogger,
+  initWinstonLogger,
 } from "@tareqjoy/utils";
 import { createGetRouter } from "./routes/get";
 import { createGetByUserRouter } from "./routes/get-by-user";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "post";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+initWinstonLogger("auth-service");
+const logger = getLogger(__filename);
 
 const appport = process.env.PORT || 5005;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/post";

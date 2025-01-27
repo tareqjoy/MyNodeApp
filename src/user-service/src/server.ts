@@ -5,7 +5,6 @@ import { createSignUpRouter } from "./routes/signup";
 import { createUserDetailsRouter } from "./routes/user";
 import { createUserInternalRouter } from "./routes/user-internal";
 import bodyParser from "body-parser";
-import * as log4js from "log4js";
 import { createSignInRouter } from "./routes/signin";
 import "source-map-support/register";
 import {
@@ -13,10 +12,12 @@ import {
   commonServiceMetricsMiddleware,
   getApiPath,
   getExpressLogger,
+  getLogger,
+  initWinstonLogger,
 } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+initWinstonLogger("auth-service");
+const logger = getLogger(__filename);
 
 const appport = process.env.PORT || 5002;
 

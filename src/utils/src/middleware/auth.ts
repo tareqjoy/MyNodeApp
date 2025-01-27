@@ -2,21 +2,22 @@
 import { AuthInfo, InternalServerError } from "@tareqjoy/models";
 import axios from "axios";
 import { plainToInstance } from "class-transformer";
-import { ATTR_HEADER_USER_ID } from "../constant/constant";
+import { ATTR_HEADER_USER_ID } from "../constant/constant.js";
 import { Request, Response, NextFunction } from "express";
-import * as log4js from "log4js";
+import { getFileLogger } from "../logging/winston.js";
+import winston from "winston";
 
 const authVerifyUrl: string =
   process.env.AUTH_VERIFY_URL || "http://localhost:80/v1/auth/verify/";
-const logger = log4js.getLogger();
-logger.level = "trace";
+
+let logger: winston.Logger = getFileLogger(__filename);
 
 export const authorize = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
-  logger.trace("calling user service.");
+  logger.silly("calling user service.");
 
   const accessToken = getAccessTokenFromHeader(req);
   if (!accessToken) {
@@ -31,7 +32,7 @@ export const authorize = async (
       {},
       {
         headers: { Authorization: `Bearer ${accessToken}` },
-      },
+      }
     );
 
     if (response.status == 200 && response.data) {
@@ -53,7 +54,7 @@ export const authorize = async (
   } catch (error) {
     if (axios.isAxiosError(error)) {
       logger.error(
-        `Error while middleware authZ: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+        `Error while middleware authZ: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`
       );
     } else {
       logger.error("Error while middleware authZ: ", error);

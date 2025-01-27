@@ -14,15 +14,12 @@ import {
   TimelineHomePost,
   TimelineHomeReq,
   TimelineHomeRes,
-  UserInternalReq,
-  UserInternalRes,
 } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { ATTR_HEADER_USER_ID, getInternalFullPath } from "@tareqjoy/utils";
+import { ATTR_HEADER_USER_ID, getInternalFullPath, getLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getLogger(__filename);
 
 const iFollowUrl: string =
   process.env.I_FOLLOW_URL || "http://127.0.0.1:5003/v1/follower/i-follow/";
@@ -36,7 +33,7 @@ export const createHomeRouter = (
   redisClient: RedisClientType<any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /home called`);
+    logger.silly(`POST /home called`);
 
     if (!req.headers || !req.headers[ATTR_HEADER_USER_ID]) {
       res
@@ -59,9 +56,9 @@ export const createHomeRouter = (
           const rawPagingJson = JSON.parse(
             Buffer.from(timelineHomeReq.nextToken, "base64").toString("utf-8"),
           );
-          logger.trace(rawPagingJson);
+          logger.silly(rawPagingJson);
           pagingRaw = plainToInstance(TimelineHomePagingRaw, rawPagingJson);
-          logger.trace(pagingRaw.type);
+          logger.silly(pagingRaw.type);
         } catch (error) {
           res.status(400).json(new InvalidRequest("Invalid nextToken"));
           return;
@@ -91,7 +88,7 @@ export const createHomeRouter = (
           );
         });
 
-        logger.trace("loaded from redis: ", postsToReturn.length);
+        logger.silly("loaded from redis: ", postsToReturn.length);
 
         if (postsToReturn.length >= timelineHomeReq.limit) {
           const pagingObj = new TimelineHomePagingRaw(
@@ -158,7 +155,7 @@ export const createHomeRouter = (
         const nextPageToken = Buffer.from(pagingJsonString).toString("base64");
         pageTokenObj = new TimelineHomePaging(nextPageToken);
       }
-      logger.trace(
+      logger.silly(
         "loaded from post service/mongodb: ",
         postDetailsResObj.posts.length,
       );
