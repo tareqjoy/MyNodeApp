@@ -17,9 +17,9 @@ import {
 } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { ATTR_HEADER_USER_ID, getInternalFullPath, getLogger } from "@tareqjoy/utils";
+import { ATTR_HEADER_USER_ID, getFileLogger, getInternalFullPath } from "@tareqjoy/utils";
 
-const logger = getLogger(__filename);
+const logger = getFileLogger(__filename);
 
 const iFollowUrl: string =
   process.env.I_FOLLOW_URL || "http://127.0.0.1:5003/v1/follower/i-follow/";

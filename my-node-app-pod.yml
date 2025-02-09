@@ -178,6 +178,9 @@ spec:
       labels:
         app: user-service
     spec:
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
       containers:
         - name: user-service-container
           image: tareqjoy/user-service:latest
@@ -191,6 +194,9 @@ spec:
                 name: mongodb-config
             - configMapRef:
                 name: redis-config
+          volumeMounts:
+                - name: temp-volume
+                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -206,6 +212,9 @@ spec:
       labels:
         app: follower-service
     spec:
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
       containers:
         - name: follower-service-container
           image: tareqjoy/follower-service:latest
@@ -221,6 +230,9 @@ spec:
                 name: service-url-config
             - configMapRef:
                 name: kafka-config
+          volumeMounts:
+                - name: temp-volume
+                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -236,6 +248,9 @@ spec:
       labels:
         app: fanout-service
     spec:
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
       containers:
         - name: fanout-service-container
           image: tareqjoy/fanout-service:latest
@@ -249,6 +264,9 @@ spec:
                 name: kafka-config
             - configMapRef:
                 name: service-url-config
+          volumeMounts:
+                - name: temp-volume
+                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -264,6 +282,9 @@ spec:
       labels:
         app: post-service
     spec:
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
       containers:
         - name: post-service-container
           image: tareqjoy/post-service:latest
@@ -279,6 +300,9 @@ spec:
                 name: kafka-config
             - configMapRef:
                 name: service-url-config
+          volumeMounts:
+                - name: temp-volume
+                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -294,6 +318,9 @@ spec:
       labels:
         app: search-service
     spec:
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
       containers:
         - name: search-service-container
           image: tareqjoy/search-service:latest
@@ -305,6 +332,9 @@ spec:
                 name: search-service-config
             - configMapRef:
                 name: elastic-search-config
+          volumeMounts:
+                - name: temp-volume
+                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -320,6 +350,9 @@ spec:
       labels:
         app: auth-service
     spec:
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
       containers:
         - name: auth-service-container
           image: tareqjoy/auth-service:latest
@@ -333,6 +366,9 @@ spec:
                 name: redis-config
             - configMapRef:
                 name: service-url-config
+          volumeMounts:
+                - name: temp-volume
+                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -348,6 +384,9 @@ spec:
       labels:
         app: frontend-service
     spec:
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
       containers:
         - name: frontend-service-container
           image: tareqjoy/frontend-service:latest
@@ -357,6 +396,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: frontend-service-config
+          volumeMounts:
+                - name: temp-volume
+                  mountPath: /app/log/
 ---
 apiVersion: v1
 kind: Service
