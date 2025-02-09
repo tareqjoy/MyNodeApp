@@ -12,12 +12,10 @@ import {
   commonServiceMetricsMiddleware,
   getApiPath,
   getExpressLogger,
-  getLogger,
-  initWinstonLogger,
+  getFileLogger
 } from "@tareqjoy/utils";
 
-initWinstonLogger("auth-service");
-const logger = getLogger(__filename);
+const logger = getFileLogger(__filename);
 
 const appport = process.env.PORT || 5002;
 

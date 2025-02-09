@@ -8,17 +8,15 @@ import {
   commonServiceMetricsMiddleware,
   getApiPath,
   getExpressLogger,
+  getFileLogger,
   getInternalApiPath,
-  getLogger,
-  initWinstonLogger,
 } from "@tareqjoy/utils";
 import { createGetRouter } from "./routes/get";
 import { createGetByUserRouter } from "./routes/get-by-user";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "post";
 
-initWinstonLogger("auth-service");
-const logger = getLogger(__filename);
+const logger = getFileLogger(__filename);
 
 const appport = process.env.PORT || 5005;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/post";

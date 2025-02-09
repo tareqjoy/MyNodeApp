@@ -142,6 +142,9 @@ spec:
       labels:
         app: timeline-service
     spec:
+      volumes:
+        - name: temp-volume
+          emptyDir: {}
       containers:
         - name: timeline-service-container
           image: tareqjoy/timeline-service:latest
@@ -157,6 +160,9 @@ spec:
                 name: redis-config
             - configMapRef:
                 name: service-url-config
+          volumeMounts:
+            - name: temp-volume
+              mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment

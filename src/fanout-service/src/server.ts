@@ -7,7 +7,7 @@ import { createFanoutRouter } from "./routes/fanout";
 import { newPostFanout } from "./workers/new-post-worker";
 import { iFollowedFanout } from "./workers/i-followed-worker";
 import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
-import { commonServiceMetricsMiddleware, getExpressLogger, getLogger, initWinstonLogger } from "@tareqjoy/utils";
+import { commonServiceMetricsMiddleware, getExpressLogger, getFileLogger } from "@tareqjoy/utils";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
@@ -19,8 +19,7 @@ const kafka_i_unfollowed_fanout_topic =
   process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || "i-unfollowed";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
-initWinstonLogger("fanout-service");
-const logger = getLogger(__filename);
+const logger =  getFileLogger(__filename);
 
 const appport = process.env.PORT || 5004;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/fanout";

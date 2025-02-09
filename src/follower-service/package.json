@@ -22,7 +22,7 @@
     "reflect-metadata": "^0.2.2",
     "@tareqjoy/clients": "^1.0.22",
     "@tareqjoy/models": "^1.0.64",
-    "@tareqjoy/utils": "^1.0.33"
+    "@tareqjoy/utils": "^1.0.36"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

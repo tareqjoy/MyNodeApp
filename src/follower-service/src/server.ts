@@ -7,16 +7,14 @@ import {
   commonServiceMetricsMiddleware,
   getApiPath,
   getExpressLogger,
-  getInternalApiPath,
-  getLogger,
-  initWinstonLogger,
+  getFileLogger,
+  getInternalApiPath
 } from "@tareqjoy/utils";
 import { createUnfollowRouter } from "./routes/unfollow";
 import { createIFollowRouter } from "./routes/i-follow";
 import { createWhoFollowsMeRouter } from "./routes/who-follows-me";
 
-initWinstonLogger("follower-service");
-const logger = getLogger(__filename);
+const logger =  getFileLogger(__filename);
 
 const api_path_root = process.env.API_PATH_ROOT || "/v1/follower";
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "follower";

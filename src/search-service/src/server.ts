@@ -7,12 +7,10 @@ import {
   commonServiceMetricsMiddleware,
   getApiPath,
   getExpressLogger,
-  getLogger,
-  initWinstonLogger,
+  getFileLogger
 } from "@tareqjoy/utils";
 
-initWinstonLogger("search-service");
-const logger = getLogger(__filename);
+const logger = getFileLogger(__filename);
 
 const api_path_root = process.env.API_PATH_ROOT || "/v1/search";
 

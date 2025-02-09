@@ -30,7 +30,7 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_auth_root));
-  app.use(await getExpressLogger());
+  app.use(getExpressLogger());
 
   const redisClient = await connectRedis();
   app.use(express.urlencoded({ extended: true }));
