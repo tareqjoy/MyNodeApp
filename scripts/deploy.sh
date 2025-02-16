@@ -1,6 +1,5 @@
-
 #!/bin/bash
-
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 set -e
 
 echo "Timeline service ..."
@@ -52,7 +51,7 @@ docker push tareqjoy/frontend-service:latest
 cd -
 
 echo "Kubernetes ..."
-kubectl apply -f my-node-app-pod.yml --force
+kubectl apply -f "${SCRIPT_DIR}/kubernetes/my-node-app-pod.yml" --force
 kubectl rollout restart deployment -n default
 
 echo "Done ..."

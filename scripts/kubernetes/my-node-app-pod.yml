@@ -128,32 +128,6 @@ metadata:
 data:
   PLACEHOLDER: PLACEHOLDER
 ---
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: log-pv
-spec:
-  capacity:
-    storage: 2Gi
-  accessModes:
-    - ReadWriteMany  # Multiple pods can write
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
-  hostPath:
-    path: "/mnt/logs"  # Change this path as needed for Minikube/host
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: log-pvc
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 2Gi
-  storageClassName: manual
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -168,10 +142,6 @@ spec:
       labels:
         app: timeline-service
     spec:
-      volumes:
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: log-pvc  
       containers:
         - name: timeline-service-container
           image: tareqjoy/timeline-service:latest
@@ -187,9 +157,6 @@ spec:
                 name: redis-config
             - configMapRef:
                 name: service-url-config
-          volumeMounts:
-            - name: temp-volume
-              mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -205,10 +172,6 @@ spec:
       labels:
         app: user-service
     spec:
-      volumes:
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: log-pvc  
       containers:
         - name: user-service-container
           image: tareqjoy/user-service:latest
@@ -222,9 +185,6 @@ spec:
                 name: mongodb-config
             - configMapRef:
                 name: redis-config
-          volumeMounts:
-                - name: temp-volume
-                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -240,10 +200,6 @@ spec:
       labels:
         app: follower-service
     spec:
-      volumes:
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: log-pvc  
       containers:
         - name: follower-service-container
           image: tareqjoy/follower-service:latest
@@ -259,9 +215,6 @@ spec:
                 name: service-url-config
             - configMapRef:
                 name: kafka-config
-          volumeMounts:
-                - name: temp-volume
-                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -277,10 +230,6 @@ spec:
       labels:
         app: fanout-service
     spec:
-      volumes:
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: log-pvc  
       containers:
         - name: fanout-service-container
           image: tareqjoy/fanout-service:latest
@@ -294,9 +243,6 @@ spec:
                 name: kafka-config
             - configMapRef:
                 name: service-url-config
-          volumeMounts:
-                - name: temp-volume
-                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -312,10 +258,6 @@ spec:
       labels:
         app: post-service
     spec:
-      volumes:
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: log-pvc  
       containers:
         - name: post-service-container
           image: tareqjoy/post-service:latest
@@ -331,9 +273,6 @@ spec:
                 name: kafka-config
             - configMapRef:
                 name: service-url-config
-          volumeMounts:
-                - name: temp-volume
-                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -349,10 +288,6 @@ spec:
       labels:
         app: search-service
     spec:
-      volumes:
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: log-pvc  
       containers:
         - name: search-service-container
           image: tareqjoy/search-service:latest
@@ -364,9 +299,6 @@ spec:
                 name: search-service-config
             - configMapRef:
                 name: elastic-search-config
-          volumeMounts:
-                - name: temp-volume
-                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -382,10 +314,6 @@ spec:
       labels:
         app: auth-service
     spec:
-      volumes:
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: log-pvc  
       containers:
         - name: auth-service-container
           image: tareqjoy/auth-service:latest
@@ -399,9 +327,6 @@ spec:
                 name: redis-config
             - configMapRef:
                 name: service-url-config
-          volumeMounts:
-                - name: temp-volume
-                  mountPath: /app/log/
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -417,10 +342,6 @@ spec:
       labels:
         app: frontend-service
     spec:
-      volumes:
-        - name: log-volume
-          persistentVolumeClaim:
-            claimName: log-pvc  
       containers:
         - name: frontend-service-container
           image: tareqjoy/frontend-service:latest
@@ -430,9 +351,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: frontend-service-config
-          volumeMounts:
-                - name: temp-volume
-                  mountPath: /app/log/
 ---
 apiVersion: v1
 kind: Service
