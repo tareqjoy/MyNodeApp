@@ -12,7 +12,7 @@ sudo systemctl start kafka && systemctl --no-pager status kafka
 sudo systemctl start redis && systemctl --no-pager status redis
 sudo systemctl start neo4j && systemctl --no-pager status neo4j
 sudo systemctl start elasticsearch.service && systemctl --no-pager status elasticsearch.service
-#sudo systemctl start logstash.service && systemctl --no-pager status logstash.service 
+sudo systemctl start logstash.service && systemctl --no-pager status logstash.service 
 sudo systemctl start kibana.service && systemctl --no-pager status kibana.service
 sudo systemctl start mongo-kafka-source.service && systemctl --no-pager status mongo-kafka-source.service
 sudo systemctl start elasticsearch-kafka-sink.service && systemctl --no-pager status elasticsearch-kafka-sink.service
