@@ -1,0 +1,14 @@
+[Unit]
+Description=Loki is a set of open source components that can be composed into a fully featured logging stack
+Documentation=https://grafana.com/docs/loki/latest/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=loki
+Group=loki
+Type=simple
+ExecStart=/usr/local/bin/loki-linux-amd64 -config.file=/etc/loki/loki.yml
+
+[Install]
+WantedBy=multi-user.target

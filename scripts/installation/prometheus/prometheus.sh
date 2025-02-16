@@ -22,8 +22,8 @@ sudo chown prometheus:prometheus /usr/local/bin/promtool
 
 # directory where Prometheus will store its data 
 sudo mkdir /var/lib/prometheus
-sudo chown prometheus:prometheus /etc/prometheus
-sudo chown prometheus:prometheus /var/lib/prometheus
+sudo chown -R prometheus:prometheus /etc/prometheus
+sudo chown -R prometheus:prometheus /var/lib/prometheus
 
 # creating service file
 DEST_DIR="/etc/systemd/system"

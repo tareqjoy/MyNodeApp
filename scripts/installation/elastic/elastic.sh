@@ -38,4 +38,5 @@ sudo apt-get update && sudo apt-get install logstash
 
 # setup logstash configuration
 yes | sudo cp -rf "${SCRIPT_DIR}/logstash.yml" "/etc/logstash/"
+yes | sudo cp -rf "${SCRIPT_DIR}/logstash.conf" "/etc/logstash/conf.d/"
 sudo chown logstash:logstash /etc/logstash/logstash.yml

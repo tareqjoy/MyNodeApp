@@ -7,13 +7,13 @@ wget -O /tmp/mongodb-kafka-connect-mongodb-1.15.0.zip https://d2p6pa21dvn84.clou
 wget -O confluentinc-kafka-connect-avro-converter-7.8.0.zip https://d2p6pa21dvn84.cloudfront.net/api/plugins/confluentinc/kafka-connect-avro-converter/versions/7.8.0/confluentinc-kafka-connect-avro-converter-7.8.0.zip
 
 # extract
-unzip /tmp/confluentinc-kafka-connect-elasticsearch-14.1.2.zip
+unzip /tmp/confluentinc-kafka-connect-elasticsearch-14.1.2.zip -d /tmp/confluentinc-kafka-connect-elasticsearch-14.1.2
 sudo mv /tmp/confluentinc-kafka-connect-elasticsearch-14.1.2 /tmp/confluentinc-kafka-connect-elasticsearch
 
-unzip xvf /tmp/mongodb-kafka-connect-mongodb-1.15.0.zip
+unzip /tmp/mongodb-kafka-connect-mongodb-1.15.0.zip -d /tmp/mongodb-kafka-connect-mongodb-1.15.0
 sudo mv /tmp/mongodb-kafka-connect-mongodb-1.15.0 /tmp/mongodb-kafka-connect-mongodb
 
-unzip xvf /tmp/confluentinc-kafka-connect-avro-converter-7.8.0.zip
+unzip /tmp/confluentinc-kafka-connect-avro-converter-7.8.0.zip -d /tmp/confluentinc-kafka-connect-avro-converter-7.8.0
 sudo mv /tmp/confluentinc-kafka-connect-avro-converter-7.8.0 /tmp/confluentinc-kafka-connect-avro-converter
 
 # make directories for jars
