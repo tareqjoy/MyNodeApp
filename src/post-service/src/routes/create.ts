@@ -1,14 +1,12 @@
 import express from "express";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
 import { PostSchema } from "../db/PostSchema";
 import { Producer } from "kafkajs";
 import axios from "axios";
 import {
   InternalServerError,
-  MessageResponse,
-  UserInternalReq,
-  UserInternalRes,
+  MessageResponse
 } from "@tareqjoy/models";
 import { CreatePostReq } from "@tareqjoy/models";
 import { InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
@@ -16,8 +14,7 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { ATTR_HEADER_USER_ID } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const kafka_new_post_fanout_topic =
   process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "new-post";
@@ -29,7 +26,7 @@ export const createCreateRouter = (
   newPostKafkaProducer: Producer,
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /create called`);
+    logger.silly(`POST /create called`);
     const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
     try {
       const createPostReq = plainToInstance(CreatePostReq, req.body);

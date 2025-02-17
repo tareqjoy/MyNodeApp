@@ -1,9 +1,8 @@
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 
 import { createClient, RedisClientType } from "redis";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const redis_host_port =
   process.env.REDIS_HOST_PORT || "redis://192.168.0.10:6379";

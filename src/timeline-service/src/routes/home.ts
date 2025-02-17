@@ -1,5 +1,4 @@
 import express from "express";
-import * as log4js from "log4js";
 import { RedisClientType } from "redis";
 import axios from "axios";
 import {
@@ -17,7 +16,7 @@ import {
 } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { ATTR_HEADER_USER_ID, getFileLogger, getInternalFullPath } from "@tareqjoy/utils";
+import { ATTR_HEADER_USER_ID, getInternalFullPath, getFileLogger } from "@tareqjoy/utils";
 
 const logger = getFileLogger(__filename);
 

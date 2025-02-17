@@ -1,8 +1,7 @@
 import neo4j, { Driver, Session, Result } from "neo4j-driver";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const neo4j_host_port =
   process.env.NEO4J_HOST_PORT || "neo4j://192.168.0.10:7687";

@@ -1,21 +1,13 @@
 import express from "express";
 import { Driver } from "neo4j-driver";
-import { Producer } from "kafkajs";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import {
-  FollowersReq,
-  FollowersReqInternal,
   InternalServerError,
-  InvalidRequest,
 } from "@tareqjoy/models";
 import { parseAndExecuteQuery } from "./common/common";
-import { plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
-import { ATTR_HEADER_USER_ID } from "@tareqjoy/utils";
 import axios from "axios";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const userServiceHostUrl: string =
   process.env.USER_SERVICE_USERID_URL ||
@@ -27,7 +19,7 @@ export const createWhoFollowsMeRouter = (
 ) => {
   const router = express.Router();
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /who-follows-me called`);
+    logger.silly(`POST /who-follows-me called`);
 
     const session = neo4jDriver.session();
     try {
@@ -35,7 +27,7 @@ export const createWhoFollowsMeRouter = (
                 MATCH (fuser:User)-[:FOLLOW]->(b:User {userId: $userId})
                 RETURN fuser
             `;
-      logger.trace(
+      logger.silly(
         "isInternalEndpoint: ",
         isInternalEndpoint,
         ", baseUrl: ",

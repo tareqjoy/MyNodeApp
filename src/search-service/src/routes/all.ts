@@ -1,12 +1,11 @@
 import { Client } from "@elastic/elasticsearch";
 import express from "express";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import { SearchReq, InvalidRequest, SearchRes } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const es_index_users =
   process.env.ELASTIC_SEARCH_INDEX_TO_SEARCH_JSON || "search.mydatabase.users";
@@ -17,7 +16,7 @@ const router = express.Router();
 
 export const createAllRouter = (client: Client) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /all called`);
+    logger.silly(`POST /all called`);
 
     const searchReq = plainToInstance(SearchReq, req.body);
     const errors = await validate(searchReq);

@@ -5,15 +5,14 @@ import {
   PostDetailsRes,
 } from "@tareqjoy/models";
 import axios from "axios";
-import * as log4js from "log4js";
 import { RedisClientType } from "redis";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";
 import { getInternalFullPath } from "@tareqjoy/utils";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger =  getFileLogger(__filename);
 
 const getPostByUserUrl: string =
   process.env.GET_POST_BY_USER_URL ||
@@ -24,7 +23,7 @@ export const iUnfollowedFanout = async (
   messageStr: string,
 ): Promise<boolean> => {
   try {
-    logger.trace(`iUnfollowedFanout has started with message: ${messageStr}`);
+    logger.silly(`iUnfollowedFanout has started with message: ${messageStr}`);
 
     const iUnfollowedKafkaMsg = plainToInstance(
       IUnfollowedKafkaMsg,
@@ -43,7 +42,7 @@ export const iUnfollowedFanout = async (
     var endTime: number = Date.now();
 
     if (leastRecentPosts.length === 0) {
-      logger.trace(`${redisKey} is empty in redis`);
+      logger.silly(`${redisKey} is empty in redis`);
     } else {
       endTime = leastRecentPosts[0].score;
     }
@@ -62,7 +61,7 @@ export const iUnfollowedFanout = async (
       postByUserAxiosRes.data,
     );
 
-    logger.trace(
+    logger.silly(
       `Received from ${postDetailsResObj.posts.length} posts from post service for userId: ${iUnfollowedKafkaMsg.unfollowsUserId}`,
     );
 
@@ -76,7 +75,7 @@ export const iUnfollowedFanout = async (
       }
     }
 
-    logger.trace(
+    logger.silly(
       `${removedPostCount} posts removed from redis key of ${redisKey}`,
     );
     workerOperationCount

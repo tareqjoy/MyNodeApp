@@ -1,5 +1,5 @@
 import express from "express";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
 import { PostSchema } from "../db/PostSchema";
 import {
@@ -13,8 +13,7 @@ import { validate } from "class-validator";
 import { toResPosts } from "./common/common";
 import axios from "axios";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const userServiceHostUrl: string =
   process.env.USER_SERVICE_USERID_URL ||
@@ -27,7 +26,7 @@ const router = express.Router();
 
 export const createGetRouter = (mongoClient: Mongoose) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /get called`);
+    logger.silly(`POST /get called`);
     try {
       const getPostReq = plainToInstance(GetPostReq, req.body);
       const errors = await validate(getPostReq);

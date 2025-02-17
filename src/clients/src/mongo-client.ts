@@ -1,9 +1,8 @@
 import mongoose, { Mongoose } from "mongoose";
 
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const mongoUrl =
   process.env.MONGODB_URL ||

@@ -4,7 +4,7 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { Request, Response } from "express";
 import { Producer } from "kafkajs";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import {
   FollowReq,
   IFollowedKafkaMsg,
@@ -16,8 +16,7 @@ import { InvalidRequest, InternalServerError } from "@tareqjoy/models";
 import axios from "axios";
 import { ATTR_HEADER_USER_ID } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const kafka_i_followed_fanout_topic =
   process.env.KAFKA_I_FOLLOWED_FANOUT_TOPIC || "i-followed";
@@ -32,7 +31,7 @@ export const createFollowRouter = (
   kafkaProducer: Producer,
 ) => {
   router.post("/", async (req: Request, res: Response) => {
-    logger.trace(`POST /follow called`);
+    logger.silly(`POST /follow called`);
     const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
     const session = neo4jDriver.session();
     try {

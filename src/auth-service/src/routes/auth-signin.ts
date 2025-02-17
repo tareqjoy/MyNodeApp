@@ -1,10 +1,7 @@
 import express from "express";
-import * as log4js from "log4js";
 import { plainToInstance } from "class-transformer";
 import {
   AuthSignInReq,
-  AuthSignInRes,
-  AuthInfo,
   UserSignInReq,
   UserSignInRes,
 } from "@tareqjoy/models";
@@ -15,12 +12,11 @@ import {
 } from "@tareqjoy/models";
 import { RedisClientType } from "redis";
 import { validate } from "class-validator";
-import jwt from "jsonwebtoken";
 import axios, { AxiosError } from "axios";
 import { genAccessRefreshToken } from "./common/common";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const router = express.Router();
 
@@ -34,7 +30,7 @@ export const createSignInRouter = (
   redisClient: RedisClientType<any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /signin called`);
+    logger.silly(`POST /signin called`);
 
     const deviceId = req.headers[ATTR_HEADER_DEVICE_ID];
 

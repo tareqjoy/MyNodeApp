@@ -1,21 +1,20 @@
 import express from "express";
 import { Mongoose } from "mongoose";
 import { UserSchema } from "../schema/user-schema";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import { plainToInstance } from "class-transformer";
 import { UserSignInReq, UserSignInRes } from "@tareqjoy/models";
 import { InternalServerError, InvalidRequest } from "@tareqjoy/models";
 import { validate } from "class-validator";
 import argon2 from "argon2";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const router = express.Router();
 
 export const createSignInRouter = (mongoClient: Mongoose) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST / called`);
+    logger.silly(`POST / called`);
 
     const signInObj = plainToInstance(UserSignInReq, req.body);
     const errors = await validate(signInObj);

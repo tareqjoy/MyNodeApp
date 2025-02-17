@@ -5,15 +5,14 @@ import {
   NewPostKafkaMsg,
 } from "@tareqjoy/models";
 import axios from "axios";
-import * as log4js from "log4js";
 import { RedisClientType } from "redis";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";
 import { getInternalFullPath } from "@tareqjoy/utils";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const whoFollowsMeUrl: string =
   process.env.WHO_FOLLOWS_ME_URL ||
@@ -48,7 +47,7 @@ export const newPostFanout = async (
       whoFollowsAxiosRes.data,
     );
 
-    logger.trace(`Received from follower service: ${followersIdsObj.userIds}`);
+    logger.silly(`Received from follower service: ${followersIdsObj.userIds}`);
 
     let totalRemovedPostCount = 0;
     for (const uid of followersIdsObj.userIds!) {
@@ -65,12 +64,12 @@ export const newPostFanout = async (
         const toRemove = setSize - maxPostSetSize - 1;
         totalRemovedPostCount += toRemove;
         await redisClient.zRemRangeByRank(redisKey, 0, toRemove); // zRemRangeByRank: https://redis.io/docs/latest/commands/zremrangebyrank/
-        logger.trace(
+        logger.silly(
           `${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`,
         );
       }
 
-      logger.trace(`Posted to redis of ${redisKey}`);
+      logger.silly(`Posted to redis of ${redisKey}`);
     }
 
     workerOperationCount

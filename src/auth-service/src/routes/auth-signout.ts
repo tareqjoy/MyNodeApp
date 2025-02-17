@@ -1,14 +1,13 @@
 import express from "express";
-import * as log4js from "log4js";
 import { plainToInstance } from "class-transformer";
 import { AuthInfo, AuthSignoutReq, MessageResponse } from "@tareqjoy/models";
 import { InternalServerError, InvalidRequest } from "@tareqjoy/models";
 import { RedisClientType } from "redis";
 import { validate } from "class-validator";
 import { validateAccessToken } from "./common/common";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const router = express.Router();
 
@@ -19,7 +18,7 @@ export const createSignOutRouter = (
   redisClient: RedisClientType<any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /signout called`);
+    logger.silly(`POST /signout called`);
 
     const authHeader = req.headers[ATTR_HEADER_AUTHORIZATION];
     if (!authHeader || typeof authHeader !== "string") {

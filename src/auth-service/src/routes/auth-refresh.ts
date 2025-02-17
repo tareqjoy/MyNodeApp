@@ -1,5 +1,4 @@
 import express from "express";
-import * as log4js from "log4js";
 import { AuthInfo, AuthRefreshReq, AuthRefreshRes } from "@tareqjoy/models";
 import { InvalidRequest, UnauthorizedRequest } from "@tareqjoy/models";
 import { RedisClientType } from "redis";
@@ -11,9 +10,9 @@ import {
   jwt_access_secret,
   jwt_refresh_secret,
 } from "./common/common";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const router = express.Router();
 
@@ -24,7 +23,7 @@ export const createRefreshRouter = (
   redisClient: RedisClientType<any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /refresh called`);
+    logger.silly(`POST /refresh called`);
 
     let clientOrDeviceId: string;
     if (

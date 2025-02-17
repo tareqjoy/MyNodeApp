@@ -1,21 +1,20 @@
 import express from "express";
 import { Mongoose } from "mongoose";
 import { UserSchema } from "../schema/user-schema";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import {
   InternalServerError,
   InvalidRequest,
   UserDetailsRes,
 } from "@tareqjoy/models";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const router = express.Router();
 
 export const createUserDetailsRouter = (mongoClient: Mongoose) => {
   router.get("/:username", async (req, res, next) => {
-    logger.trace(`GET /:username called`);
+    logger.silly(`GET /:username called`);
 
     const username: string = req.params.username;
     const User = mongoClient.model("User", UserSchema);

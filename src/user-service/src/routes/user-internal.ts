@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose, { Mongoose } from "mongoose";
 import { UserSchema } from "../schema/user-schema";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import { RedisClientType } from "redis";
 import { plainToInstance } from "class-transformer";
 import { UserInternalReq } from "@tareqjoy/models";
@@ -12,8 +12,7 @@ import {
 } from "@tareqjoy/models";
 import { validate } from "class-validator";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const redisUsernameTtlSec: string =
   process.env.REDIS_USERNAME_TTL_SEC || "86400";
@@ -25,7 +24,7 @@ export const createUserInternalRouter = (
   redisClient: RedisClientType<any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST UserInternal called`);
+    logger.silly(`POST UserInternal called`);
 
     const userIdsDto = plainToInstance(UserInternalReq, req.body);
 
@@ -57,11 +56,11 @@ export const createUserInternalRouter = (
             toUsername.set(nameOrId, redisNameOrId);
           }
 
-          logger.trace(`found in redis: ${nameOrId} -> ${redisNameOrId}`);
+          logger.silly(`found in redis: ${nameOrId} -> ${redisNameOrId}`);
           continue;
         }
 
-        logger.trace(`not found in redis: ${nameOrId}`);
+        logger.silly(`not found in redis: ${nameOrId}`);
         const User = mongoClient.model("User", UserSchema);
 
         const query =
@@ -76,7 +75,7 @@ export const createUserInternalRouter = (
           } else {
             toUsername.set(nameOrId, null);
           }
-          logger.trace(`not found in mongodb: ${nameOrId}`);
+          logger.silly(`not found in mongodb: ${nameOrId}`);
           continue;
         }
 
@@ -87,7 +86,7 @@ export const createUserInternalRouter = (
         } else {
           toUsername.set(nameOrId, value);
         }
-        logger.trace(
+        logger.silly(
           `username cached into redis. key: ${nameOrId}, ttl: ${redisUsernameTtlSec}`,
         );
       }

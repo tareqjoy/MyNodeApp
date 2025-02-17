@@ -3,7 +3,6 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 
 import { Request, Response } from "express";
-import * as log4js from "log4js";
 import {
   FollowersReq,
   FollowersReqInternal,

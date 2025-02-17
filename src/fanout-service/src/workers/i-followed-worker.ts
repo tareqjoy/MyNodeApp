@@ -5,15 +5,14 @@ import {
   PostDetailsRes,
 } from "@tareqjoy/models";
 import axios from "axios";
-import * as log4js from "log4js";
 import { RedisClientType } from "redis";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";
 import { getInternalFullPath } from "@tareqjoy/utils";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger =  getFileLogger(__filename);
 
 const maxPostSetSize: number =
   Number(process.env.KAFKA_MAX_POST_SET_SIZE) || 100;
@@ -26,7 +25,7 @@ export const iFollowedFanout = async (
   messageStr: string,
 ): Promise<boolean> => {
   try {
-    logger.trace(`iFollowedFanout has started with message: ${messageStr}`);
+    logger.debug(`iFollowedFanout has started with message: ${messageStr}`);
 
     const iFollowedKafkaMsg = plainToInstance(
       IFollowedKafkaMsg,
@@ -45,7 +44,7 @@ export const iFollowedFanout = async (
     var endTime: number = Date.now();
 
     if (leastRecentPosts.length === 0) {
-      logger.trace(`${redisKey} is empty in redis`);
+      logger.debug(`${redisKey} is empty in redis`);
     } else {
       endTime = leastRecentPosts[0].score;
     }
@@ -64,7 +63,7 @@ export const iFollowedFanout = async (
       postByUserAxiosRes.data,
     );
 
-    logger.trace(
+    logger.silly(
       `Received from ${postDetailsResObj.posts.length} posts from post service for userId: ${iFollowedKafkaMsg.followsUserId}`,
     );
 
@@ -78,7 +77,7 @@ export const iFollowedFanout = async (
       });
     }
 
-    logger.trace(
+    logger.silly(
       `${postDetailsResObj.posts.length} posts posted to redis key of ${redisKey}`,
     );
 
@@ -90,7 +89,7 @@ export const iFollowedFanout = async (
     if (setSize > maxPostSetSize) {
       const toRemove = setSize - maxPostSetSize - 1;
       await redisClient.zRemRangeByRank(redisKey, 0, toRemove);
-      logger.trace(
+      logger.silly(
         `${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`,
       );
       workerOperationCount

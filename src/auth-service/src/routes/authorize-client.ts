@@ -1,5 +1,4 @@
 import express from "express";
-import * as log4js from "log4js";
 import { plainToInstance } from "class-transformer";
 import {
   AuthInfo,
@@ -16,9 +15,9 @@ import { validate } from "class-validator";
 import { AxiosError } from "axios";
 import { genAccessRefreshToken, validateAccessToken } from "./common/common";
 import { v4 as uuidv4 } from "uuid";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const router = express.Router();
 
@@ -32,7 +31,7 @@ export const createAuthorizeClientRouter = (
   redisClient: RedisClientType<any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /authorize called`);
+    logger.silly(`POST /authorize called`);
 
     const authorizeClientObj = plainToInstance(AuthorizeClientReq, req.body);
     const errors = await validate(authorizeClientObj);
@@ -42,7 +41,7 @@ export const createAuthorizeClientRouter = (
     }
 
     try {
-      logger.trace(JSON.stringify(authorizeClientObj));
+      logger.silly(JSON.stringify(authorizeClientObj));
       if (authorizeClientObj.response_type === "code") {
         const authHeader = req.headers[ATTR_HEADER_AUTHORIZATION];
         if (!authHeader || typeof authHeader !== "string") {

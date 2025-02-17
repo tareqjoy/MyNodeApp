@@ -1,10 +1,8 @@
 import express from "express";
-import * as log4js from "log4js";
-import { InvalidRequest } from "@tareqjoy/models";
 import { validateAccessToken } from "./common/common";
+import { getFileLogger } from "@tareqjoy/utils";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const router = express.Router();
 
@@ -12,7 +10,7 @@ const ATTR_HEADER_AUTHORIZATION = "authorization";
 
 export const createVerifyRouter = () => {
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /verify called`);
+    logger.silly(`POST /verify called`);
 
     const validateRet = validateAccessToken(
       req.headers[ATTR_HEADER_AUTHORIZATION],

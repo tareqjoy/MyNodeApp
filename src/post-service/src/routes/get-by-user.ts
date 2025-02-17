@@ -1,5 +1,5 @@
 import express from "express";
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
 import { PostSchema } from "../db/PostSchema";
 import axios from "axios";
@@ -18,8 +18,7 @@ import {
   getTimeSortedGetPostIdsByUserListQuery,
 } from "./common/common";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const userServiceHostUrl: string =
   process.env.USER_SERVICE_USERID_URL ||
@@ -28,7 +27,7 @@ const userServiceHostUrl: string =
 export const createGetByUserRouter = (mongoClient: Mongoose) => {
   const router = express.Router();
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /get-by-user called`);
+    logger.silly(`POST /get-by-user called`);
     try {
       const getPostReq = plainToInstance(GetPostByUserReq, req.body);
       const errors = await validate(getPostReq);

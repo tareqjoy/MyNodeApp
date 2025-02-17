@@ -1,16 +1,11 @@
 import express from "express";
 import { Driver } from "neo4j-driver";
-import { Producer } from "kafkajs";
-import * as log4js from "log4js";
-import { FollowersReq, InternalServerError } from "@tareqjoy/models";
+import { getFileLogger } from "@tareqjoy/utils";
+import { InternalServerError } from "@tareqjoy/models";
 import { parseAndExecuteQuery } from "./common/common";
-import { ATTR_HEADER_USER_ID } from "@tareqjoy/utils";
-import { plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
 import axios from "axios";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const userServiceHostUrl: string =
   process.env.USER_SERVICE_USERID_URL ||
@@ -22,7 +17,7 @@ export const createIFollowRouter = (
 ) => {
   const router = express.Router();
   router.post("/", async (req, res, next) => {
-    logger.trace(`POST /i-follow called`);
+    logger.silly(`POST /i-follow called`);
 
     const session = neo4jDriver.session();
     try {

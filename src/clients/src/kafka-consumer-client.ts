@@ -1,9 +1,8 @@
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 
 import { Consumer, Kafka } from "kafkajs";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const kafka_host_port = process.env.KAFKA_HOST_PORT || "localhost:9092";
 

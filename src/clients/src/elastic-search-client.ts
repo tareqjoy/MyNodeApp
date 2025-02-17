@@ -1,11 +1,10 @@
 //Getting started: https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/getting-started-js.html
 
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 
 import { Client } from "@elastic/elasticsearch";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 const elastic_search_host_port =
   process.env.ELASTIC_SEARCH_HOST_PORT || "http://localhost:9200";

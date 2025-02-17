@@ -1,4 +1,4 @@
-import * as log4js from "log4js";
+import { getFileLogger } from "@tareqjoy/utils";
 import mongoose from "mongoose";
 import axios from "axios";
 import {
@@ -10,8 +10,7 @@ import {
 } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 
-const logger = log4js.getLogger();
-logger.level = "trace";
+const logger = getFileLogger(__filename);
 
 export function getTimeSortedGetPostIdsByUserListQuery(
   userMongoIds: mongoose.Types.ObjectId[],
