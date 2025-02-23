@@ -1,0 +1,14 @@
+[Unit]
+Description=Jaeger is a distributed tracing platform 
+Documentation=https://www.jaegertracing.io/docs
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=jaeger
+Group=jaeger
+Type=simple
+ExecStart=/usr/local/bin/jaeger --config=/etc/jaeger/jaeger.yml
+
+[Install]
+WantedBy=multi-user.target

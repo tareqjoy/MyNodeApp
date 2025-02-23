@@ -1,18 +1,28 @@
-import express from "express";
-import "reflect-metadata";
-import bodyParser from "body-parser";
-import { createHomeRouter } from "./routes/home";
-import { connectRedis } from "@tareqjoy/clients";
+
+import {
+
+} from "@tareqjoy/utils";
 
 import {
   getApiPath,
   authorize,
   commonServiceMetricsMiddleware,
   getExpressLogger,
-  getFileLogger
+  getFileLogger,
+  getTracer
 } from "@tareqjoy/utils";
 
+
+import express from "express";
+import "reflect-metadata";
+import bodyParser from "body-parser";
+import { createHomeRouter } from "./routes/home";
+import { connectRedis } from "@tareqjoy/clients";
+
+
 const logger = getFileLogger(__filename);
+
+
 
 const appport = process.env.PORT || 5001;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/timeline";
@@ -31,7 +41,12 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
-  app.use(getExpressLogger());
+ // app.use(getExpressLogger());
+
+ app.use((req, res, next) => {
+
+  next();
+ });
 
   const redisClient = await connectRedis();
 
@@ -84,3 +99,4 @@ async function main() {
 }
 
 main();
+
