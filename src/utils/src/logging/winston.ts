@@ -14,7 +14,7 @@ export function getFileLogger(filename: string): winston.Logger {
   if(!logger) {
     logger = winston.createLogger({
       level:
-        process.env.NODE_ENV === "production?"
+        process.env.NODE_ENV === "production"
           ? process.env.WINSTON_LOG_PROD_LEVEL ||
             process.env.WINSTON_LOG_LEVEL ||
             "info"

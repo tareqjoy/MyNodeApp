@@ -411,6 +411,16 @@ config:
         Keep_Log Off
         K8S-Logging.Parser On
         K8S-Logging.Exclude On
+    [FILTER]
+        Name    grep
+        Match   *
+        Exclude $kubernetes['container_name'] fluent-bit
+        Exclude $kubernetes['container_name'] controller
+        Exclude $kubernetes['container_name'] opentelemetry-collector
+        Exclude $kubernetes['container_name'] kube-controller-manager
+        Exclude $kubernetes['namespace_name'] kubernetes-dashboard
+        Exclude $kubernetes['namespace_name'] kube-system
+        
 
   ## https://docs.fluentbit.io/manual/pipeline/outputs
   ## https://docs.fluentbit.io/manual/pipeline/outputs/loki
