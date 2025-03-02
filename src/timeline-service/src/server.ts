@@ -1,18 +1,10 @@
 
 import {
-
-} from "@tareqjoy/utils";
-
-import {
   getApiPath,
   authorize,
   commonServiceMetricsMiddleware,
-  getExpressLogger,
   getFileLogger,
-  getTracer
 } from "@tareqjoy/utils";
-
-
 import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";

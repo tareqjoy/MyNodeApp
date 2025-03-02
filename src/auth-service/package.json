@@ -4,10 +4,11 @@
     "description": "",
     "main": "dist/server.js",
     "scripts": {
-        "clean": "rimraf dist",
+        "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules", 
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node dist/server.js",
-        "dev": "ts-node src/server.ts",
+        "set-env": "node set-env.js",
+        "start": "export $(node set-env.js) && node dist/server.js",
+        "dev": "export $(node set-env.js) && ts-node src/server.ts",
         "format": "prettier --write 'src/**/*.{ts,tsx}'",
         "build": "tsc"
     },
@@ -16,7 +17,7 @@
     "dependencies": {
         "@tareqjoy/clients": "^1.0.23",
         "@tareqjoy/models": "^1.0.65",
-        "@tareqjoy/utils": "^1.0.37",
+        "@tareqjoy/utils": "^1.0.51",
         "apache-arrow": "^19.0.0",
         "axios": "^1.7.9",
         "class-transformer": "^0.5.1",

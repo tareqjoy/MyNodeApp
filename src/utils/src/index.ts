@@ -1,5 +1,6 @@
 import "reflect-metadata";
 
+// make sure instruments happen before winston, express
 export * from "./observability/otel-instrumentation";
 
 export * from "./api/api";

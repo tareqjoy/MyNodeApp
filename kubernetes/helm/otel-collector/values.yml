@@ -98,12 +98,24 @@ config:
   exporters:
     debug:
       verbosity: detailed
-    otlp/jaeger: # Jaeger supports OTLP directly. The default port for OTLP/gRPC is 4317
-      endpoint: 192.168.0.10:14250
+    otlp/jaeger:
+      endpoint: http://192.168.0.10:4317
       tls:
         insecure: true
     otlphttp/loki:
       endpoint: http://192.168.0.10:3100/otlp
+    prometheus:
+      endpoint: "0.0.0.0:9090"
+      namespace: test-space
+      const_labels:
+        label1: value1
+        "another label": spaced value
+      send_timestamps: true
+      metric_expiration: 180m
+      enable_open_metrics: true
+      add_metric_suffixes: false
+      resource_to_telemetry_conversion:
+        enabled: true
   extensions:
     # The health_check extension is mandatory for this chart.
     # Without the health_check extension the collector will fail the readiness and liveliness probes.
@@ -152,7 +164,7 @@ config:
           - otlp 
       metrics:
         exporters:
-          - debug
+          - prometheus
         processors:
           - memory_limiter
           - batch
@@ -187,10 +199,10 @@ alternateConfig: {}
 
 image:
   # If you want to use the core image `otel/opentelemetry-collector`, you also need to change `command.name` value to `otelcol`.
-  repository: ""
+  repository: "otel/opentelemetry-collector-contrib"
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: "latest"
   # When digest is set to a non-empty value, images will be pulled by digest (regardless of tag value).
   digest: ""
 imagePullSecrets: []

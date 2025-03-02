@@ -17,36 +17,37 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import { trace, Span } from '@opentelemetry/api';
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
+import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { IncomingMessage } from 'http';
 
-const otlp_host_port = process.env.OTLP_HOST_PORT || "http://localhost:4317";
+const otlp_http_host_port = process.env.OTLP_HTTP_HOST_PORT || "http://192.168.49.2:4318";
+const otlp_grpc_host_port = process.env.OTLP_GRPC_HOST_PORT || "http://192.168.49.2:4317";
 console.log('found: ', process.env.SERVICE_NAME, process.env.SERVICE_VERSION);
 
-const collectorOptions = {
-  // url is optional and can be omitted - default is http://localhost:4317
-  // Unix domain sockets are also supported: 'unix:///path/to/socket.sock'
-  url: otlp_host_port,
+const traceCollectorOptions = {
+  url: `${otlp_grpc_host_port}/v1/traces`,
+};
+const logCollectorOptions = {
+  url: `${otlp_http_host_port}/v1/logs`
 };
 
-const otlpExporter = new OTLPTraceExporter(collectorOptions);
-const consoleExporter = new ConsoleSpanExporter();
-
-const envBasedExporter = process.env.NODE_ENV === "production" ? otlpExporter : consoleExporter;
+const envBasedTraceExporter = new OTLPTraceExporter(traceCollectorOptions);
+const envBasedLogExporter = new OTLPLogExporter(logCollectorOptions);
 
 const sdk = new NodeSDK({
   resource: new Resource({
     [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME || 'unknown',
     [ATTR_SERVICE_VERSION]: process.env.SERVICE_VERSION || 'unknown',
   }),
-  traceExporter: envBasedExporter,
+  traceExporter: envBasedTraceExporter,
+  spanProcessors: [new BatchSpanProcessor(envBasedTraceExporter)],
  // metricReader: new PeriodicExportingMetricReader({
  //   exporter: new ConsoleMetricExporter(),
  // }),
-  logRecordProcessors: [new BatchLogRecordProcessor(new ConsoleLogRecordExporter())],
-  spanProcessors: [new BatchSpanProcessor(envBasedExporter)],
+  logRecordProcessors: [new BatchLogRecordProcessor(envBasedLogExporter)],
   instrumentations: [
     // Express instrumentation expects HTTP layer to be instrumented
     new HttpInstrumentation({

@@ -1,14 +1,13 @@
-import express from "express";
-import "reflect-metadata";
-import { createAllRouter } from "./routes/all";
-import { connectElasticSearch } from "@tareqjoy/clients";
 import {
   authorize,
   commonServiceMetricsMiddleware,
   getApiPath,
-  getExpressLogger,
   getFileLogger
 } from "@tareqjoy/utils";
+import express from "express";
+import "reflect-metadata";
+import { createAllRouter } from "./routes/all";
+import { connectElasticSearch } from "@tareqjoy/clients";
 
 const logger = getFileLogger(__filename);
 
@@ -32,7 +31,6 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
-  app.use(getExpressLogger());
 
   const elasticSearchClient = await connectElasticSearch();
 

@@ -6,10 +6,11 @@
     "scripts": {
         "setup:db:createIndex": "tsc -p . && node dist/db/DbSetup.js --create-index",
         "setup:db:createShard": "tsc -p . && node dist/db/DbSetup.js --create-shard",
-        "clean": "rimraf dist", 
+        "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules", 
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node dist/server.js",
-        "dev": "ts-node src/server.ts",
+        "set-env": "node set-env.js",
+        "start": "export $(node set-env.js) && node dist/server.js",
+        "dev": "export $(node set-env.js) && ts-node src/server.ts",
         "format": "prettier --write 'src/**/*.{ts,tsx}'",
         "build": "tsc"
     },
@@ -23,7 +24,7 @@
         "reflect-metadata": "^0.2.2",
         "@tareqjoy/clients": "^1.0.22",
         "@tareqjoy/models": "^1.0.65",
-        "@tareqjoy/utils": "^1.0.37"
+        "@tareqjoy/utils": "^1.0.51"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",

@@ -4,7 +4,7 @@
     "description": "",
     "main": "dist/server.js",
     "scripts": {
-        "clean": "rimraf dist", 
+        "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules", 
         "test": "echo \"Error: no test specified\" && exit 1",
         "set-env": "node set-env.js",
         "start": "export $(node set-env.js) && node dist/server.js",
@@ -24,7 +24,7 @@
         "reflect-metadata": "^0.2.2",
         "@tareqjoy/clients": "^1.0.22",
         "@tareqjoy/models": "^1.0.64",
-        "@tareqjoy/utils": "^1.0.39",
+        "@tareqjoy/utils": "^1.0.51",
         "apache-arrow": "^19.0.0"
     },
     "devDependencies": {

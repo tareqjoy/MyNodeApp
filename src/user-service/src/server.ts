@@ -1,3 +1,9 @@
+import {
+  authorize,
+  commonServiceMetricsMiddleware,
+  getApiPath,
+  getFileLogger
+} from "@tareqjoy/utils";
 import express from "express";
 import "reflect-metadata";
 import { connectMongo, connectRedis } from "@tareqjoy/clients";
@@ -7,13 +13,7 @@ import { createUserInternalRouter } from "./routes/user-internal";
 import bodyParser from "body-parser";
 import { createSignInRouter } from "./routes/signin";
 import "source-map-support/register";
-import {
-  authorize,
-  commonServiceMetricsMiddleware,
-  getApiPath,
-  getExpressLogger,
-  getFileLogger
-} from "@tareqjoy/utils";
+
 
 const logger = getFileLogger(__filename);
 
@@ -35,7 +35,6 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
-  app.use(getExpressLogger());
 
   const redisClient = await connectRedis();
   const mongoClient = await connectMongo();

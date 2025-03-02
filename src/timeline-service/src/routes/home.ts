@@ -32,7 +32,6 @@ export const createHomeRouter = (
   redisClient: RedisClientType<any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.silly(`POST /home called`);
 
     if (!req.headers || !req.headers[ATTR_HEADER_USER_ID]) {
       res

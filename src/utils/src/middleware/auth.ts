@@ -17,7 +17,7 @@ export const authorize = async (
   res: Response,
   next: NextFunction
 ) => {
-  logger.silly("calling user service.");
+  logger.warn("calling user service.");
 
   const accessToken = getAccessTokenFromHeader(req);
   if (!accessToken) {

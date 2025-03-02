@@ -26,10 +26,8 @@ sudo chown -R prometheus:prometheus /etc/prometheus
 sudo chown -R prometheus:prometheus /var/lib/prometheus
 
 # creating service file
-DEST_DIR="/etc/systemd/system"
-
-sudo cp "${SCRIPT_DIR}/prometheus.service" "${DEST_DIR}/"
-sudo chmod 644 "${DEST_DIR}/prometheus.service"
+sudo cp "${SCRIPT_DIR}/prometheus.service" "/etc/systemd/system/"
+sudo chmod 644 "/etc/systemd/system/prometheus.service"
 systemctl daemon-reload
 
 # install JMX Exporter
