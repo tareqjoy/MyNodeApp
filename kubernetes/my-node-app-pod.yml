@@ -200,6 +200,8 @@ spec:
                 name: mongodb-config
             - configMapRef:
                 name: redis-config
+            - configMapRef:
+                name: service-url-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -314,6 +316,8 @@ spec:
                 name: search-service-config
             - configMapRef:
                 name: elastic-search-config
+            - configMapRef:
+                name: service-url-config
 ---
 apiVersion: apps/v1
 kind: Deployment
