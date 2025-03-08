@@ -11,7 +11,7 @@
       "sourceMap": true,                     // Generate source maps for debugging
       "removeComments": true,                 // Remove comments from output JavaScript files
       "types": ["node"],
-      "lib": ["ESNext"],
+      "lib": ["ESNext", "DOM"],
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true
     },
