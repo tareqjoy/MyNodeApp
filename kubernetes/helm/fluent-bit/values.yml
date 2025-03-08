@@ -312,9 +312,11 @@ terminationGracePeriodSeconds:
 
 priorityClassName: ""
 
-env: []
-#  - name: FOO
-#    value: "bar"
+env:
+  - name: SERVICE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.labels['app']
 
 # The envWithTpl array below has the same usage as "env", but is using the tpl function to support templatable string.
 # This can be useful when you want to pass dynamic values to the Chart using the helm argument "--set <variable>=<value>"
@@ -385,6 +387,8 @@ config:
         HTTP_Listen 0.0.0.0
         HTTP_Port {{ .Values.metricsPort }}
         Health_Check On
+        service_name ${SERVICE_NAME}
+        
 
   ## https://docs.fluentbit.io/manual/pipeline/inputs
   inputs: |
@@ -426,23 +430,10 @@ config:
   ## https://docs.fluentbit.io/manual/pipeline/outputs/loki
   outputs: |
     [OUTPUT]
-        Name                 opentelemetry
-        Match                *
-        Host                 opentelemetry-collector
-        Port                 4318
-        Log_response_payload True
-        Metrics_uri          /v1/metrics
-        Logs_uri             /v1/logs
-        Traces_uri           /v1/traces
-        Tls                  Off
-        Tls.verify           Off
-        logs_body_key $message
-        logs_span_id_message_key span_id
-        logs_trace_id_message_key trace_id
-        logs_severity_text_message_key loglevel
-        logs_severity_number_message_key lognum
-        # add user-defined labels
-        add_label            app fluent-bit
+        name loki
+        match *
+        host 192.168.0.10
+        port 3100
 
 
 #name loki
