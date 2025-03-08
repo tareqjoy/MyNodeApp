@@ -35,11 +35,6 @@ async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
  // app.use(getExpressLogger());
 
- app.use((req, res, next) => {
-
-  next();
- });
-
   const redisClient = await connectRedis();
 
   app.use(

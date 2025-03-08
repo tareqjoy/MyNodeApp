@@ -15,52 +15,54 @@ let logger: winston.Logger = getFileLogger(__filename);
 export const authorize = async (
   req: Request,
   res: Response,
-  next: NextFunction
-) => {
+  next: NextFunction,
+): Promise<void> => {
   logger.warn("calling user service.");
 
   const accessToken = getAccessTokenFromHeader(req);
   if (!accessToken) {
-    return res
-      .status(401)
-      .json({ error: "Authorization header or token is missing" });
+    res.status(401).json({
+      error: "authorization header missing or bad authorization token",
+    });
+    return;
   }
 
+  // Authorization header is there
   try {
     const response = await axios.post(
       authVerifyUrl,
       {},
       {
         headers: { Authorization: `Bearer ${accessToken}` },
-      }
+      },
     );
 
-    if (response.status == 200 && response.data) {
-      // Attach user claims to the request object for downstream use
-      const authInfoResp = plainToInstance(AuthInfo, response.data);
+    // Attach user claims to the request object for downstream use
+    const authInfoResp = plainToInstance(AuthInfo, response.data);
 
-      if (authInfoResp.userId) {
-        req.headers[ATTR_HEADER_USER_ID] = authInfoResp.userId;
+    if (authInfoResp.userId) {
+      req.headers[ATTR_HEADER_USER_ID] = authInfoResp.userId;
 
-        logger.debug("successfully verified userId:", authInfoResp.userId);
-        return next();
-      } else {
-        logger.debug("got 200 but authInfoResp.userId is null");
-      }
+      logger.debug("successfully verified userId:", authInfoResp.userId);
+      next();
+    } else {
+      logger.warn("got 200 but authInfoResp.userId is null");
+      res.status(500).json(new InternalServerError());
     }
-
-    logger.debug("failed to verify access token");
-    return res.status(401).json({ error: "Invalid or expired token" });
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      logger.error(
-        `Error while middleware authZ: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`
-      );
+      if (error.response?.status == 401) {
+        res.status(500).json(error.response?.data);
+      } else {
+        logger.error(
+          `Service error while middleware authZ: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+        );
+        res.status(500).json(new InternalServerError());
+      }
     } else {
-      logger.error("Error while middleware authZ: ", error);
+      logger.error("Unexpected error while middleware authZ: ", error);
+      res.status(500).json(new InternalServerError());
     }
-    res.status(500).json(new InternalServerError());
-    return;
   }
 };
 
