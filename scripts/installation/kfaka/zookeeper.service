@@ -8,6 +8,7 @@ After=network.target remote-fs.target
 User=kafka
 Group=kafka
 Type=simple
+Environment="ZOO_LOG_DIR=/var/log/zookeeper"
 ExecStart=/usr/local/kafka/bin/zookeeper-server-start.sh /usr/local/kafka/config/zookeeper.properties
 ExecStop=/usr/local/kafka/bin/zookeeper-server-stop.sh
 Restart=on-abnormal

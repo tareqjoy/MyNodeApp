@@ -14,12 +14,10 @@ sudo mv /tmp/kafka_2.13-3.9.0 /tmp/kafka
 sudo mkdir -p /usr/local/kafka/
 sudo mv /tmp/kafka /usr/local/kafka/
 sudo mkdir -p /data/kafka/
+sudo mkdir -p /data/zookeeper/
 sudo mkdir -p /var/log/kafka/
+sudo mkdir -p /var/log/zookeeper/
 
-# giving ownership
-sudo chown -R kafka:kafka /usr/local/kafka/
-sudo chown kafka:kafka /data/kafka/
-sudo chown kafka:kafka /var/log/kafka/
 
 # setting up service file
 yes | sudo cp -rf "${SCRIPT_DIR}/kafka.service" "/etc/systemd/system/"
@@ -29,7 +27,14 @@ sudo chmod 644 "/etc/systemd/system/zookeeper.service"
 systemctl daemon-reload
 
 # copying config file
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="server.properties"
-yes | sudo cp -rf "${SCRIPT_DIR}/${CONFIG_FILE}" "/usr/local/kafka/config/"
+yes | sudo cp -rf "${SCRIPT_DIR}/server.properties" "/usr/local/kafka/config/"
+yes | sudo cp -rf "${SCRIPT_DIR}/zookeeper.properties" "/usr/local/kafka/config/"
+
+
+# giving ownership
+sudo chown -R kafka:kafka /usr/local/kafka/
+sudo chown -R kafka:kafka /data/kafka/
+sudo chown -R kafka:kafka /data/zookeeper/
+sudo chown -R kafka:kafka /var/log/kafka/
+sudo chown -R kafka:kafka /var/log/zookeeper/
 

@@ -14,6 +14,7 @@ Environment="KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote=true -Dcom.sun.manage
 Environment="KAFKA_HEAP_OPTS=-Xmx512m -Xms512m"
 Environment="KAFKA_JVM_PERFORMANCE_OPTS=-XX:MetaspaceSize=96m -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:G1HeapRegionSize=16M -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80"
 Environment="JAVA_HOME=/usr/lib/jvm/java-1.21.0-openjdk-amd64"
+Environment="LOG_DIR=/var/log/kafka"
 ExecStart=/usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties
 ExecStop=/usr/local/kafka/bin/kafka-server-stop.sh
 Restart=on-abnormal
