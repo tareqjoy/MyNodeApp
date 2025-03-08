@@ -16,10 +16,10 @@
     "license": "ISC",
     "dependencies": {
         "@tareqjoy/clients": "^1.0.24",
-        "@tareqjoy/models": "^1.0.65",
-        "@tareqjoy/utils": "^1.0.53",
-        "apache-arrow": "^19.0.0",
-        "axios": "^1.7.9",
+        "@tareqjoy/models": "^1.0.66",
+        "@tareqjoy/utils": "^1.0.54",
+        "apache-arrow": "^19.0.1",
+        "axios": "^1.8.2",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.1",
         "cors": "^2.8.5",
@@ -29,19 +29,19 @@
         "redis": "^4.7.0",
         "reflect-metadata": "^0.2.2",
         "source-map-support": "^0.5.21",
-        "uuid": "^11.0.5",
+        "uuid": "^11.1.0",
         "winston": "^3.17.0"
     },
     "devDependencies": {
         "@types/cors": "^2.8.17",
         "@types/express": "^5.0.0",
-        "@types/node": "^22.10.10",
+        "@types/node": "^22.13.10",
         "@types/uuid": "^10.0.0",
-        "@types/jsonwebtoken": "^9.0.8",
+        "@types/jsonwebtoken": "^9.0.9",
         "nodemon": "^3.1.9",
-        "prettier": "^3.4.2",
+        "prettier": "^3.5.3",
         "rimraf": "^6.0.1",
         "ts-node": "10.9.2",
-        "typescript": "^5.7.3"
+        "typescript": "^5.8.2"
     }
 }

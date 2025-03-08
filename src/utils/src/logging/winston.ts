@@ -34,8 +34,6 @@ export function getFileLogger(filename: string): winston.Logger {
     }
   }
 
-
-
   return logger.child({ scope: filename })!;
 }
 
