@@ -6,8 +6,6 @@ import {
   ConsoleMetricExporter,
 } from '@opentelemetry/sdk-metrics';
 import {
-  SimpleLogRecordProcessor,
-  ConsoleLogRecordExporter,
   BatchLogRecordProcessor,
 } from '@opentelemetry/sdk-logs';
 import { Resource } from '@opentelemetry/resources';
@@ -22,6 +20,9 @@ import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { IncomingMessage } from 'http';
+import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
+import { MongoDBInstrumentation } from '@opentelemetry/instrumentation-mongodb';
+import { KafkaJsInstrumentation } from 'opentelemetry-instrumentation-kafkajs';
 
 const otlp_http_host_port = process.env.OTLP_HTTP_HOST_PORT || "http://192.168.49.2:4318";
 const otlp_grpc_host_port = process.env.OTLP_GRPC_HOST_PORT || "http://192.168.49.2:4317";
@@ -62,7 +63,10 @@ const sdk = new NodeSDK({
       }
     }),
     new ExpressInstrumentation(),
-    new WinstonInstrumentation()
+    new WinstonInstrumentation(),
+    new RedisInstrumentation(),
+    new MongoDBInstrumentation(),
+    new KafkaJsInstrumentation()
   ]
 });
 

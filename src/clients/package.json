@@ -16,12 +16,11 @@
   "license": "ISC",
   "dependencies": {
     "kafkajs": "2.0.0",
-    "log4js": "^6.9.1",
     "redis": "^4.7.0",
     "mongoose": "^8.2.4",
     "neo4j-driver": "^5.23.0",
     "@elastic/elasticsearch": "^8.17.0",
-    "@tareqjoy/utils": "^1.0.37"
+    "@tareqjoy/utils": "^1.0.52"
   },
   "devDependencies": {
     "@types/node": "^22.10.10",
