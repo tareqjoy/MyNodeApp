@@ -1,60 +1,60 @@
-'use client'
+'use client';
 import 'reflect-metadata';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
-import { axiosAuthClient, axiosPublicClient, deleteAccessToken, deleteRefreshToken, getUserName } from '@/lib/auth';
-import { useEffect, useState } from 'react';
-import { useRouter } from "next/navigation";
+import { getUserName, deleteAccessToken, deleteRefreshToken, axiosAuthClient } from '@/lib/auth';
 import Loading from './loading';
 
-const authSignOutUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_OUT_URL || "http://localhost:80/v1/auth/signout/";
-const userDetailsUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://localhost:80/v1/user/detail/";
-
+const authSignOutUrl = process.env.NEXT_PUBLIC_AUTH_SIGN_OUT_URL || 'http://localhost:80/v1/auth/signout/';
 const deviceId = 'some-unique-device-id';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [showProfile, setShowProfile] = useState(false);
-  const [userData, setUserData] = useState('');
-  
-  
+  const [userData, setUserData] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const isAuthed = async () => {
-      const data = await useVerifyAccessToken();
-      if(!data) {
-        router.push('/login')
+    const checkAuth = async () => {
+      const isAuthenticated = await useVerifyAccessToken();
+      if (!isAuthenticated) {
+        router.push('/login');
       } else {
-        setShowProfile(true);
         setUserData(getUserName() || '');
       }
+      setLoading(false);
     };
-    isAuthed();
-  }, [showProfile]);
+    checkAuth();
+  }, []);
 
-  if(!showProfile) {
-    return (<Loading />)
-  }
-
-  
   const handleLogOut = async () => {
     try {
-      const resp = await axiosAuthClient.post(authSignOutUrl, {}, {headers: {'Device-ID': deviceId}});
+      await axiosAuthClient.post(authSignOutUrl, {}, { headers: { 'Device-ID': deviceId } });
       deleteAccessToken();
       deleteRefreshToken();
-      window.location.reload();
+      router.push('/login');
     } catch (error) {
       console.error('Auth failed:', error);
     }
   };
 
+  if (loading) return <Loading />;
+
   return (
-    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
-      <div className="w-full flex-none md:w-64">
-      <button>{userData}</button>
-      </div>
-      <div className="flex-grow p-6 md:overflow-y-auto md:p-12">{children}</div>
-      <div className="w-full flex-none md:w-64">
-      <button style={{ width: '100%', padding: '0.75rem', backgroundColor: '#0070f3', color: 'white', border: 'none', cursor: 'pointer' }} onClick={handleLogOut}>Log out</button>
-      </div>
+    <div className="flex h-screen flex-col md:flex-row">
+      {/* Sidebar */}
+      <aside className="w-full md:w-64 p-6 bg-gray-800 text-white flex flex-col items-center">
+        <span className="text-lg font-semibold">{userData}</span>
+        <button
+          className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition"
+          onClick={handleLogOut}
+        >
+          Log Out
+        </button>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-grow p-6 md:p-12 overflow-y-auto">{children}</main>
     </div>
   );
 }
