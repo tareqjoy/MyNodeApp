@@ -6,7 +6,7 @@
     "scripts": {
         "setup:db:createIndex": "tsc -p . && node dist/db/DbSetup.js --create-index",
         "setup:db:createShard": "tsc -p . && node dist/db/DbSetup.js --create-shard",
-        "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules", 
+        "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
         "test": "echo \"Error: no test specified\" && exit 1",
         "set-env": "node set-env.js",
         "start": "export $(node set-env.js) && node dist/server.js",
@@ -17,22 +17,22 @@
     "author": "Tareq Joy",
     "license": "ISC",
     "dependencies": {
-        "axios": "^1.8.2",
-        "express": "^4.21.2",
-        "class-validator": "^0.14.1",
-        "class-transformer": "^0.5.1",
-        "reflect-metadata": "^0.2.2",
         "@tareqjoy/clients": "^1.0.24",
         "@tareqjoy/models": "^1.0.66",
-        "@tareqjoy/utils": "^1.0.60"
+        "@tareqjoy/utils": "^1.0.60",
+        "axios": "^1.8.2",
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.14.1",
+        "express": "^4.21.2",
+        "reflect-metadata": "^0.2.2"
     },
     "devDependencies": {
         "@types/express": "^5.0.0",
         "@types/node": "^22.13.10",
         "nodemon": "^3.1.9",
-        "typescript": "^5.8.2",
-        "ts-node": "10.9.2",
         "prettier": "^3.5.3",
-        "rimraf": "^6.0.1"
+        "rimraf": "^6.0.1",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.8.2"
     }
 }

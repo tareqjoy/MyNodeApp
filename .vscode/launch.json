@@ -1,19 +1,61 @@
 {
-    "configurations": [
-        {
-            "name": "Launch post-service",
-            "type": "node",
-            "request": "launch",
-            "skipFiles": ["<node_internals>/**"],
-            "program": "${workspaceFolder}/src/post-service/src/index.ts",  // Entry point for package A
-            "runtimeExecutable": "ts-node",
-            "runtimeArgs": [
-              "-r",
-              "ts-node/register"
-            ],
-            "outFiles": [
-              "${workspaceFolder}/packages/package-a/dist/**/*.js"  // Path to compiled files (if using `tsc`)
-            ]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node-terminal",
+      "name": "Debug timeline-service",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "cwd": "${workspaceFolder}/src/timeline-service"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Debug user-service",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "cwd": "${workspaceFolder}/src/user-service"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Debug follower-service",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "cwd": "${workspaceFolder}/src/user-service"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Debug fanout-service",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "cwd": "${workspaceFolder}/src/user-service"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Debug post-service",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/src/post-service",
+      "command": "npm run build && npm run start",
+    },
+    {
+      "type": "node-terminal",
+      "name": "Debug search-service",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "cwd": "${workspaceFolder}/src/search-service"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Debug auth-service",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "cwd": "${workspaceFolder}/src/auth-service"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Debug frontend-service",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "cwd": "${workspaceFolder}/src/frontend-service"
+    }
+  ]
 }
