@@ -1,0 +1,103 @@
+{
+  "artificialDelayMilliseconds": 5,
+  "keepExistingTerminalsOpen": false,
+  "runOnStartup": true,
+  "terminals": [
+    {
+      "splitTerminals": [
+        {
+          "name": "MyNodeApp",
+          "commands": [""]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "timeline-service",
+          "commands": ["cd src/timeline-service"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "user-service",
+          "commands": ["cd src/user-service"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "follower-service",
+          "commands": ["cd src/follower-service"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "fanout-service",
+          "commands": ["cd src/fanout-service"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "post-service",
+          "commands": ["cd src/post-service"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "search-service",
+          "commands": ["cd src/search-service"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "auth-service",
+          "commands": ["cd src/auth-service"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "frontend-service",
+          "commands": ["cd src/frontend-service"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "clients",
+          "commands": ["cd src/clients"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "models",
+          "commands": ["cd src/models"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
+          "name": "utils",
+          "commands": ["cd src/utils"]
+        }
+      ]
+    }
+  ]
+}

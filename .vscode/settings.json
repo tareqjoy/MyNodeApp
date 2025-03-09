@@ -1,0 +1,11 @@
+{
+    "files.exclude": {
+        "**/.logs": true
+    },
+    "yaml.schemas": {
+        "https://gitlab.com/gitlab-org/cluster-integration/gitlab-agent/-/raw/master/pkg/agentcfg/agentcfg_schemas/ConfigurationFile.json": "file:///home/tareqjoy/workspace/MyNodeApp/my-node-app-pod.yml"
+    },
+    "editor.fontSize": 14,
+    "terminal.integrated.fontSize": 14,
+    "window.zoomLevel": 0.2
+}

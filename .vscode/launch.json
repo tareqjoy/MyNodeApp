@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Launch post-service",
+            "type": "node",
+            "request": "launch",
+            "skipFiles": ["<node_internals>/**"],
+            "program": "${workspaceFolder}/src/post-service/src/index.ts",  // Entry point for package A
+            "runtimeExecutable": "ts-node",
+            "runtimeArgs": [
+              "-r",
+              "ts-node/register"
+            ],
+            "outFiles": [
+              "${workspaceFolder}/packages/package-a/dist/**/*.js"  // Path to compiled files (if using `tsc`)
+            ]
+        }
+    ]
+}
