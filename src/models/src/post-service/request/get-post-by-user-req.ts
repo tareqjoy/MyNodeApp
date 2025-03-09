@@ -7,11 +7,20 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsString,
   Max,
   Min,
 } from "class-validator";
 import { IsAtLeastOneFieldRequired } from "../../constraints/atleast-one-field-required";
+import { PostByUserPagingRaw } from "../common/post-by-user-paging-raw";
 
+export class Options {
+  nextToken?: string;
+  pagingInfo?: PostByUserPagingRaw;
+  limit?: number;
+  returnAsUsername?: boolean;
+  returnOnlyPostId?: boolean;
+}
 export class GetPostByUserReq {
   @IsOptional()
   @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
@@ -25,8 +34,11 @@ export class GetPostByUserReq {
   userIds?: string[];
 
   @IsOptional()
-  @IsMongoId()
-  lastPostId?: string;
+  @IsString()
+  nextToken?: string;
+
+  @IsOptional()
+  pagingInfo?: PostByUserPagingRaw;
 
   @IsOptional()
   @IsInt()
@@ -61,22 +73,12 @@ export class GetPostByUserReq {
   constructor(
     namesOrIds?: string[],
     providedUsernames?: boolean,
-    options?: {
-      lastPostId?: string;
-      limit?: number;
-      returnAsUsername?: boolean;
-      returnOnlyPostId?: boolean;
-    },
+    options?: Options,
   );
   constructor(
     namesOrIds?: string[],
     providedUsernames?: boolean,
-    options?: {
-      lastPostId?: string;
-      limit?: number;
-      returnAsUsername?: boolean;
-      returnOnlyPostId?: boolean;
-    },
+    options?: Options,
   ) {
     if (providedUsernames) {
       this.usernames = namesOrIds;
@@ -87,6 +89,7 @@ export class GetPostByUserReq {
     this.limit = options?.limit || 100;
     this.returnAsUsername = options?.returnAsUsername || false;
     this.returnOnlyPostId = options?.returnOnlyPostId || false;
-    this.lastPostId = options?.lastPostId;
+    this.nextToken = options?.nextToken;
+    this.pagingInfo = options?.pagingInfo;
   }
 }

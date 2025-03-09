@@ -7,8 +7,8 @@ import {
   GetPostByUserReq,
   UserInternalReq,
   UserInternalRes,
-  Paging,
   InternalServerError,
+  PostByUserPagingRaw,
 } from "@tareqjoy/models";
 import { InvalidRequest } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
@@ -73,18 +73,21 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
 
       const projection = getPostReq.returnOnlyPostId ? { _id: 1, time: 1 } : {};
 
-      var lastPostTime = Date.now();
-      if (getPostReq.lastPostId) {
-        const lastPost = await Post.findOne(
-          { _id: getPostReq.lastPostId },
-          { time: 1 },
-        );
-        if (lastPost) {
-          lastPostTime = lastPost.time;
-        } else {
-          res
-            .status(400)
-            .json(new InvalidRequest("no post found by lastPostId."));
+      var lastPostTime: number = Date.now();
+      var lastPostId: string | undefined = undefined;
+      if (getPostReq.pagingInfo) {
+        lastPostTime = getPostReq.pagingInfo.lastPostTime;
+        lastPostId = getPostReq.pagingInfo.lastPostId;
+      } else if(getPostReq.nextToken) {
+        try {
+          const rawPagingJson = JSON.parse(
+            Buffer.from(getPostReq.nextToken, "base64").toString("utf-8"),
+          );
+          const pagingRawObj = plainToInstance(PostByUserPagingRaw, rawPagingJson);
+          lastPostTime = pagingRawObj.lastPostTime;
+          lastPostId = pagingRawObj.lastPostId;
+        } catch (error) {
+          res.status(400).json(new InvalidRequest("Invalid nextToken"));
           return;
         }
       }
@@ -93,16 +96,17 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
         getTimeSortedGetPostIdsByUserListQuery(
           userMongoIds,
           lastPostTime,
-          getPostReq.lastPostId,
+          lastPostId,
         ),
         projection,
       )
         .sort({ time: -1, _id: -1 })
         .limit(getPostReq.limit);
 
-      var paging: Paging | undefined;
+      var paging: PostByUserPagingRaw | undefined;
       if (dbPosts.length == getPostReq.limit) {
-        paging = new Paging(dbPosts[dbPosts.length - 1].id.toString());
+        const lastPost = dbPosts[dbPosts.length - 1];
+        paging = new PostByUserPagingRaw(lastPost.time, lastPost.id.toString());
       }
       res
         .status(200)

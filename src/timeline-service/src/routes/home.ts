@@ -7,6 +7,7 @@ import {
   GetPostByUserReq,
   InternalServerError,
   InvalidRequest,
+  PostByUserPagingRaw,
   PostDetailsRes,
   TimelineHomePaging,
   TimelineHomePagingRaw,
@@ -54,9 +55,7 @@ export const createHomeRouter = (
           const rawPagingJson = JSON.parse(
             Buffer.from(timelineHomeReq.nextToken, "base64").toString("utf-8"),
           );
-          logger.silly(rawPagingJson);
           pagingRaw = plainToInstance(TimelineHomePagingRaw, rawPagingJson);
-          logger.silly(pagingRaw.type);
         } catch (error) {
           res.status(400).json(new InvalidRequest("Invalid nextToken"));
           return;
@@ -86,7 +85,7 @@ export const createHomeRouter = (
           );
         });
 
-        logger.silly("loaded from redis: ", postsToReturn.length);
+        logger.debug("loaded from redis: ", postsToReturn.length);
 
         if (postsToReturn.length >= timelineHomeReq.limit) {
           const pagingObj = new TimelineHomePagingRaw(
@@ -109,13 +108,18 @@ export const createHomeRouter = (
         }
       }
       // postsToReturn.length < timelineHomeReq.limit
-      let lastPostId = undefined;
+      // user scrolled a lot! now we will need to load partially or fully from database.
+
+      let pagingInfoForPostService: PostByUserPagingRaw | undefined = undefined;
+      let nextPageTokenForPostService: string | undefined = undefined;
       if (postsToReturn.length > 0) {
-        //partially loaded on redis
-        lastPostId = postsToReturn[postsToReturn.length - 1].postId;
+        //partially loaded on redis, load the rest from post service
+        const lastRedisPost = postsToReturn[postsToReturn.length - 1];
+        pagingInfoForPostService = new PostByUserPagingRaw(lastRedisPost.time, lastRedisPost.postId);
       } else if (pagingRaw?.type == "m" && pagingRaw?.id) {
-        //requested with 'm' in mind
-        lastPostId = pagingRaw.id;
+        //requested with 'm' means, timeline data request now maps directly to post service request
+        //so, using directly next page token of post service 
+        nextPageTokenForPostService = pagingRaw.id;
       } //else no data from redis, request type was 'r' but redis had 0 data
 
       const iFollowReq = new FollowersReqInternal(userId);
@@ -127,7 +131,8 @@ export const createHomeRouter = (
 
       const morePostToLoad = timelineHomeReq.limit - postsToReturn.length;
       const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, {
-        lastPostId: lastPostId,
+        pagingInfo: pagingInfoForPostService,
+        nextToken: nextPageTokenForPostService,
         limit: morePostToLoad,
         returnOnlyPostId: true,
       });
@@ -146,14 +151,14 @@ export const createHomeRouter = (
       }
 
       let pageTokenObj: TimelineHomePaging | undefined;
-      if (postDetailsResObj.paging?.lastPostId) {
-        const pageLastPostIdStr = postDetailsResObj.paging?.lastPostId;
+      if (postDetailsResObj.paging?.nextToken) {
+        const pageLastPostIdStr = postDetailsResObj.paging?.nextToken;
         const pagingObj = new TimelineHomePagingRaw("m", pageLastPostIdStr);
         const pagingJsonString = JSON.stringify(pagingObj);
         const nextPageToken = Buffer.from(pagingJsonString).toString("base64");
         pageTokenObj = new TimelineHomePaging(nextPageToken);
       }
-      logger.silly(
+      logger.debug(
         "loaded from post service/mongodb: ",
         postDetailsResObj.posts.length,
       );

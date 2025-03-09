@@ -6,7 +6,8 @@ import {
   SinglePost,
   UserInternalReq,
   UserInternalRes,
-  Paging,
+  PostByUserPagingRaw,
+  PostByUserPaging,
 } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 
@@ -44,7 +45,7 @@ export async function toResPosts(
   dbPosts: any,
   returnOnlyPostId: boolean,
   returnAsUsername: boolean,
-  paging?: Paging,
+  paging?: PostByUserPagingRaw,
 ): Promise<PostDetailsRes> {
   const resPosts: SinglePost[] = [];
   if (returnOnlyPostId) {
@@ -91,5 +92,11 @@ export async function toResPosts(
       }
     }
   }
-  return new PostDetailsRes(resPosts, paging);
+  if(paging) {
+    const pagingJsonString = JSON.stringify(paging);
+    const nextPageToken = Buffer.from(pagingJsonString).toString("base64");
+    return new PostDetailsRes(resPosts, new PostByUserPaging(nextPageToken));
+  } else {
+    return new PostDetailsRes(resPosts);
+  }
 }

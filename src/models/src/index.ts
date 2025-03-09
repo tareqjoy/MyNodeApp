@@ -30,6 +30,8 @@ export * from "./fanout-service/request/new-post-kafka-msg";
 export * from "./fanout-service/request/i-followed-kafka-msg";
 export * from "./fanout-service/request/i-unfollowed-kafka-msg";
 
+export * from "./post-service/common/post-by-user-paging-raw";
+
 export * from "./post-service/request/create-post-req";
 export * from "./post-service/request/get-post-req";
 export * from "./post-service/request/get-post-by-user-req";

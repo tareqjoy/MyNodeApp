@@ -36,25 +36,24 @@ export class SinglePost {
   }
 }
 
-export class Paging {
-  lastPostId?: string;
+export class PostByUserPaging {
+  nextToken: string; //base64 string of a json
 
   constructor();
-  constructor(highTime: number);
-  constructor(highTime: number, lastPostId: string);
-  constructor(highTime?: number, lastPostId?: string) {
-    this.lastPostId = lastPostId;
+  constructor(nextToken: string);
+  constructor(nextToken?: string) {
+    this.nextToken = nextToken || "";
   }
 }
 
 export class PostDetailsRes {
   posts: SinglePost[];
-  paging?: Paging;
+  paging?: PostByUserPaging;
 
   constructor();
   constructor(posts: SinglePost[]);
-  constructor(posts: SinglePost[], paging?: Paging);
-  constructor(posts?: SinglePost[], paging?: Paging) {
+  constructor(posts: SinglePost[], paging?: PostByUserPaging);
+  constructor(posts?: SinglePost[], paging?: PostByUserPaging) {
     if (posts) {
       this.posts = posts;
     } else {
