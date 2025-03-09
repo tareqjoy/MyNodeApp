@@ -155,6 +155,7 @@ axiosAuthClient.interceptors.response.use(
           console.error("axiosAuthClient: error while getting new accesstoken");
           console.warn(`axiosAuthClient: ignoring the ${subscribers.length} awaiting subscribed requests`);
           onRefreshed("");
+          isRefreshing = false;
           return Promise.reject(err);
         }
       }
