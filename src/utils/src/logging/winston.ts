@@ -12,29 +12,40 @@ const defaultMeta = {
 
 export function getFileLogger(filename: string): winston.Logger {
   if (!logger) {
-    logger = winston.createLogger({
-      level:
-        process.env.NODE_ENV === "production"
-          ? process.env.WINSTON_LOG_PROD_LEVEL ||
-            process.env.WINSTON_LOG_LEVEL ||
-            "info"
-          : process.env.WINSTON_LOG_LEVEL || "debug",
-      format: format.combine(
-        format.timestamp({
-          format: "YYYY-MM-DD HH:mm:ss",
-        }),
-        format.errors({ stack: true }),
-        format.splat(),
-        format.json(),
-      ),
-      defaultMeta: defaultMeta
-    });
-    if (process.env.NODE_ENV !== "production") {
-      logger.add(new winston.transports.Console());
+    if (process.env.NODE_ENV === "production") {
+      logger = winston.createLogger({
+        level: process.env.WINSTON_LOG_PROD_LEVEL || process.env.WINSTON_LOG_LEVEL || "info",
+        format: format.combine(
+          format.timestamp({
+            format: "YYYY-MM-DD HH:mm:ss",
+          }),
+          format.errors({ stack: true }),
+          format.splat(),
+          format.json(),
+        ),
+        defaultMeta: defaultMeta
+      });
+    } else {
+      logger = winston.createLogger({
+        level: process.env.WINSTON_LOG_LEVEL || "debug",
+        format: format.combine(
+          format.timestamp({
+            format: "YYYY-MM-DD HH:mm:ss",
+          }),
+          format.errors({ stack: true }),
+          format.splat(),
+          format.json(),
+          format.colorize({ all: true }), 
+        ),
+        defaultMeta: defaultMeta,
+        transports: [
+          new winston.transports.Console()
+        ]
+      });
     }
   }
 
-  return logger.child({ scope: filename })!;
+  return logger.child({ scope: getRelativeFilePath(filename) })!;
 }
 
 export function getExpressLogger(): Handler {
@@ -63,4 +74,19 @@ export function getExpressLogger(): Handler {
     
   }
   return expressLogger;
+}
+
+
+function getRelativeFilePath(filePath: string): string {
+  const keywords = ["node_modules", "dist", "src"];
+
+  // Find the last occurrence of prioritized keywords
+  for (const keyword of keywords) {
+    const index = filePath.lastIndexOf(`/${keyword}/`);
+    if (index != -1) {
+      return filePath.substring(index+1);
+    }
+  }
+
+  return filePath;
 }
