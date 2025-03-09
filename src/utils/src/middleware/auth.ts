@@ -17,7 +17,7 @@ export const authorize = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  logger.warn("calling user service.");
+  logger.debug("calling auth service.");
 
   const accessToken = getAccessTokenFromHeader(req);
   if (!accessToken) {
@@ -43,7 +43,7 @@ export const authorize = async (
     if (authInfoResp.userId) {
       req.headers[ATTR_HEADER_USER_ID] = authInfoResp.userId;
 
-      logger.debug("successfully verified userId:", authInfoResp.userId);
+      logger.debug(`successfully verified userId: ${authInfoResp.userId}`);
       next();
     } else {
       logger.warn("got 200 but authInfoResp.userId is null");
@@ -55,12 +55,12 @@ export const authorize = async (
         res.status(500).json(error.response?.data);
       } else {
         logger.error(
-          `Service error while middleware authZ: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+          `Service error while middleware authZ: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`
         );
         res.status(500).json(new InternalServerError());
       }
     } else {
-      logger.error("Unexpected error while middleware authZ: ", error);
+      logger.error("Unexpected error while middleware authZ: ", { error });
       res.status(500).json(new InternalServerError());
     }
   }
