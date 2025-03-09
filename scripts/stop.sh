@@ -17,6 +17,7 @@ sudo systemctl stop elasticsearch.service && systemctl --no-pager status elastic
 sudo systemctl stop mongo-kafka-source.service && systemctl --no-pager status mongo-kafka-source.service
 sudo systemctl stop elasticsearch-kafka-sink.service && systemctl --no-pager status elasticsearch-kafka-sink.service
 sudo systemctl stop grafana-server && sudo systemctl --no-page status grafana-server 
+# sudo systemctl stop nginx && sudo systemctl --no-page status nginx
 
 minikube stop
 

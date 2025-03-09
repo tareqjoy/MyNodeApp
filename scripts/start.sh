@@ -3,6 +3,7 @@
 
 set -e
 
+# sudo systemctl start nginx && sudo systemctl --no-page status nginx
 sudo systemctl start prometheus && sudo systemctl --no-page status prometheus
 sudo systemctl start mongod-rs0-0 && systemctl --no-pager status mongod-rs0-0
 sudo systemctl start mongod-rs0-1 && systemctl --no-pager status mongod-rs0-1
