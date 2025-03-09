@@ -1,5 +1,5 @@
 import express from "express";
-import { Mongoose } from "mongoose";
+import { Mongoose, isValidObjectId } from "mongoose";
 import { UserSchema } from "../schema/user-schema";
 import { getFileLogger } from "@tareqjoy/utils";
 import {
@@ -13,13 +13,23 @@ const logger = getFileLogger(__filename);
 const router = express.Router();
 
 export const createUserDetailsRouter = (mongoClient: Mongoose) => {
-  router.get("/:username", async (req, res, next) => {
+  router.get("/:usernameOrId", async (req, res, next) => {
     logger.silly(`GET /:username called`);
 
-    const username: string = req.params.username;
+    const { provided } = req.query;
+
+    const usernameOrId: string = req.params.usernameOrId;
+    if(provided === "userid" && !isValidObjectId(usernameOrId)) {
+       res.status(400).json(new InvalidRequest("Invalid userid"));
+       return;
+    }
+
+
     const User = mongoClient.model("User", UserSchema);
 
-    User.findOne({ username: username })
+    const query = provided === "userid"?  { _id: usernameOrId }: { username: usernameOrId };
+
+    User.findOne(query)
       .exec()
       .then((doc) => {
         if (doc == null) {
