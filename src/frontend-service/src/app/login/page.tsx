@@ -6,6 +6,8 @@ import { axiosAuthClient, axiosPublicClient, setAccessToken, setRefreshToken, se
 import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import Loading from './loading';
+import error from 'next/error';
+import Image from 'next/image';
 
 const authSignInUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL || "http://localhost:80/v1/auth/signin/";
 const userIdUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://localhost:80/v1/user/userid/";
@@ -89,40 +91,63 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem' }}>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>
-            Username:
+<div className="relative h-screen w-full bg-cover bg-center flex items-center justify-center" 
+      style={{ backgroundImage: "url('/login-bg.jpg')" }}>
+      {/* Overlay */}
+      
+
+      {/* Login Form */}
+      <div className="relative z-10 bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+        <h2 className="text-2xl font-semibold text-center text-gray-800">Welcome Back</h2>
+        <p className="text-gray-500 text-center mb-6">Sign in to your account</p>
+
+        {error && <p className="text-red-500 text-sm text-center mb-4">{errorMessage}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-gray-700 font-medium">Email</label>
             <input
-              type="text"
+              type="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
+              className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="Enter your email"
               required
             />
-          </label>
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>
-            Password:
+          </div>
+
+          {/* Password Input */}
+          <div>
+            <label className="block text-gray-700 font-medium">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="Enter your password"
-              style={{ width: '100%', padding: '0.5rem', marginTop: '0.5rem' }}
               required
             />
-          </label>
-        </div>
-        {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
-        <button type="submit" style={{ width: '100%', padding: '0.75rem', backgroundColor: '#0070f3', color: 'white', border: 'none', cursor: 'pointer' }}>
-          Login
-        </button>
-      </form>
+          </div>
+
+          {/* Forgot Password */}
+          <div className="text-right">
+            <a href="#" className="text-blue-500 text-sm hover:underline">Forgot password?</a>
+          </div>
+
+          {/* Login Button */}
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Sign In
+          </button>
+        </form>
+
+        {/* Signup Link */}
+        <p className="text-gray-600 text-sm text-center mt-4">
+          Don't have an account? <a href="/register" className="text-blue-500 hover:underline">Sign up</a>
+        </p>
+      </div>
     </div>
   );
 }
