@@ -19,8 +19,6 @@ export default function UserPosts({ userId }: { userId: string }) {
     try {
         const postByUserReq = new GetPostByUserReq([userId], false, {nextToken: nextToken || undefined, returnOnlyPostId: false, limit: 10});
       const axiosResp = await axiosAuthClient.post(userPostsUrl, postByUserReq);
-      console.log("sent: " + JSON.stringify(axiosResp.data));
-      console.log("loaded: " + JSON.stringify(axiosResp.data));
 
       const postDetailsResObj = plainToInstance(PostDetailsRes, axiosResp.data);
 

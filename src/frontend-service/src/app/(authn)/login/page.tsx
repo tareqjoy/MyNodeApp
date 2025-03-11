@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { axiosAuthClient, axiosPublicClient, setAccessToken, setRefreshToken, setUserId } from '@/lib/auth';
+import { axiosAuthClient, axiosPublicClient, setAccessToken, setRefreshToken, setUserId, setUserName } from '@/lib/auth';
 import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import Loading from './loading';
@@ -19,7 +19,7 @@ export default function LoginPage() {
 
   // State management
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [username, setUsername] = useState('');
+  const [username, setUsernameInForm] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -65,7 +65,7 @@ export default function LoginPage() {
         const authSignInResObj = plainToInstance(AuthSignInRes, signInRes.data);
         setAccessToken(authSignInResObj.access_token);
         setRefreshToken(authSignInResObj.refresh_token);
-        setUsername(username);
+        setUserName(username);
 
         const usernameRes = await axiosAuthClient.post(userIdUrl, { username });
         setUserId(usernameRes.data.toUserIds[username]);
@@ -109,7 +109,7 @@ export default function LoginPage() {
             <input
               type="username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => setUsernameInForm(e.target.value)}
               className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="Enter your email"
               required
