@@ -48,52 +48,63 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
 <div className="flex flex-col h-screen">
-      {/* Top Bar */}
-      
-      { 
-        <header className="w-full bg-gray-900 text-white flex items-center justify-between px-6 py-4 shadow-md">
-          {/* Search Bar */}
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-1/3 px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+  {/* Top Bar */}
+  { 
+    <header className="w-full bg-gray-900 text-white flex items-center justify-between px-6 py-4 shadow-md">
+      {/* Search Bar */}
+      <input
+        type="text"
+        placeholder="Search..."
+        className="w-1/3 px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
 
-          {/* User Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+      {/* Navigation Buttons */}
+      <div className="flex items-center space-x-4">
+        {/* Home Button */}
+        <button
+          onClick={() => router.push('/')}
+          className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md"
+        >
+          Home
+        </button>
+
+        {/* User Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+          >
+            <span>{userData}</span>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <span>{userData}</span>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+
+          {/* Dropdown Menu */}
+          {showDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white text-gray-900 shadow-lg rounded-lg">
+              <button
+                onClick={handleLogOut}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
+                Log Out
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  }
 
-            {/* Dropdown Menu */}
-            {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white text-gray-900 shadow-lg rounded-lg">
-                <button
-                  onClick={handleLogOut}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"
-                >
-                  Log Out
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
-      }
+  {/* Main Content */}
+  <main className="flex-grow p-6 md:p-12 overflow-y-auto">{children}</main>
+</div>
 
-      {/* Main Content */}
-      <main className="flex-grow p-6 md:p-12 overflow-y-auto">{children}</main>
-    </div>
   );
 }

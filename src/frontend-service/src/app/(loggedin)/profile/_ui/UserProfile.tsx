@@ -9,11 +9,11 @@ interface UserProfileProps {
 
 export default function UserProfile({ username, name, email, birthYear }: UserProfileProps) {
   return (
-    <div className="border rounded-lg p-4 shadow-md bg-white">
-      <h2 className="text-xl font-semibold text-center">{username}</h2>
-      <h2 className="text-xl font-semibold text-center">{name}</h2>
-      <p className="text-gray-500 text-center">{email}</p>
-      <p className="text-gray-500 text-center">{birthYear}</p>
+    <div className="border rounded-lg p-6 shadow-md bg-white text-center">
+      <h2 className="text-2xl font-semibold">{username}</h2>
+      <p className="text-gray-700">{name}</p>
+      <p className="text-gray-500">{email}</p>
+      <p className="text-gray-500">{birthYear}</p>
     </div>
   );
 }

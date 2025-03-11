@@ -37,7 +37,6 @@ export default function UserPosts({ userId }: { userId: string }) {
 
   return (
     <div className="w-full max-w-2xl mt-6">
-      <h2 className="text-xl font-bold mb-4">Posts</h2>
       {error && <p className="text-red-500">{error}</p>}
       {posts.length === 0 && !loading && <p className="text-gray-500">No posts available.</p>}
 

@@ -4,6 +4,12 @@ export class FollowersReq {
   @IsBoolean()
   @IsOptional()
   returnAsUsername: boolean = false;
+
+  constructor();
+  constructor(returnAsUsername: boolean);
+  constructor(returnAsUsername?: boolean) {
+    this.returnAsUsername = returnAsUsername || false;
+  }
 }
 
 export class FollowersReqInternal {
