@@ -62,7 +62,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex items-center space-x-4">
         {/* Home Button */}
         <button
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/home')}
           className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md"
         >
           Home

@@ -1,14 +1,10 @@
 import { Type } from "class-transformer";
 import {
   IsString,
-  IsNotEmpty,
-  IsNumber,
   Min,
   IsOptional,
-  IsBoolean,
   IsInt,
   Max,
-  IsMongoId,
 } from "class-validator";
 
 export class TimelineHomeReq {
@@ -22,4 +18,17 @@ export class TimelineHomeReq {
   @Min(1)
   @Max(1000)
   limit: number = 100;
+
+  constructor();
+  constructor(nextToken: string);
+  constructor(limit: number);
+  constructor(nextToken: string, limit: number);
+  constructor(nextTokenOrLimit?: string | number, limit?: number) {
+    if (typeof nextTokenOrLimit === "string") {
+      this.nextToken = nextTokenOrLimit || undefined;
+      this.limit = limit || 100;
+    } else if(typeof nextTokenOrLimit === "number") {
+      this.limit = nextTokenOrLimit || 100;
+    }
+  }
 }

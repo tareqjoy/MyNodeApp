@@ -1,12 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { axiosAuthClient } from '@/lib/auth';
-import { GetPostByUserReq, PostDetailsRes, SinglePost } from '@tareqjoy/models';
+import { GetPostReq, PostDetailsRes, SinglePost, TimelineHomeReq, TimelineHomeRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 
-const userPostsUrl: string = process.env.NEXT_PUBLIC_USER_POSTS_URL || "http://localhost:80/v1/post/get-by-user";
+const timelineUrl: string = process.env.NEXT_PUBLIC_TIMELINE_HOME_URL || "http://localhost:80/v1/timeline/home";
+const getPostsUrl: string = process.env.NEXT_PUBLIC_GET_POSTS_URL || "http://localhost:80/v1/post/get";
 
-export default function UserPosts({ userId }: { userId: string }) {
+export default function TimelinePosts({ userId }: { userId: string }) {
   const [posts, setPosts] = useState<SinglePost[]>([]);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,13 +18,22 @@ export default function UserPosts({ userId }: { userId: string }) {
 
     setLoading(true);
     try {
-        const postByUserReq = new GetPostByUserReq([userId], false, {nextToken: nextToken || undefined, returnOnlyPostId: false, limit: 10});
-      const axiosResp = await axiosAuthClient.post(userPostsUrl, postByUserReq);
+      const timelineHomeReq = nextToken ? new TimelineHomeReq(nextToken, 10): new TimelineHomeReq(10);
+      const axiosTimelineHomeResp = await axiosAuthClient.post(timelineUrl, timelineHomeReq);
 
-      const postDetailsResObj = plainToInstance(PostDetailsRes, axiosResp.data);
+      const timelineHomeResObj = plainToInstance(TimelineHomeRes, axiosTimelineHomeResp.data);
+
+      const postIds = timelineHomeResObj.posts.map(tpost => tpost.postId);
+
+      console.log(postIds);
+
+      const getPostsReq = new GetPostReq(postIds, true);
+      const axiosGetPostsResp = await axiosAuthClient.post(getPostsUrl, getPostsReq);
+
+      const postDetailsResObj = plainToInstance(PostDetailsRes, axiosGetPostsResp.data);
 
       setPosts((prev) => loadMore ? [...prev, ...postDetailsResObj.posts] : postDetailsResObj.posts);
-      setNextToken(postDetailsResObj.paging?.nextToken || null);
+      setNextToken(timelineHomeResObj.paging?.nextToken || null);
     } catch (err) {
       setError("Failed to load posts.");
     } finally {
@@ -43,8 +53,10 @@ export default function UserPosts({ userId }: { userId: string }) {
       <div className="space-y-4">
         {posts.map((post) => (
           <div key={post.postId} className="p-4 border rounded-lg shadow-sm">
+            <p className="text-sm text-gray-100">{post.postId}</p>
+            <p className="text-sm text-gray-100">{post.username}</p>
             <p className="text-sm text-gray-600">{new Date(post.time).toLocaleString()}</p>
-            <p className="text-gray-400 ">{post.body}</p>
+            <p className="text-gray-200 ">{post.body}</p>
             
           </div>
         ))}
