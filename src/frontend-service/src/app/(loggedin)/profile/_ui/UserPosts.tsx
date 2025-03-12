@@ -43,8 +43,9 @@ export default function UserPosts({ userId }: { userId: string }) {
       <div className="space-y-4">
         {posts.map((post) => (
           <div key={post.postId} className="p-4 border rounded-lg shadow-sm">
-            <p className="text-gray-600">{post.body}</p>
-            <p className="text-sm text-gray-400">Posted on: {new Date(post.time).toLocaleDateString()}</p>
+            <p className="text-sm text-gray-600">{new Date(post.time).toLocaleDateString()}</p>
+            <p className="text-gray-400 ">{post.body}</p>
+            
           </div>
         ))}
       </div>

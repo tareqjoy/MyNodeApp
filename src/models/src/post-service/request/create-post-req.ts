@@ -11,4 +11,11 @@ export class CreatePostReq {
   @Type(() => Number)
   @Min(1)
   postTime: number = 0;
+
+  constructor();
+  constructor(body: string, postTime: number);
+  constructor(body?: string, postTime?: number) {
+    this.body = body || "";
+    this.postTime = postTime || 1;
+  }
 }

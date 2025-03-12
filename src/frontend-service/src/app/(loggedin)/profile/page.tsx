@@ -7,6 +7,7 @@ import UserProfile from "./_ui/UserProfile";
 import { plainToInstance } from 'class-transformer';
 import UserPosts from './_ui/UserPosts';
 import UserFollows from './_ui/UserFollows';
+import ProfilePost from './_ui/ProfilePost';
 
 const userDetailsUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://localhost:80/v1/user/detail";
 
@@ -40,9 +41,13 @@ export default function ProfilePage() {
   if (!user) return <p className="text-gray-500 text-center mt-4">No user data available.</p>;
 
   return (
-<div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Profile Info */}
       <UserProfile username={user.username} name={user.name} email={user.email} birthYear={user.birthYear || 0} />
+
+      <div className=" rounded-lg shadow">
+        <ProfilePost />
+      </div>
 
       {/* Tabs for Posts & Friends */}
       <div className="flex border-b">
