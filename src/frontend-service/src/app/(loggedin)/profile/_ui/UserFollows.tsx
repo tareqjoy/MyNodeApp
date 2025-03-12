@@ -35,7 +35,7 @@ export default function UserFollows() {
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="w-full max-w-2xl mt-6">
+    <div className="w-full max-w-5xl mt-6">
       {ifollow.length === 0 ? (
         <p className="text-gray-500">None!</p>
       ) : (
