@@ -100,7 +100,7 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
         ),
         projection,
       )
-        .sort({ time: -1, _id: -1 })
+        .sort({ time: -1, _id: 1 })
         .limit(getPostReq.limit);
 
       var paging: PostByUserPagingRaw | undefined;

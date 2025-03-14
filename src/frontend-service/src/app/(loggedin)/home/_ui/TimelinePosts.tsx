@@ -53,7 +53,6 @@ export default function TimelinePosts({ userId }: { userId: string }) {
       <div className="space-y-4">
         {posts.map((post) => (
           <div key={post.postId} className="p-4 border rounded-lg shadow-sm">
-            <p className="text-sm text-gray-100">{post.postId}</p>
             <p className="text-sm text-gray-100">{post.username}</p>
             <p className="text-sm text-gray-600">{new Date(post.time).toLocaleString()}</p>
             <p className="text-gray-200 ">{post.body}</p>

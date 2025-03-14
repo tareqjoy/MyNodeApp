@@ -17,7 +17,11 @@ import {
 } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { ATTR_HEADER_USER_ID, getInternalFullPath, getFileLogger } from "@tareqjoy/utils";
+import {
+  ATTR_HEADER_USER_ID,
+  getInternalFullPath,
+  getFileLogger,
+} from "@tareqjoy/utils";
 
 const logger = getFileLogger(__filename);
 
@@ -30,10 +34,9 @@ const getPostByUserUrl: string =
 const router = express.Router();
 
 export const createHomeRouter = (
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any>
 ) => {
   router.post("/", async (req, res, next) => {
-
     if (!req.headers || !req.headers[ATTR_HEADER_USER_ID]) {
       res
         .status(400)
@@ -53,7 +56,7 @@ export const createHomeRouter = (
       if (timelineHomeReq.nextToken) {
         try {
           const rawPagingJson = JSON.parse(
-            Buffer.from(timelineHomeReq.nextToken, "base64").toString("utf-8"),
+            Buffer.from(timelineHomeReq.nextToken, "base64").toString("utf-8")
           );
           pagingRaw = plainToInstance(TimelineHomePagingRaw, rawPagingJson);
         } catch (error) {
@@ -63,110 +66,62 @@ export const createHomeRouter = (
       }
 
       const userId: string = req.headers[ATTR_HEADER_USER_ID] as string;
-      const redisKey = `timeline-userId:${userId}`;
-
-      let redisCursor = 0;
-      if (pagingRaw) {
-        redisCursor = Number(pagingRaw.id);
-      }
 
       const postsToReturn: TimelineHomePost[] = [];
+      let potentialPagingRaw: TimelineHomePagingRaw | undefined = undefined;
 
-      if (!pagingRaw?.type || (pagingRaw?.type == "r" && redisCursor >= 0)) {
-        // https://redis.io/docs/latest/commands/scan/
-        // The COUNT might not be respected in the return
-        const redisScanReply = await redisClient.zScan(redisKey, redisCursor, {
-          COUNT: timelineHomeReq.limit,
-        });
+      if (!pagingRaw?.type || pagingRaw?.type == "r") {
+        const [postsFromRedis, redisPagingRaw] = await getFromRedis(
+          redisClient,
+          userId,
+          timelineHomeReq.limit,
+          pagingRaw
+        );
+        postsToReturn.push(...postsFromRedis);
 
-        redisScanReply.members.forEach((redisData) => {
-          postsToReturn.push(
-            new TimelineHomePost(redisData.value, redisData.score),
-          );
-        });
-
-        logger.debug("loaded from redis: ", postsToReturn.length);
-
-        if (postsToReturn.length >= timelineHomeReq.limit) {
-          const pagingObj = new TimelineHomePagingRaw(
-            "r",
-            redisScanReply.cursor == 0 ? "-1" : String(redisScanReply.cursor),
-          );
-          const pagingJsonString = JSON.stringify(pagingObj);
-          const nextPageToken =
-            Buffer.from(pagingJsonString).toString("base64");
-
-          res
-            .status(200)
-            .json(
-              new TimelineHomeRes(
-                postsToReturn,
-                new TimelineHomePaging(nextPageToken),
-              ),
-            );
-          return;
+        if(redisPagingRaw) {
+          potentialPagingRaw = redisPagingRaw; 
+        } else {
+          // undefined when redis cursor is finished traversing all data
+          timelineHomeReq.limit = postsFromRedis.length + 1;
         }
+
+        logger.debug(
+          `loaded from redis: ${postsFromRedis.length}`
+        );
       }
-      // postsToReturn.length < timelineHomeReq.limit
-      // user scrolled a lot! now we will need to load partially or fully from database.
 
-      let pagingInfoForPostService: PostByUserPagingRaw | undefined = undefined;
-      let nextPageTokenForPostService: string | undefined = undefined;
-      if (postsToReturn.length > 0) {
-        //partially loaded on redis, load the rest from post service
-        const lastRedisPost = postsToReturn[postsToReturn.length - 1];
-        pagingInfoForPostService = new PostByUserPagingRaw(lastRedisPost.time, lastRedisPost.postId);
-      } else if (pagingRaw?.type == "m" && pagingRaw?.id) {
-        //requested with 'm' means, timeline data request now maps directly to post service request
-        //so, using directly next page token of post service 
-        nextPageTokenForPostService = pagingRaw.id;
-      } //else no data from redis, request type was 'r' but redis had 0 data
+      if (postsToReturn.length < timelineHomeReq.limit) {
+        // user scrolled a lot! now we will need to load partially or fully from database.
 
-      const iFollowReq = new FollowersReqInternal(userId);
-      const iFollowAxiosRes = await axios.post(
-        getInternalFullPath(iFollowUrl),
-        iFollowReq,
-      );
-      const iFollowIdsObj = plainToInstance(FollowersRes, iFollowAxiosRes.data);
+        // need to call i-follow user posts
+        const [postsFromPostService, postServicePagingRaw] = await getFromPostService(
+          postsToReturn,
+          userId,
+          timelineHomeReq.limit,
+          pagingRaw
+        );
 
-      const morePostToLoad = timelineHomeReq.limit - postsToReturn.length;
-      const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, {
-        pagingInfo: pagingInfoForPostService,
-        nextToken: nextPageTokenForPostService,
-        limit: morePostToLoad,
-        returnOnlyPostId: true,
-      });
+        postsToReturn.push(...postsFromPostService);
+        potentialPagingRaw = postServicePagingRaw; 
 
-      const postByUserAxiosRes = await axios.post(
-        getInternalFullPath(getPostByUserUrl),
-        postByUserReq,
-      );
-      const postDetailsResObj = plainToInstance(
-        PostDetailsRes,
-        postByUserAxiosRes.data,
-      );
-
-      for (const post of postDetailsResObj.posts) {
-        postsToReturn.push(new TimelineHomePost(post.postId, post.time));
+        logger.debug(
+          `loaded from post service/mongodb: ${postsFromPostService.length}`
+        );
       }
 
       let pageTokenObj: TimelineHomePaging | undefined;
-      if (postDetailsResObj.paging?.nextToken) {
-        const pageLastPostIdStr = postDetailsResObj.paging?.nextToken;
-        const pagingObj = new TimelineHomePagingRaw("m", pageLastPostIdStr);
-        const pagingJsonString = JSON.stringify(pagingObj);
+      if (potentialPagingRaw) {
+        const pagingJsonString = JSON.stringify(potentialPagingRaw);
         const nextPageToken = Buffer.from(pagingJsonString).toString("base64");
         pageTokenObj = new TimelineHomePaging(nextPageToken);
       }
-      logger.debug(
-        "loaded from post service/mongodb: ",
-        postDetailsResObj.posts.length,
-      );
+
       res.status(200).json(new TimelineHomeRes(postsToReturn, pageTokenObj));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+          `Error while /new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`
         );
       } else {
         logger.error("Error while /new-post: ", error);
@@ -177,3 +132,98 @@ export const createHomeRouter = (
 
   return router;
 };
+
+async function getFromRedis(
+  redisClient: RedisClientType<any, any, any>,
+  userId: string,
+  limit: number,
+  pagingRaw?: TimelineHomePagingRaw
+): Promise<[TimelineHomePost[], TimelineHomePagingRaw | undefined]> {
+  const redisKey = `timeline-userId:${userId}`;
+
+  let redisCursor = 0;
+  if (pagingRaw) {
+    redisCursor = Number(pagingRaw.id);
+  }
+
+  const postsToReturn: TimelineHomePost[] = [];
+
+  // https://redis.io/docs/latest/commands/scan/
+  // The COUNT might not be respected in the return
+  const redisScanReply = await redisClient.zScan(redisKey, redisCursor, {
+    COUNT: limit,
+  });
+
+  redisScanReply.members.forEach((redisData) => {
+    postsToReturn.push(new TimelineHomePost(redisData.value, redisData.score));
+  });
+
+  logger.debug(`loaded from redis: ${postsToReturn.length}`);
+
+  let pagingObj: TimelineHomePagingRaw | undefined = undefined;
+  if (redisScanReply.cursor !== 0) {
+    pagingObj = new TimelineHomePagingRaw("r", String(redisScanReply.cursor));
+  }
+
+  return [postsToReturn, pagingObj];
+}
+
+async function getFromPostService(
+  redisPosts: TimelineHomePost[],
+  userId: string,
+  limit: number,
+  pagingRaw?: TimelineHomePagingRaw
+): Promise<[TimelineHomePost[], TimelineHomePagingRaw | undefined]> {
+  const iFollowReq = new FollowersReqInternal(userId);
+  const iFollowAxiosRes = await axios.post(
+    getInternalFullPath(iFollowUrl),
+    iFollowReq
+  );
+  const iFollowIdsObj = plainToInstance(FollowersRes, iFollowAxiosRes.data);
+
+  // need to call post service
+  let pagingInfoForPostService: PostByUserPagingRaw | undefined = undefined;
+  let nextPageTokenForPostService: string | undefined = undefined;
+
+  if (redisPosts.length > 0) {
+    // if redis loaded all before finishing the limit, generating post service page token based on redis data
+    const lastRedisPost = redisPosts[redisPosts.length - 1];
+    pagingInfoForPostService = new PostByUserPagingRaw(
+      lastRedisPost.time,
+      lastRedisPost.postId
+    );
+  } else if (pagingRaw?.type == "m" && pagingRaw?.id) {
+    //requested with 'm' means, timeline data request now maps directly to post service request
+    //so, using directly next page token of post service
+    nextPageTokenForPostService = pagingRaw.id;
+  } //else load from post service even for the first non-paginated call, means nextPageTokenForPostService = undefined
+
+  const morePostToLoad = limit - redisPosts.length;
+  const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, {
+    pagingInfo: pagingInfoForPostService,
+    nextToken: nextPageTokenForPostService,
+    limit: morePostToLoad,
+    returnOnlyPostId: true,
+  });
+
+  const postByUserAxiosRes = await axios.post(
+    getInternalFullPath(getPostByUserUrl),
+    postByUserReq
+  );
+  const postDetailsResObj = plainToInstance(
+    PostDetailsRes,
+    postByUserAxiosRes.data
+  );
+  const timelinePosts: TimelineHomePost[] = [];
+  for (const post of postDetailsResObj.posts) {
+    timelinePosts.push(new TimelineHomePost(post.postId, post.time));
+  }
+
+  let pagingObj: TimelineHomePagingRaw | undefined;
+  if (postDetailsResObj.paging?.nextToken) {
+    const pageLastPostIdStr = postDetailsResObj.paging?.nextToken;
+    pagingObj = new TimelineHomePagingRaw("m", pageLastPostIdStr);
+  }
+
+  return [timelinePosts, pagingObj];
+}
