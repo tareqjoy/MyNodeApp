@@ -31,7 +31,7 @@ export default function LoginPage() {
         const resp = await axiosAuthClient.post(authVerifyUrl, {});
         if (resp.status === 200) {
           console.log("User is authenticated, redirecting to profile...");
-          router.push('/profile');
+          router.push('/home');
           return;
         }
       } catch (error) {
@@ -79,7 +79,7 @@ export default function LoginPage() {
           const redirectUrl = `${callerPage}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
           router.push(redirectUrl);
         } else {
-          router.push('/profile');
+          router.push('/home');
         }
       } else {
         setErrorMessage('Login failed. Please check your credentials.');

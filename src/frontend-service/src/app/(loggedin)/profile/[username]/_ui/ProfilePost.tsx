@@ -1,3 +1,5 @@
+'use client';
+
 import { axiosAuthClient } from "@/lib/auth";
 import { CreatePostReq, MessageResponse } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";

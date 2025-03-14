@@ -2,11 +2,12 @@
 
 'use client';
 import 'reflect-metadata';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
 import { getUserName, deleteAccessToken, deleteRefreshToken, axiosAuthClient } from '@/lib/auth';
 import Loading from './loading';
+import Link from 'next/link';
 
 const authSignOutUrl = process.env.NEXT_PUBLIC_AUTH_SIGN_OUT_URL || 'http://localhost:80/v1/auth/signout/';
 const deviceId = 'some-unique-device-id';
@@ -16,6 +17,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [userData, setUserData] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setShowDropdown(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -36,12 +56,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       await axiosAuthClient.post(authSignOutUrl, {}, { headers: { 'Device-ID': deviceId } });
       deleteAccessToken();
       deleteRefreshToken();
+      setShowDropdown(false);
       router.push('/login');
     } catch (error) {
       console.error('Auth failed:', error);
     } finally {
         setLoading(false);
     }
+  };
+
+  const handleProfileButtonClick = () => {
+    setShowDropdown(false);
   };
 
   if (loading) return <Loading />;
@@ -61,13 +86,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Navigation Buttons */}
       <div className="flex items-center space-x-4">
         {/* Home Button */}
-        <button
-          onClick={() => router.push('/home')}
-          className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md"
-        >
-          Home
-        </button>
-
+        <Link href="/home">
+          <button
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md"
+          >
+            Home
+          </button>
+        </Link>
         {/* User Menu */}
         <div className="relative">
           <button
@@ -88,7 +113,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Dropdown Menu */}
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white text-gray-900 shadow-lg rounded-lg">
+            <div ref={dropdownRef} className="absolute right-0 mt-2 w-48 bg-white text-gray-900 shadow-lg rounded-lg">
+              <Link href="/profile">
+                <button
+                  onClick={handleProfileButtonClick}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"
+                >
+                  Profile
+                </button>
+              </Link>
               <button
                 onClick={handleLogOut}
                 className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"

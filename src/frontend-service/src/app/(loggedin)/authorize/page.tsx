@@ -41,7 +41,7 @@ export default function AuthorizePage() {
           window.location.href = `${decodeURIComponent(searchParams.get('redirect_uri')!)}?code=${authResObj.code}`;
         }
       } else {
-        router.push(`/profile`);
+        router.push(`/home`);
       }
 
 
@@ -52,7 +52,7 @@ export default function AuthorizePage() {
   };
 
   const handleCancel = () => {
-    router.push(`/profile`);
+    router.push(`/home`);
   };
 
   return (
