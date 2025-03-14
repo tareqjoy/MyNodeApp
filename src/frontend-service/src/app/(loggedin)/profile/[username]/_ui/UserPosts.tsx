@@ -6,7 +6,8 @@ import { plainToInstance } from 'class-transformer';
 
 const userPostsUrl: string = process.env.NEXT_PUBLIC_USER_POSTS_URL || "http://localhost:80/v1/post/get-by-user";
 
-export default function UserPosts({ userId }: { userId: string }) {
+
+export default function UserPosts({ userIdOrName, isProvidedUsername }: { userIdOrName: string; isProvidedUsername: boolean }) {
   const [posts, setPosts] = useState<SinglePost[]>([]);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export default function UserPosts({ userId }: { userId: string }) {
 
     setLoading(true);
     try {
-        const postByUserReq = new GetPostByUserReq([userId], false, {nextToken: nextToken || undefined, returnOnlyPostId: false, limit: 10});
+        const postByUserReq = new GetPostByUserReq([userIdOrName], isProvidedUsername, {nextToken: nextToken || undefined, returnOnlyPostId: false, limit: 10});
       const axiosResp = await axiosAuthClient.post(userPostsUrl, postByUserReq);
 
       const postDetailsResObj = plainToInstance(PostDetailsRes, axiosResp.data);
