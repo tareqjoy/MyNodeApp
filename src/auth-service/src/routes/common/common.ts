@@ -71,7 +71,7 @@ export function validateAccessToken(authHeader: any): ValidateResponse {
 export async function genAccessRefreshToken(
   redisClient: RedisClientType<any, any, any>,
   userId: string,
-  deviceId: string,
+  deviceOrClientId: string,
 ): Promise<AuthSignInRes> {
   const authInfo = new AuthInfo(userId);
   const accessToken = jwt.sign({ ...authInfo }, jwt_access_secret, {
@@ -81,7 +81,7 @@ export async function genAccessRefreshToken(
     expiresIn: jwt_refresh_expires_sec,
   });
 
-  const redisKey = `refresh-token:${userId}:${deviceId}`;
+  const redisKey = `refresh-token:${userId}:${deviceOrClientId}`;
   await redisClient.set(redisKey, refreshToken, {
     EX: jwt_refresh_expires_sec,
   });

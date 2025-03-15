@@ -67,8 +67,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {},
         { headers: { "Device-ID": deviceId } }
       );
-      deleteAccessToken();
       deleteRefreshToken();
+      deleteAccessToken();
+      
       setShowDropdown(false);
       router.push("/login");
     } catch (error) {

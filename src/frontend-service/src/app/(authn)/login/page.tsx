@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { axiosAuthClient, axiosPublicClient, setAccessToken, setRefreshToken, setUserId, setUserName } from '@/lib/auth';
+import { axiosAuthClient, axiosPublicClient, getRefreshToken, setAccessToken, setRefreshToken, setUserId, setUserName } from '@/lib/auth';
 import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import Loading from './loading';
@@ -27,6 +27,11 @@ export default function LoginPage() {
   useEffect(() => {
     const isAuthed = async () => {
       console.log("Checking authentication...");
+      if(!getRefreshToken()) {
+        console.log("User is not authenticated, showing login form...");
+        setShowLoginForm(true);
+        return;
+      }
       try {
         const resp = await axiosAuthClient.post(authVerifyUrl, {});
         if (resp.status === 200) {

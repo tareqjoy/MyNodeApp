@@ -63,7 +63,9 @@ export const createSignOutRouter = (
         if (authSignOutObj.allDevices) {
           deviceIdField = "*";
         }
+       
         const redisKey = `refresh-token:${authInfo.userId}:${deviceIdField}`;
+        logger.debug(`logging out, redis-key: ${redisKey}`);
         const signOutCount = await redisClient.del(redisKey);
 
         res
