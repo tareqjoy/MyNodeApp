@@ -94,11 +94,13 @@ const mergeSourceAndHighlight = (result: any): Record<string, any> => {
 
   if (result.highlight) {
     for (const [key, value] of Object.entries(result.highlight)) {
-      // Assert that value is of type string[]
       const highlightValue = value as string[];
 
-      // Replace _source field if it's present in highlight, otherwise add it
-      merged[key] = highlightValue[0]; // Taking the first highlighted fragment
+      if (highlightValue.length > 1) {
+        merged[key] = highlightValue.join('...'); 
+      } else {
+        merged[key] = highlightValue[0];
+      }
     }
   }
 
@@ -121,7 +123,7 @@ const getUserSearchQuery = (query: string) => ({
       fields: {
         name: { 
           fragment_size: 15,
-          number_of_fragments: 1,
+          number_of_fragments: 5,
         },
         username: {} // Enable highlighting for username
       },
@@ -152,7 +154,7 @@ const getPostSearchQuery = (query: string) => ({
       fields: {
         "*": { 
           fragment_size: 15,
-          number_of_fragments: 1,
+          number_of_fragments: 5,
         }
       },
       pre_tags: ["<mark>"],
