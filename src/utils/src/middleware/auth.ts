@@ -52,7 +52,7 @@ export const authorize = async (
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status == 401) {
-        res.status(500).json(error.response?.data);
+        res.status(401).json(error.response?.data);
       } else {
         logger.error(
           `Service error while middleware authZ: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`

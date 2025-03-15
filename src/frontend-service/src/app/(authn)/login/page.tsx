@@ -35,7 +35,7 @@ export default function LoginPage() {
           return;
         }
       } catch (error) {
-        console.error("User is not authenticated, showing login form...");
+        console.log("User is not authenticated, showing login form...");
       }
       setShowLoginForm(true);
     };
