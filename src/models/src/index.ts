@@ -25,6 +25,7 @@ export * from "./follow-service/request/unfollow-req";
 export * from "./follow-service/response/followers-res";
 export * from "./follow-service/response/follow-res";
 export * from "./follow-service/response/unfollow-res";
+export * from "./follow-service/response/do-i-follow-res";
 
 export * from "./fanout-service/request/new-post-kafka-msg";
 export * from "./fanout-service/request/i-followed-kafka-msg";

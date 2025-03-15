@@ -12,6 +12,7 @@ import { createFollowRouter } from "./routes/follow";
 import { createUnfollowRouter } from "./routes/unfollow";
 import { createIFollowRouter } from "./routes/i-follow";
 import { createWhoFollowsMeRouter } from "./routes/who-follows-me";
+import { createDoIFollowRouter } from "./routes/do-i-follow";
 
 const logger =  getFileLogger(__filename);
 
@@ -70,6 +71,11 @@ async function main() {
     getApiPath(api_path_root, "who-follows-me"),
     authorize,
     createWhoFollowsMeRouter(neo4jDriver, false)
+  );
+  app.use(
+    getApiPath(api_path_root, "do-i-follow"),
+    authorize,
+    createDoIFollowRouter(neo4jDriver)
   );
 
   // Start the server and listen to the port
