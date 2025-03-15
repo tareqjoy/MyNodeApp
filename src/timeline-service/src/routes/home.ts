@@ -30,6 +30,9 @@ const iFollowUrl: string =
 const getPostByUserUrl: string =
   process.env.GET_POST_BY_USER_URL ||
   "http://127.0.0.1:5005/v1/post/get-by-user/";
+const loadFromPostService: string =
+  process.env.LOAD_FROM_POST_SERVICE ||
+  "load";
 
 const router = express.Router();
 
@@ -79,19 +82,17 @@ export const createHomeRouter = (
         );
         postsToReturn.push(...postsFromRedis);
 
-        if(redisPagingRaw) {
-          potentialPagingRaw = redisPagingRaw; 
+        if (redisPagingRaw) {
+          potentialPagingRaw = redisPagingRaw;
         } else {
           // undefined when redis cursor is finished traversing all data
           timelineHomeReq.limit = postsFromRedis.length + 1;
         }
 
-        logger.debug(
-          `loaded from redis: ${postsFromRedis.length}`
-        );
+        logger.debug(`loaded from redis: ${postsFromRedis.length}`);
       }
 
-      if (postsToReturn.length < timelineHomeReq.limit) {
+      if (loadFromPostService === "load" && postsToReturn.length < timelineHomeReq.limit) {
         // user scrolled a lot! now we will need to load partially or fully from database.
 
         // need to call i-follow user posts
@@ -117,7 +118,7 @@ export const createHomeRouter = (
         const nextPageToken = Buffer.from(pagingJsonString).toString("base64");
         pageTokenObj = new TimelineHomePaging(nextPageToken);
       }
-
+      logger.debug(`returning results: ${postsToReturn.length}`);
       res.status(200).json(new TimelineHomeRes(postsToReturn, pageTokenObj));
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -142,42 +143,31 @@ async function getFromRedis(
 ): Promise<[TimelineHomePost[], TimelineHomePagingRaw | undefined]> {
   const redisKey = `timeline-userId:${userId}`;
 
-  let redisLastTime: string | undefined = undefined;
+  let redisPostStartTime: string = "+inf";
   if (pagingRaw) {
-    redisLastTime = pagingRaw.id;
+    redisPostStartTime = `${Number(pagingRaw.id)-1}`;
   }
 
   const postsToReturn: TimelineHomePost[] = [];
   const redisResult: any[] = [];
-  if (!redisLastTime) {
-    // first call
-    // calling one more extra to see if there is at least 1 post that has the same postTime which will not be covered in the limit!
-    // https://redis.io/docs/latest/commands/zrange/
-    const redisRangeReply = await redisClient.zRangeWithScores(
-      redisKey,
-      0,
-      limit,
-      { REV: true }
-    );
-    logger.debug(`loaded from redis when first call: ${redisRangeReply.length}`);
-    redisResult.push(...redisRangeReply);
-  } else {
-    const redisRangeReply = await redisClient.zRangeWithScores(
-      redisKey,
-      redisLastTime,
-      "-inf",
-      { REV: true, BY: "SCORE", LIMIT: { offset: 0, count: limit + 1 } }
-    );
-    logger.debug(`loaded from redis when pagination: ${redisRangeReply.length}`);
-    redisResult.push(...redisRangeReply);
-  }
+
+  // first call
+  // calling one more extra to see if there is at least 1 post that has the same postTime which will not be covered in the limit!
+  // https://redis.io/docs/latest/commands/zrange/
+
+  const redisRangeReply = await redisClient.zRangeWithScores(
+    redisKey,
+    redisPostStartTime,
+    "-inf",
+    { REV: true, BY: "SCORE", LIMIT: { offset: 0, count: limit + 1 } }
+  );
+  logger.debug(`loaded from redis when pagination: ${redisRangeReply.length}`);
+  redisResult.push(...redisRangeReply);
 
   let isRedisFinished = false;
-  
-  //as limit cannot be 0, redisResult.length will always be more than 1 (if there is >1 data in redis itself). 
-  if (
-    redisResult.length === limit + 1
-  ) {
+
+  //as limit cannot be 0, redisResult.length will always be more than 1 (if there is >1 data in redis itself).
+  if (redisResult.length === limit + 1) {
     if (
       redisResult[redisResult.length - 2].score ===
       redisResult[redisResult.length - 1].score
@@ -187,40 +177,27 @@ async function getFromRedis(
       // so adding until we get a subset of list that has diff score
       logger.info(`Posts with same time found! redisKey: ${redisKey}`);
       const sameScore = redisResult[redisResult.length - 1].score;
-      const maxIterationLimit = 1000;
-      const chunkSize = 5;
-      let startIdx = limit + 2;
-      for (let i = 0; i < maxIterationLimit; i++) {
-        const redisRangeReplyWithSameScore = await redisClient.zRangeWithScores(
-          redisKey,
-          startIdx,
-          chunkSize,
-          { REV: true }
-        );
-        if (redisRangeReplyWithSameScore.length == 0) {
-          // no more chunk found in redis
-          isRedisFinished = true;
-          break;
+
+      const postIdSet = new Set(redisRangeReply.map((item) => item.value));
+      // https://redis.io/docs/latest/commands/zrangebyscore/
+      const redisSameScoreReply = await redisClient.zRangeByScore(
+        redisKey,
+        sameScore,
+        sameScore
+      );
+      logger.info(`Posts with same time count: ${redisSameScoreReply.length}`);
+      // zRangeByScore returns by ascending sorted but zRangeWithScores (REV=true) returns by descending
+      const descendingSortedRedisReply = redisSameScoreReply.reverse();
+
+      for (const [i, value] of descendingSortedRedisReply.entries()) {
+        if (!postIdSet.has(value)) {
+          redisResult.push({ value: value, score: sameScore });
         }
-        if (
-          redisRangeReplyWithSameScore[redisRangeReplyWithSameScore.length - 1]
-            .score === sameScore
-        ) {
-          // a very rare case, this chunk is still full of same score
-          redisResult.push(...redisRangeReplyWithSameScore);
-          logger.warn(
-            `A full chunk of posts with same time found! redisKey: ${redisKey}`
-          );
-        } else {
-          for (const [i, redisData] of redisRangeReplyWithSameScore.entries()) {
-            if (redisData.score === sameScore) {
-              redisResult.push(redisData);
-            } else {
-              break;
-            }
-          }
-        }
-        startIdx = startIdx + chunkSize + 1;
+      }
+
+      if(loadFromPostService === "load") {
+        const redisZTotalCount = await redisClient.zCard(redisKey);
+        isRedisFinished = redisZTotalCount === redisResult.length;
       }
     } else {
       redisResult.pop();
@@ -235,7 +212,10 @@ async function getFromRedis(
 
   let pagingObj: TimelineHomePagingRaw | undefined = undefined;
   if (!isRedisFinished) {
-    pagingObj = new TimelineHomePagingRaw("r", String(postsToReturn[postsToReturn.length-1].time-1));
+    pagingObj = new TimelineHomePagingRaw(
+      "r",
+      String(postsToReturn[postsToReturn.length - 1].time)
+    );
   }
 
   return [postsToReturn, pagingObj];
