@@ -16,7 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@tareqjoy/clients": "^1.0.24",
-    "@tareqjoy/models": "^1.0.66",
+    "@tareqjoy/models": "^1.0.78",
     "@tareqjoy/utils": "^1.0.61",
     "reflect-metadata": "^0.2.2",
     "class-transformer": "^0.5.1",
