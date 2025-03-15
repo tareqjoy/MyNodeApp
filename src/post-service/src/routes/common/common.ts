@@ -27,7 +27,7 @@ export function getTimeSortedGetPostIdsByUserListQuery(
       ...query,
       $or: [
         { time: { $lt: highTime } },
-        { time: highTime, _id: { $gt: lastPostId } },
+        { time: highTime, _id: { $lt: lastPostId } },
       ],
     };
   } else {

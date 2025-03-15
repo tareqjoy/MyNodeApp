@@ -95,15 +95,16 @@ export const createHomeRouter = (
         // user scrolled a lot! now we will need to load partially or fully from database.
 
         // need to call i-follow user posts
-        const [postsFromPostService, postServicePagingRaw] = await getFromPostService(
-          postsToReturn,
-          userId,
-          timelineHomeReq.limit,
-          pagingRaw
-        );
+        const [postsFromPostService, postServicePagingRaw] =
+          await getFromPostService(
+            postsToReturn,
+            userId,
+            timelineHomeReq.limit,
+            pagingRaw
+          );
 
         postsToReturn.push(...postsFromPostService);
-        potentialPagingRaw = postServicePagingRaw; 
+        potentialPagingRaw = postServicePagingRaw;
 
         logger.debug(
           `loaded from post service/mongodb: ${postsFromPostService.length}`
@@ -141,28 +142,100 @@ async function getFromRedis(
 ): Promise<[TimelineHomePost[], TimelineHomePagingRaw | undefined]> {
   const redisKey = `timeline-userId:${userId}`;
 
-  let redisCursor = 0;
+  let redisLastTime: string | undefined = undefined;
   if (pagingRaw) {
-    redisCursor = Number(pagingRaw.id);
+    redisLastTime = pagingRaw.id;
   }
 
   const postsToReturn: TimelineHomePost[] = [];
+  const redisResult: any[] = [];
+  if (!redisLastTime) {
+    // first call
+    // calling one more extra to see if there is at least 1 post that has the same postTime which will not be covered in the limit!
+    // https://redis.io/docs/latest/commands/zrange/
+    const redisRangeReply = await redisClient.zRangeWithScores(
+      redisKey,
+      0,
+      limit,
+      { REV: true }
+    );
+    logger.debug(`loaded from redis when first call: ${redisRangeReply.length}`);
+    redisResult.push(...redisRangeReply);
+  } else {
+    const redisRangeReply = await redisClient.zRangeWithScores(
+      redisKey,
+      redisLastTime,
+      "-inf",
+      { REV: true, BY: "SCORE", LIMIT: { offset: 0, count: limit + 1 } }
+    );
+    logger.debug(`loaded from redis when pagination: ${redisRangeReply.length}`);
+    redisResult.push(...redisRangeReply);
+  }
 
-  // https://redis.io/docs/latest/commands/scan/
-  // The COUNT might not be respected in the return
-  const redisScanReply = await redisClient.zScan(redisKey, redisCursor, {
-    COUNT: limit,
-  });
+  let isRedisFinished = false;
+  
+  //as limit cannot be 0, redisResult.length will always be more than 1 (if there is >1 data in redis itself). 
+  if (
+    redisResult.length === limit + 1
+  ) {
+    if (
+      redisResult[redisResult.length - 2].score ===
+      redisResult[redisResult.length - 1].score
+    ) {
+      // a not too common case to happen
+      // oops! there are at least one redis post with same postTime which will not be covered in the limit!
+      // so adding until we get a subset of list that has diff score
+      logger.info(`Posts with same time found! redisKey: ${redisKey}`);
+      const sameScore = redisResult[redisResult.length - 1].score;
+      const maxIterationLimit = 1000;
+      const chunkSize = 5;
+      let startIdx = limit + 2;
+      for (let i = 0; i < maxIterationLimit; i++) {
+        const redisRangeReplyWithSameScore = await redisClient.zRangeWithScores(
+          redisKey,
+          startIdx,
+          chunkSize,
+          { REV: true }
+        );
+        if (redisRangeReplyWithSameScore.length == 0) {
+          // no more chunk found in redis
+          isRedisFinished = true;
+          break;
+        }
+        if (
+          redisRangeReplyWithSameScore[redisRangeReplyWithSameScore.length - 1]
+            .score === sameScore
+        ) {
+          // a very rare case, this chunk is still full of same score
+          redisResult.push(...redisRangeReplyWithSameScore);
+          logger.warn(
+            `A full chunk of posts with same time found! redisKey: ${redisKey}`
+          );
+        } else {
+          for (const [i, redisData] of redisRangeReplyWithSameScore.entries()) {
+            if (redisData.score === sameScore) {
+              redisResult.push(redisData);
+            } else {
+              break;
+            }
+          }
+        }
+        startIdx = startIdx + chunkSize + 1;
+      }
+    } else {
+      redisResult.pop();
+    }
+  } else {
+    isRedisFinished = true;
+  }
 
-  redisScanReply.members.forEach((redisData) => {
+  redisResult.forEach((redisData) => {
     postsToReturn.push(new TimelineHomePost(redisData.value, redisData.score));
   });
 
-  logger.debug(`loaded from redis: ${postsToReturn.length}`);
-
   let pagingObj: TimelineHomePagingRaw | undefined = undefined;
-  if (redisScanReply.cursor !== 0) {
-    pagingObj = new TimelineHomePagingRaw("r", String(redisScanReply.cursor));
+  if (!isRedisFinished) {
+    pagingObj = new TimelineHomePagingRaw("r", String(postsToReturn[postsToReturn.length-1].time-1));
   }
 
   return [postsToReturn, pagingObj];

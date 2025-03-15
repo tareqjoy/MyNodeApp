@@ -45,15 +45,15 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
       if (getPostReq.usernames) {
         const pUserInternalReq = new UserInternalReq(
           getPostReq.usernames,
-          true,
+          true
         );
         const pUserIdAxiosResponse = await axios.post(
           userServiceHostUrl,
-          pUserInternalReq,
+          pUserInternalReq
         );
         const pUserResObj = plainToInstance(
           UserInternalRes,
-          pUserIdAxiosResponse.data,
+          pUserIdAxiosResponse.data
         );
 
         for (const key in pUserResObj.toUserIds) {
@@ -78,12 +78,15 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
       if (getPostReq.pagingInfo) {
         lastPostTime = getPostReq.pagingInfo.lastPostTime;
         lastPostId = getPostReq.pagingInfo.lastPostId;
-      } else if(getPostReq.nextToken) {
+      } else if (getPostReq.nextToken) {
         try {
           const rawPagingJson = JSON.parse(
-            Buffer.from(getPostReq.nextToken, "base64").toString("utf-8"),
+            Buffer.from(getPostReq.nextToken, "base64").toString("utf-8")
           );
-          const pagingRawObj = plainToInstance(PostByUserPagingRaw, rawPagingJson);
+          const pagingRawObj = plainToInstance(
+            PostByUserPagingRaw,
+            rawPagingJson
+          );
           lastPostTime = pagingRawObj.lastPostTime;
           lastPostId = pagingRawObj.lastPostId;
         } catch (error) {
@@ -96,12 +99,14 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
         getTimeSortedGetPostIdsByUserListQuery(
           userMongoIds,
           lastPostTime,
-          lastPostId,
+          lastPostId
         ),
-        projection,
+        projection
       )
-        .sort({ time: -1, _id: 1 })
+        .sort({ time: -1, _id: -1 })
         .limit(getPostReq.limit);
+
+      logger.debug(`returned posts from mongodb: ${dbPosts.length}`);
 
       var paging: PostByUserPagingRaw | undefined;
       if (dbPosts.length == getPostReq.limit) {
@@ -116,13 +121,13 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
             dbPosts,
             getPostReq.returnOnlyPostId,
             getPostReq.returnAsUsername,
-            paging,
-          ),
+            paging
+          )
         );
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /get-by-user: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+          `Error while /get-by-user: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`
         );
       } else {
         logger.error("Error while /get-by-user: ", error);

@@ -14,7 +14,7 @@ export default async function useVerifyAccessToken(): Promise<boolean> {
       return false;
     }
   } catch (error) {
-    console.error('useVerifyAccessToken: Caught error while verifying access token');
+    console.log('useVerifyAccessToken: Caught error while verifying access token');
     return false;
   }
 };
