@@ -10,4 +10,11 @@ export class FollowReq {
   @Min(0)
   @Type(() => Number)
   followTime: number = -1;
+
+  constructor();
+  constructor(followsUsername: string, followTime: number);
+  constructor(followsUsername?: string, followTime?: number) {
+    this.followsUsername = followsUsername || "";
+    this.followTime = followTime || 0;
+  }
 }

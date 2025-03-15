@@ -19,6 +19,16 @@ const Search = () => {
 
   const searchRef = useRef<HTMLDivElement>(null);
 
+  const removeMarkTags = (text: string): string => {
+    return text.replace(/<\/?mark>/g, "");  // Removes both <mark> and </mark> tags
+  };
+
+  const resetSearchUI = (): void => {
+    setShowResults(false);
+    setQuery("");
+    setResults(null);
+  };
+
   // Fetch search results (Debounced)
   const fetchSearchResults = debounce(async (searchTerm: string) => {
     if (!searchTerm) {
@@ -79,9 +89,10 @@ const Search = () => {
               <h3 className="text-gray-300 font-semibold px-2">Users</h3>
               {results?.userResults?.map((user) => (
                 <Link
-                  href={`/profile/${user.username}`}
+                  href={`/profile/${removeMarkTags(user.username)}`}
                   key={user.userid}
                   className="block px-4 py-2 hover:bg-gray-700 rounded-md"
+                  onClick={() => resetSearchUI() }
                 >
                   <HighlightText text={user.name} /> 
                   <span> (@<HighlightText text={user.username} />)</span>
@@ -96,6 +107,7 @@ const Search = () => {
               <Link
                 href={`/search?q=${query}`}
                 className="block py-2 text-blue-400 hover:underline"
+                onClick={() => resetSearchUI() }
               >
                 See More Users
               </Link>
@@ -111,6 +123,7 @@ const Search = () => {
                   href={`/post/${post.postid}`}
                   key={post.postid}
                   className="block px-4 py-2 hover:bg-gray-700 rounded-md"
+                  onClick={() => resetSearchUI() }
                 >
                   <HighlightText text={post.body} />
                 </Link>
@@ -125,6 +138,7 @@ const Search = () => {
               <Link
                 href={`/search?q=${query}`}
                 className="block py-2 text-blue-400 hover:underline"
+                onClick={() => resetSearchUI() }
               >
                 See More Posts
               </Link>

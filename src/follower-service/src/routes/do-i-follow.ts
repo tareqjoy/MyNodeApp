@@ -2,7 +2,6 @@ import express from "express";
 import { Driver } from "neo4j-driver";
 import { ATTR_HEADER_USER_ID, getFileLogger } from "@tareqjoy/utils";
 import { DoIFollowResponse, InternalServerError, InvalidRequest } from "@tareqjoy/models";
-import { parseAndExecuteQuery } from "./common/common";
 import axios from "axios";
 
 const logger = getFileLogger(__filename);

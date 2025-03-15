@@ -1,10 +1,13 @@
-'use client'
-import { useEffect, useState } from 'react';
-import { axiosAuthClient } from '@/lib/auth';
-import { FollowersReq, FollowersRes } from '@tareqjoy/models';
-import { plainToInstance } from 'class-transformer';
+"use client";
+import { useEffect, useState } from "react";
+import { axiosAuthClient } from "@/lib/auth";
+import { FollowersReq, FollowersRes } from "@tareqjoy/models";
+import { plainToInstance } from "class-transformer";
+import Link from "next/link";
 
-const iFollowUrl = process.env.NEXT_PUBLIC_USER_FRIENDS_URL || "http://localhost:80/v1/follower/i-follow";
+const iFollowUrl =
+  process.env.NEXT_PUBLIC_USER_FRIENDS_URL ||
+  "http://localhost:80/v1/follower/i-follow";
 
 export default function UserFollows() {
   const [ifollow, setIFollow] = useState<string[]>([]);
@@ -17,10 +20,10 @@ export default function UserFollows() {
         const iFollowObj = new FollowersReq(true);
         const axiosResp = await axiosAuthClient.post(iFollowUrl, iFollowObj);
         const postDetailsResObj = plainToInstance(FollowersRes, axiosResp.data);
-        if(postDetailsResObj.usernames) {
-            setIFollow(postDetailsResObj.usernames!);
+        if (postDetailsResObj.usernames) {
+          setIFollow(postDetailsResObj.usernames!);
         } else {
-            setError("Failed to load i'm following.");
+          setError("Failed to load i'm following.");
         }
       } catch (err) {
         setError("Failed to load i'm following.");
@@ -41,9 +44,13 @@ export default function UserFollows() {
       ) : (
         <ul className="space-y-4">
           {ifollow.map((friend) => (
-            <li key={friend} className="p-4 border rounded-lg shadow-sm">
+            <Link
+              key={friend}
+              href={`/profile/${friend}`}
+              className="block p-4 border rounded-lg shadow-sm hover:bg-gray-100 transition"
+            >
               <p className="text-gray-800">{friend}</p>
-            </li>
+            </Link>
           ))}
         </ul>
       )}
