@@ -23,4 +23,12 @@ export class SearchReq {
 
   @IsAtLeastOneFieldRequired(["userToken", "postToken", "allToken"])
   anyField?: string; // This is a dummy field for the validation to work
+
+  constructor();
+  constructor(options: {userToken?: string, postToken?: string, allToken?: string});
+  constructor(options?: {userToken?: string, postToken?: string, allToken?: string}) {
+    this.userToken = options?.userToken;
+    this.postToken = options?.postToken;
+    this.allToken = options?.allToken;
+  }
 }
