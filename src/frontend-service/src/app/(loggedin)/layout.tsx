@@ -69,9 +69,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       );
       deleteRefreshToken();
       deleteAccessToken();
-      
       setShowDropdown(false);
-      router.push("/login");
+      window.location.reload();  
     } catch (error) {
       console.error("Auth failed:", error);
     } finally {
