@@ -1,6 +1,6 @@
 "use client";
 import "reflect-metadata";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import {
   DoIFollowResponse,
   FollowReq,
@@ -73,27 +73,39 @@ export default function ProfilePage({
         followUnfollowUrl,
         followUnfollowObj
       );
-      if(axiosFollowUnfollowResp.status === 200) {
-        setFollowingState((prevState) => prevState==="following"? "unfollowing" : "following");
+      if (axiosFollowUnfollowResp.status === 200) {
+        setFollowingState((prevState) =>
+          prevState === "following" ? "unfollowing" : "following"
+        );
       }
-    }catch (err) {
+    } catch (err) {
       console.warn("failed to follow or unfollow", err);
-    } finally {
     }
   };
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const axiosUserDetailsResp = await axiosAuthClient.get(
+        const userDetailsRequest = axiosAuthClient.get(
           `${userDetailsUrl}/${usernameOrId}`,
           {
             params: { provided: isProvidedUsername ? "username" : "userid" },
           }
         );
+
+        const doIFollowRequest = axiosAuthClient.get(
+          `${doIFollowUrl}/${usernameOrId}`
+        );
+
+        // Run both requests in parallel
+        const [userDetailsResp, doIFollowResp] = await Promise.all([
+          userDetailsRequest,
+          doIFollowRequest,
+        ]);
+
         const userDetailsResObj = plainToInstance(
           UserDetailsRes,
-          axiosUserDetailsResp.data
+          userDetailsResp.data
         );
         setUser(userDetailsResObj);
 
@@ -102,12 +114,9 @@ export default function ProfilePage({
         if (userDetailsResObj.userId === getUserId()) {
           setFollowingState("hide");
         } else {
-          const axiosDoIFollowResp = await axiosAuthClient.get(
-            `${doIFollowUrl}/${userDetailsResObj.userId}`
-          );
           const doIFollowResObj = plainToInstance(
             DoIFollowResponse,
-            axiosDoIFollowResp.data
+            doIFollowResp.data
           );
 
           setFollowingState(
@@ -121,12 +130,8 @@ export default function ProfilePage({
       }
     };
     fetchUser();
-  }, []);
+  }, [usernameOrId, isProvidedUsername]);
 
-  if (loading)
-    return (
-      <p className="text-gray-500 animate-pulse text-center mt-4">Loading...</p>
-    );
   if (error) return <p className="text-red-500 text-center mt-4">{error}</p>;
   if (!user)
     return (
@@ -148,7 +153,9 @@ export default function ProfilePage({
       {/* Conditionally render ProfilePost if isItMe is true */}
       {isItMe && (
         <div className="rounded-lg shadow">
-          <ProfilePost />
+          <Suspense fallback={<div>Loading Profile Post...</div>}>
+            <ProfilePost />
+          </Suspense>
         </div>
       )}
       {/* Tabs for Posts & Friends */}
@@ -179,18 +186,18 @@ export default function ProfilePage({
       {/* Tab Content */}
       {isItMe ? (
         selectedTab === "posts" ? (
-          <UserPosts
-            userIdOrName={usernameOrId}
-            isProvidedUsername={isProvidedUsername}
-          />
+          <Suspense fallback={<div>Loading Posts...</div>}>
+            <UserPosts userIdOrName={usernameOrId} isProvidedUsername={isProvidedUsername} />
+          </Suspense>
         ) : (
-          <UserFollows />
+          <Suspense fallback={<div>Loading Following...</div>}>
+            <UserFollows />
+          </Suspense>
         )
       ) : (
-        <UserPosts
-          userIdOrName={usernameOrId}
-          isProvidedUsername={isProvidedUsername}
-        />
+        <Suspense fallback={<div>Loading Posts...</div>}>
+          <UserPosts userIdOrName={usernameOrId} isProvidedUsername={isProvidedUsername} />
+        </Suspense>
       )}
     </div>
   );
