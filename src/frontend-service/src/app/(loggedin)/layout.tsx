@@ -70,7 +70,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       deleteRefreshToken();
       deleteAccessToken();
       setShowDropdown(false);
-      window.location.reload();  
+      router.push("/login");
+      window.location.reload();
     } catch (error) {
       console.error("Auth failed:", error);
     } finally {
@@ -80,6 +81,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleProfileButtonClick = () => {
     setShowDropdown(false);
+    router.push(`/profile/${getUserName()}`);
+  };
+
+  const handleHomeButtonClick = () => {
+    setShowDropdown(false);
+    router.push(`/home/`);
   };
 
   if (loading) return <Loading />;
@@ -88,18 +95,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-screen">
       {/* Top Bar */}
       {
-        <header className="w-full bg-gray-900 text-white flex items-center justify-between px-6 py-4 shadow-md">
+        <header className="w-full bg-gray-900 text-white flex items-center justify-between px-6 py-4 shadow-lg shadow-gray-800/50 z-10 backdrop-blur-md bg-opacity-80">
+
           {/* Search Bar */}
           <Search />
 
           {/* Navigation Buttons */}
           <div className="flex items-center space-x-4">
             {/* Home Button */}
-            <Link href="/home">
-              <button className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md">
-                Home
-              </button>
-            </Link>
+
+            <button
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md"
+              onClick={handleHomeButtonClick}
+            >
+              Home
+            </button>
+
             {/* User Menu */}
             <div className="relative">
               <button
@@ -129,14 +140,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   ref={dropdownRef}
                   className="absolute right-0 mt-2 w-48 bg-white text-gray-900 shadow-lg rounded-lg"
                 >
-                  <Link href="/profile">
-                    <button
-                      onClick={handleProfileButtonClick}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"
-                    >
-                      Profile
-                    </button>
-                  </Link>
+                  <button
+                    onClick={handleProfileButtonClick}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"
+                  >
+                    Profile
+                  </button>
                   <button
                     onClick={handleLogOut}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"

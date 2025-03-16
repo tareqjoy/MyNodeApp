@@ -133,22 +133,20 @@ export default function ProfilePage({
   }, [usernameOrId, isProvidedUsername]);
 
   if (error) return <p className="text-red-500 text-center mt-4">{error}</p>;
-  if (!user)
-    return (
-      <p className="text-gray-500 text-center mt-4">No user data available.</p>
-    );
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Profile Info */}
-      <UserProfile
-        username={user.username}
-        name={user.name}
-        email={user.email}
-        birthDay={user.birthDay}
-        followState={followingState}
-        onFollowToggle={handleFollowToggle}
-      />
+      <Suspense fallback={<div>Loading Profile...</div>}>
+        <UserProfile
+          username={user?.username || ""}
+          name={user?.name || ""}
+          email={user?.email || ""}
+          birthDay={user?.birthDay || ""}
+          followState={followingState}
+          onFollowToggle={handleFollowToggle}
+        />
+      </Suspense>
 
       {/* Conditionally render ProfilePost if isItMe is true */}
       {isItMe && (
@@ -187,7 +185,10 @@ export default function ProfilePage({
       {isItMe ? (
         selectedTab === "posts" ? (
           <Suspense fallback={<div>Loading Posts...</div>}>
-            <UserPosts userIdOrName={usernameOrId} isProvidedUsername={isProvidedUsername} />
+            <UserPosts
+              userIdOrName={usernameOrId}
+              isProvidedUsername={isProvidedUsername}
+            />
           </Suspense>
         ) : (
           <Suspense fallback={<div>Loading Following...</div>}>
@@ -196,7 +197,10 @@ export default function ProfilePage({
         )
       ) : (
         <Suspense fallback={<div>Loading Posts...</div>}>
-          <UserPosts userIdOrName={usernameOrId} isProvidedUsername={isProvidedUsername} />
+          <UserPosts
+            userIdOrName={usernameOrId}
+            isProvidedUsername={isProvidedUsername}
+          />
         </Suspense>
       )}
     </div>
