@@ -7,7 +7,7 @@ interface UserProfileProps {
   username: string;
   name: string;
   email: string;
-  birthYear: number;
+  birthDay: string;
   followState: "hide" | "following" | "unfollowing";
   onFollowToggle: () => void;
 }
@@ -16,7 +16,7 @@ export default function UserProfile({
   username,
   name,
   email,
-  birthYear,
+  birthDay,
   followState,
   onFollowToggle,
 }: UserProfileProps) {
@@ -51,7 +51,7 @@ export default function UserProfile({
           <h2 className="text-gray-600 text-2xl font-semibold">{name}</h2>
           <p className="text-gray-600">@{username}</p>
           <p className="text-gray-500">{email}</p>
-          <p className="text-gray-500">Born in {birthYear}</p>
+          <p className="text-gray-500">Birthday {birthDay}</p>
         </div>
 
         {/* Follow Button */}

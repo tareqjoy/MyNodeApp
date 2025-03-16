@@ -140,7 +140,7 @@ export default function ProfilePage({
         username={user.username}
         name={user.name}
         email={user.email}
-        birthYear={user.birthYear || 0}
+        birthDay={user.birthDay}
         followState={followingState}
         onFollowToggle={handleFollowToggle}
       />

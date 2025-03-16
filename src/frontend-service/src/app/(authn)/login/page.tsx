@@ -18,7 +18,6 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
 
   // State management
-  const [showLoginForm, setShowLoginForm] = useState(false);
   const [username, setUsernameInForm] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -29,7 +28,6 @@ export default function LoginPage() {
       console.log("Checking authentication...");
       if(!getRefreshToken()) {
         console.log("User is not authenticated, showing login form...");
-        setShowLoginForm(true);
         return;
       }
       try {
@@ -42,16 +40,12 @@ export default function LoginPage() {
       } catch (error) {
         console.log("User is not authenticated, showing login form...");
       }
-      setShowLoginForm(true);
     };
 
     isAuthed();
   }, [router]);
 
-  // Show loading screen while checking auth status
-  if (!showLoginForm) {
-    return <Loading />;
-  }
+
 
   // Handle login form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
