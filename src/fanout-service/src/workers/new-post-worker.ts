@@ -47,29 +47,33 @@ export const newPostFanout = async (
       whoFollowsAxiosRes.data,
     );
 
-    logger.silly(`Received from follower service: ${followersIdsObj.userIds}`);
+    logger.debug(`Received from follower service: ${followersIdsObj.userIds}`);
 
     let totalRemovedPostCount = 0;
     for (const uid of followersIdsObj.userIds!) {
       const redisKey = `timeline-userId:${uid}`;
       //  When multiple elements have the same score, they are ordered lexicographically
-      await redisClient.zAdd(redisKey, {
+      const newAddCount = await redisClient.zAdd(redisKey, {
         //zAdd: https://redis.io/docs/latest/commands/zadd/
         score: newPostKafkaMsg.postTime,
         value: newPostKafkaMsg.postId,
       });
+
+      if(newAddCount === 0) {
+        logger.warn(`post failed to add, post: ${newPostKafkaMsg.postId}, userid: ${uid}`);
+      }
 
       const setSize = await redisClient.zCard(redisKey);
       if (setSize > maxPostSetSize) {
         const toRemove = setSize - maxPostSetSize - 1;
         totalRemovedPostCount += toRemove;
         await redisClient.zRemRangeByRank(redisKey, 0, toRemove); // zRemRangeByRank: https://redis.io/docs/latest/commands/zremrangebyrank/
-        logger.silly(
+        logger.debug(
           `${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`,
         );
       }
 
-      logger.silly(`Posted to redis of ${redisKey}`);
+      logger.debug(`Posted to redis of ${redisKey}`);
     }
 
     workerOperationCount

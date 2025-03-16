@@ -23,7 +23,7 @@ export const iUnfollowedFanout = async (
   messageStr: string,
 ): Promise<boolean> => {
   try {
-    logger.silly(`iUnfollowedFanout has started with message: ${messageStr}`);
+    logger.debug(`iUnfollowedFanout has started with message: ${messageStr}`);
 
     const iUnfollowedKafkaMsg = plainToInstance(
       IUnfollowedKafkaMsg,
@@ -42,7 +42,7 @@ export const iUnfollowedFanout = async (
     var endTime: number = Date.now();
 
     if (leastRecentPosts.length === 0) {
-      logger.silly(`${redisKey} is empty in redis`);
+      logger.debug(`${redisKey} is empty in redis`);
     } else {
       endTime = leastRecentPosts[0].score;
     }
@@ -61,22 +61,20 @@ export const iUnfollowedFanout = async (
       postByUserAxiosRes.data,
     );
 
-    logger.silly(
+    logger.debug(
       `Received from ${postDetailsResObj.posts.length} posts from post service for userId: ${iUnfollowedKafkaMsg.unfollowsUserId}`,
     );
 
     var removedPostCount = 0;
     for (const post of postDetailsResObj.posts) {
-      if (post.time > endTime) {
+      if (post.time < endTime) {
         break;
       }
-      if (await redisClient.zRem(redisKey, post.postId)) {
-        removedPostCount++;
-      }
+      removedPostCount+=await redisClient.zRem(redisKey, post.postId);
     }
 
-    logger.silly(
-      `${removedPostCount} posts removed from redis key of ${redisKey}`,
+    logger.debug(
+      `posts removed from redis key of ${redisKey}: ${removedPostCount}`,
     );
     workerOperationCount
       .labels(iUnfollowedFanout.name, "post_removed_from_redis")

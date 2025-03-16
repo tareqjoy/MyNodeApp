@@ -57,7 +57,7 @@ export const createGetRouter = (mongoClient: Mongoose) => {
       const Post = mongoClient.model("Post", PostSchema);
       const dbPosts = await Post.find({
         _id: { $in: Array.from(postObjectIds) },
-      }).sort({ time: -1 });
+      });
 
       res
         .status(200)

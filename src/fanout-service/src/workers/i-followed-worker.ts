@@ -49,6 +49,7 @@ export const iFollowedFanout = async (
       endTime = leastRecentPosts[0].score;
     }
 
+    logger.debug(`end time is: ${endTime}`);
     const postByUserReq = new GetPostByUserReq(
       [iFollowedKafkaMsg.followsUserId],
       false,
@@ -63,22 +64,24 @@ export const iFollowedFanout = async (
       postByUserAxiosRes.data,
     );
 
-    logger.silly(
-      `Received from ${postDetailsResObj.posts.length} posts from post service for userId: ${iFollowedKafkaMsg.followsUserId}`,
+    logger.debug(
+      `Received ${postDetailsResObj.posts.length} posts from post service for userId: ${iFollowedKafkaMsg.followsUserId}`,
     );
 
+    // postDetailsResObj.posts is descending sorted
+    let postCount = 0;
     for (const post of postDetailsResObj.posts) {
-      if (post.time > endTime) {
+      if (post.time < endTime) {
         break;
       }
-      await redisClient.zAdd(redisKey, {
+      postCount += await redisClient.zAdd(redisKey, {
         score: post.time,
         value: post.postId,
       });
     }
 
-    logger.silly(
-      `${postDetailsResObj.posts.length} posts posted to redis key of ${redisKey}`,
+    logger.debug(
+      `posts posted to redis key of ${redisKey}: ${postCount}`,
     );
 
     workerOperationCount
@@ -88,9 +91,9 @@ export const iFollowedFanout = async (
     const setSize = await redisClient.zCard(redisKey);
     if (setSize > maxPostSetSize) {
       const toRemove = setSize - maxPostSetSize - 1;
-      await redisClient.zRemRangeByRank(redisKey, 0, toRemove);
-      logger.silly(
-        `${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`,
+      const postRemCount = await redisClient.zRemRangeByRank(redisKey, 0, toRemove);
+      logger.debug(
+        `${redisKey} had ${setSize} posts, removed ${postRemCount} least recent posts`,
       );
       workerOperationCount
         .labels(iFollowedFanout.name, "old_post_removed_from_redis")

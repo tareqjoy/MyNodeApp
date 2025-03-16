@@ -32,7 +32,10 @@ export default function TimelinePosts({ userId }: { userId: string }) {
 
       const postDetailsResObj = plainToInstance(PostDetailsRes, axiosGetPostsResp.data);
 
-      setPosts((prev) => loadMore ? [...prev, ...postDetailsResObj.posts] : postDetailsResObj.posts);
+      const singlePostMap : Map<string, SinglePost> = new Map(postDetailsResObj.posts.map(post => [post.postId, post]));
+      const postsAsTimelinePostOrder = postIds.map(id => singlePostMap.get(id)).filter(obj => obj !== undefined) as SinglePost[];
+
+      setPosts((prev) => loadMore ? [...prev, ...postsAsTimelinePostOrder] : postsAsTimelinePostOrder);
       setNextToken(timelineHomeResObj.paging?.nextToken || null);
     } catch (err) {
       setError("Failed to load posts.");
