@@ -39,7 +39,7 @@ export const iUnfollowedFanout = async (
     const redisKey = `timeline-userId:${iUnfollowedKafkaMsg.userId}`;
     const leastRecentPosts = await redisClient.zRangeWithScores(redisKey, 0, 0);
 
-    var endTime: number = Date.now();
+    var endTime: number = 0;
 
     if (leastRecentPosts.length === 0) {
       logger.debug(`${redisKey} is empty in redis`);
@@ -73,9 +73,13 @@ export const iUnfollowedFanout = async (
       removedPostCount+=await redisClient.zRem(redisKey, post.postId);
     }
 
-    logger.debug(
-      `posts removed from redis key of ${redisKey}: ${removedPostCount}`,
-    );
+    if(postDetailsResObj.posts.length - removedPostCount >= 1) {
+      logger.warn(
+        `failed to remove post from redis key of ${redisKey}: ${postDetailsResObj.posts.length - removedPostCount}`,
+      );
+    }
+
+
     workerOperationCount
       .labels(iUnfollowedFanout.name, "post_removed_from_redis")
       .inc(removedPostCount);

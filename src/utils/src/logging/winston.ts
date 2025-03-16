@@ -35,6 +35,13 @@ export function getFileLogger(filename: string): winston.Logger {
           format.errors({ stack: true }),
           format.splat(),
           format.json(),
+          format.printf((info) => {
+            const { timestamp, message, level, ...rest } = info; // Extract fields
+            return (
+              JSON.stringify({ timestamp, message, level, ...rest }, null, 2) + // Pretty print JSON
+              "\n====================================\n" // Custom separator
+            );
+          }),
           format.colorize({ all: true }), 
         ),
         defaultMeta: defaultMeta,

@@ -41,7 +41,7 @@ export const iFollowedFanout = async (
     const redisKey = `timeline-userId:${iFollowedKafkaMsg.userId}`;
     const leastRecentPosts = await redisClient.zRangeWithScores(redisKey, 0, 0);
 
-    var endTime: number = Date.now();
+    var endTime: number = 0;
 
     if (leastRecentPosts.length === 0) {
       logger.debug(`${redisKey} is empty in redis`);
@@ -80,9 +80,12 @@ export const iFollowedFanout = async (
       });
     }
 
-    logger.debug(
-      `posts posted to redis key of ${redisKey}: ${postCount}`,
-    );
+    if(postDetailsResObj.posts.length - postCount >= 1) {
+      logger.warn(
+        `failed to post to redis key of ${redisKey}: ${postDetailsResObj.posts.length - postCount}`,
+      );
+    }
+
 
     workerOperationCount
       .labels(iFollowedFanout.name, "new_post_loaded_to_redis")

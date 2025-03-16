@@ -86,7 +86,7 @@ export const createHomeRouter = (
           potentialPagingRaw = redisPagingRaw;
         } else {
           // undefined when redis cursor is finished traversing all data
-          timelineHomeReq.limit = postsFromRedis.length + 1;
+          timelineHomeReq.limit = Math.max(postsFromRedis.length + 1, timelineHomeReq.limit);
         }
 
         logger.debug(`loaded from redis: ${postsFromRedis.length}`);
@@ -252,6 +252,7 @@ async function getFromPostService(
   } //else load from post service even for the first non-paginated call, means nextPageTokenForPostService = undefined
 
   const morePostToLoad = limit - redisPosts.length;
+  logger.debug(`more post to load from post service: limit: ${limit}, toload: ${morePostToLoad}`)
   const postByUserReq = new GetPostByUserReq(iFollowIdsObj.userIds, false, {
     pagingInfo: pagingInfoForPostService,
     nextToken: nextPageTokenForPostService,
