@@ -3,7 +3,8 @@ export class UserDetailsRes {
   username: string;
   name: string;
   email: string;
-  birthYear: number | null;
+  birthDay: string;
+  gender: string;
 
   constructor();
   constructor(
@@ -11,19 +12,22 @@ export class UserDetailsRes {
     username: string,
     name: string,
     email: string,
-    birthYear?: number | null,
+    birthYear: string,
+    gender: string,
   );
   constructor(
     userId?: string,
     username?: string,
     name?: string,
     email?: string,
-    birthYear?: number | null,
+    birthDay?: string,
+    gender?: string,
   ) {
     this.userId = userId || "";
     this.username = username || "";
     this.name = name || "";
     this.email = email || "";
-    this.birthYear = birthYear ? birthYear : null;
+    this.birthDay = birthDay || "" ;
+    this.gender = gender || "" ;
   }
 }

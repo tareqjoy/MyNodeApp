@@ -40,9 +40,17 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
     }).exec();
 
     if (existUser) {
+      let existsParam: string = "";
+      if(existUser.username === signUpDto.username && existUser.email === signUpDto.email) {
+        existsParam = "both username & email";
+      } else if(existUser.username === signUpDto.username ) {
+        existsParam = "username";
+      } else if(existUser.email === signUpDto.email ) {
+        existsParam = "email";
+      }
       res
         .status(400)
-        .json(new InvalidRequest("username or email already exists"));
+        .json(new InvalidRequest(`${existsParam} already exists`));
       return;
     }
 
@@ -56,10 +64,11 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
     const user = new User({
       _id: new mongoose.Types.ObjectId(),
       username: signUpDto.username,
-      name: signUpDto.name,
       email: signUpDto.email,
-      birthYear: signUpDto.birthYear,
       password: hashedPass,
+      name: signUpDto.name,
+      birthDay: new Date(signUpDto.birthDay),
+      gender: signUpDto.gender,
     });
 
     user

@@ -43,7 +43,8 @@ export const createUserDetailsRouter = (mongoClient: Mongoose) => {
                 doc.username,
                 doc.name,
                 doc.email,
-                doc.birthYear,
+                doc.birthDay.toISOString(),
+                doc.gender
               ),
             );
         }

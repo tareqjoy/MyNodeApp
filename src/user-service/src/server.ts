@@ -13,6 +13,7 @@ import { createUserInternalRouter } from "./routes/user-internal";
 import bodyParser from "body-parser";
 import { createSignInRouter } from "./routes/signin";
 import "source-map-support/register";
+import { createCheckUsernameRouter } from "./routes/check-username";
 
 
 const logger = getFileLogger(__filename);
@@ -53,6 +54,8 @@ async function main() {
     createUserInternalRouter(mongoClient, redisClient),
   );
   app.use(getApiPath(api_path_root, "signin"), createSignInRouter(mongoClient));
+  app.use(getApiPath(api_path_root, "check-username"), createCheckUsernameRouter(mongoClient));
+
 
   app.use(
     (

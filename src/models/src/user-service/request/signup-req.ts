@@ -1,13 +1,11 @@
-import { Transform } from "class-transformer";
+
 import {
   IsEmail,
-  IsInt,
+  IsIn,
   IsNotEmpty,
   IsString,
   Matches,
-  Max,
   MaxLength,
-  Min,
   MinLength,
 } from "class-validator";
 
@@ -19,6 +17,7 @@ export class SignUpReq {
     message:
       "Username can only contain alphanumeric characters and underscores",
   })
+  @MinLength(4, { message: "Name must be at least 4 characters long" })
   @MaxLength(15, { message: "Username cannot be longer than 15 characters" })
   username: string = "";
 
@@ -27,7 +26,7 @@ export class SignUpReq {
   @Matches(/^[a-zA-Z\s'-]+$/, {
     message: "Name can only contain letters, spaces, apostrophes and hyphens",
   })
-  @MinLength(2, { message: "Name must be at least 2 characters long" })
+  @MinLength(5, { message: "Name must be at least 5 characters long" })
   @MaxLength(50, { message: "Name cannot be longer than 50 characters" })
   name: string = "";
 
@@ -35,29 +34,43 @@ export class SignUpReq {
   @IsEmail()
   email: string = "";
 
-  @IsNotEmpty({ message: "Year is required" })
-  @IsInt({ message: "Year must be a number" })
-  @Min(1900, { message: "Year must be at least 1900" })
-  @Max(new Date().getFullYear() - 10, {
-    message: `Year cannot be greater than ${new Date().getFullYear()}`,
+  @IsNotEmpty({ message: "birthDay is required" })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
+    message: "Birthday must be in the format YYYY-MM-DD",
   })
-  birthYear: number = 0;
+  birthDay: string = "";
+
+  @IsNotEmpty()
+  @IsIn(["male", "female", "non-binary"], { message: "Gender must be either male, female, or non-binary" })
+  gender: string = "";
 
   @IsString()
   @MinLength(6, {
-    message: "Password is too short, it should be at least 8 characters long.",
+    message: "Password is too short, it should be at least 6 characters long.",
   })
   @MaxLength(50, {
     message:
       "Password is too long, it should be no more than 50 characters long.",
   })
   // At least 1 uppercase, 1 lowercase, 1 digit, and 1 special character
+  /*
   @Matches(
     /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
     {
       message:
         "Password is too weak. It should contain at least 1 uppercase, 1 lowercase, 1 digit, and 1 special character.",
     },
-  )
+  )*/
   password: string = "";
+
+  constructor();
+  constructor(username: string, email: string, password: string, name: string, birthDay: string, gender: string);
+  constructor(username?: string, email?: string, password?: string, name?: string, birthDay?: string, gender?: string) {
+    this.username = username || "";
+    this.email = email || "";
+    this.password = password || "";
+    this.name = name || "";
+    this.birthDay = birthDay || "";
+    this.gender = gender || "";
+  }
 }

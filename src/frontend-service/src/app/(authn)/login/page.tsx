@@ -96,63 +96,64 @@ export default function LoginPage() {
   };
 
   return (
-<div className="relative h-screen w-full bg-cover bg-center flex items-center justify-center" 
-      style={{ backgroundImage: "url('/login-bg.jpg')" }}>
-      {/* Overlay */}
-      
+<div className="relative h-screen w-full bg-center flex items-center justify-center">
+  {/* Overlay */}
 
-      {/* Login Form */}
-      <div className="relative z-10 bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-        <h2 className="text-2xl font-semibold text-center text-gray-800">Welcome Back</h2>
-        <p className="text-gray-500 text-center mb-6">Sign in to your account</p>
+  {/* Login Form */}
+  <div className="relative z-10 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full">
+    <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-200">Welcome Back</h2>
+    <p className="text-gray-500 dark:text-gray-400 text-center mb-6">Sign in to your account</p>
 
-        {error && <p className="text-red-500 text-sm text-center mb-4">{errorMessage}</p>}
+    {error && <p className="text-red-500 text-sm text-center mb-4">{errorMessage}</p>}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-medium">Email</label>
-            <input
-              type="username"
-              value={username}
-              onChange={(e) => setUsernameInForm(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <label className="block text-gray-700 font-medium">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          {/* Forgot Password */}
-          <div className="text-right">
-            <a href="#" className="text-blue-500 text-sm hover:underline">Forgot password?</a>
-          </div>
-
-          {/* Login Button */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Sign In
-          </button>
-        </form>
-
-        {/* Signup Link */}
-        <p className="text-gray-600 text-sm text-center mt-4">
-          Don't have an account? <a href="/register" className="text-blue-500 hover:underline">Sign up</a>
-        </p>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-gray-700 dark:text-gray-300 font-medium">Username</label>
+        <input
+          type="username"
+          value={username}
+          onChange={(e) => setUsernameInForm(e.target.value)}
+          className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          placeholder="Enter your username"
+          autoComplete="username"
+          required
+        />
       </div>
-    </div>
+
+      {/* Password Input */}
+      <div>
+        <label className="block text-gray-700 dark:text-gray-300 font-medium">Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          placeholder="Enter your password"
+          autoComplete="current-password"
+          required
+        />
+      </div>
+
+      {/* Forgot Password */}
+      <div className="text-right">
+        <a href="#" className="text-blue-500 text-sm hover:underline dark:text-blue-400">Forgot password?</a>
+      </div>
+
+      {/* Login Button */}
+      <button
+        type="submit"
+        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition dark:bg-blue-500 dark:hover:bg-blue-600"
+      >
+        Sign In
+      </button>
+    </form>
+
+    {/* Signup Link */}
+    <p className="text-gray-600 text-sm text-center mt-4 dark:text-gray-400">
+      Don't have an account? <a href="/register" className="text-blue-500 hover:underline dark:text-blue-400">Sign up</a>
+    </p>
+  </div>
+</div>
+
   );
 }

@@ -17,6 +17,7 @@ export * from "./user-service/request/user-internal-req";
 export * from "./user-service/response/user-signIn-res";
 export * from "./user-service/response/user-details-res";
 export * from "./user-service/response/user-internal-res";
+export * from "./user-service/response/check-username-res";
 
 export * from "./follow-service/request/followers-req";
 export * from "./follow-service/request/follow-req";
