@@ -23,8 +23,8 @@
         "class-transformer": "^0.5.1",
         "reflect-metadata": "^0.2.2",
         "@tareqjoy/clients": "^1.0.24",
-        "@tareqjoy/models": "^1.0.70",
-        "@tareqjoy/utils": "^1.0.64",
+        "@tareqjoy/models": "^1.0.102",
+        "@tareqjoy/utils": "^1.0.68",
         "apache-arrow": "^19.0.1"
     },
     "devDependencies": {

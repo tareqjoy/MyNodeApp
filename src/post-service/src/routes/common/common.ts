@@ -165,8 +165,9 @@ export async function getPostLikeCount(
 
     // If there are posts to load from MongoDB, query in bulk
     if (keysToLoadFromMongo.length > 0) {
+      const objectIds = keysToLoadFromMongo.map((id) => new Types.ObjectId(id));
       const mongoResults = await PostLike.aggregate([
-        { $match: { postId: { $in: keysToLoadFromMongo } } },
+        { $match: { postId: { $in: objectIds } } },
         {
           $group: {
             _id: { postId: "$postId", likeType: "$likeType" },
@@ -207,6 +208,7 @@ export async function getPostLikeCount(
           });
         } else {
           // If the post doesn't exist in Redis, load from MongoDB and then update Redis
+          logger.debug(`not in redis! ${postIds[index]}`)
           const reactions = mongoData[postIds[index]] || [];
           for (const reaction of reactions) {
             await redisClient.hIncrBy(
