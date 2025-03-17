@@ -210,13 +210,12 @@ export async function getPostLikeCount(
           // If the post doesn't exist in Redis, load from MongoDB and then update Redis
           logger.debug(`not in redis! ${postIds[index]}`)
           const reactions = mongoData[postIds[index]] || [];
-          for (const reaction of reactions) {
-            await redisClient.hIncrBy(
-              postRedisKey,
-              reaction.type,
-              reaction.count
-            );
-            redisReactions[reaction.type] = String(reaction.count); // Store updated count
+          if (reactions.length > 0) {
+            const redisData: Record<string, number> = {};
+            reactions.forEach((reaction) => {
+              redisData[reaction.type] = reaction.count;
+            });
+            await redisClient.hSet(postRedisKey, redisData);
           }
         }
 
