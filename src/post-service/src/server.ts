@@ -8,9 +8,9 @@ import {
 import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";
-import { connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
-import { createCreateRouter } from "./routes/create";
-import { createGetRouter } from "./routes/get";
+import { connectKafkaProducer, connectMongo, connectRedis } from "@tareqjoy/clients";
+import { createCreateRouter } from "./routes/create-post";
+import { createGetRouter } from "./routes/get-post";
 import { createGetByUserRouter } from "./routes/get-by-user";
 import { createLikeRouter } from "./routes/like";
 
@@ -38,11 +38,12 @@ async function main() {
 
   const kafkaProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
+  const redisClient = await connectRedis();
 
   //Only for internal use, should be protected from public access
   app.use(
     getInternalApiPath(api_path_root, "get-by-user"),
-    createGetByUserRouter(mongoClient),
+    createGetByUserRouter(mongoClient, redisClient),
   );
 
   //For public use
@@ -54,17 +55,17 @@ async function main() {
   app.use(
     getApiPath(api_path_root, "get"),
     authorize,
-    createGetRouter(mongoClient),
+    createGetRouter(mongoClient, redisClient),
   );
   app.use(
     getApiPath(api_path_root, "get-by-user"),
     authorize,
-    createGetByUserRouter(mongoClient),
+    createGetByUserRouter(mongoClient, redisClient),
   );
   app.use(
     getApiPath(api_path_root, "like"),
     authorize,
-    createLikeRouter(mongoClient, kafkaProducer),
+    createLikeRouter(mongoClient, redisClient, kafkaProducer),
   );
 
   app.use(

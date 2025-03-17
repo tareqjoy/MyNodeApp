@@ -1,9 +1,23 @@
+export class SingleLike {
+  type: string;
+  count: number;
+
+  constructor();
+  constructor(type: string, count: number);
+  constructor(type?: string, count?: number) {
+      this.type = type || "";
+      this.count = count || 0;
+  }
+}
+
 export class SinglePost {
   postId: string;
   userId?: string;
   username?: string;
-  body?: string;
+  body: string;
   time: number;
+  likes: SingleLike[];
+  myLikeType?: string;
 
   constructor();
   constructor(
@@ -13,6 +27,8 @@ export class SinglePost {
       userIdOrUsername?: string;
       isUserName?: boolean;
       body?: string;
+      likes?: SingleLike[];
+      myLikeType?: string;
     },
   );
   constructor(
@@ -22,6 +38,8 @@ export class SinglePost {
       userIdOrUsername?: string;
       isUserName?: boolean;
       body?: string;
+      likes?: SingleLike[];
+      myLikeType?: string;
     },
   ) {
     this.postId = postId || "";
@@ -31,8 +49,10 @@ export class SinglePost {
       //isUserName undefined or false
       this.userId = options?.userIdOrUsername;
     }
-    this.body = options?.body;
+    this.body = options?.body || "";
+    this.likes = options?.likes || [];
     this.time = time || 0;
+    this.myLikeType = options?.myLikeType;
   }
 }
 

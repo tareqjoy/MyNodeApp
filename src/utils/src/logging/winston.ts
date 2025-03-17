@@ -35,12 +35,23 @@ export function getFileLogger(filename: string): winston.Logger {
           format.errors({ stack: true }),
           format.splat(),
           format.json(),
-          format.printf((info) => {
-            const { timestamp, message, level, ...rest } = info; // Extract fields
-            return (
-              JSON.stringify({ timestamp, message, level, ...rest }, null, 2) + // Pretty print JSON
-              "\n====================================\n" // Custom separator
+          format.printf(({ timestamp, message, level, stack, ...rest }) => {
+            // Extract relevant information
+            let logOutput = JSON.stringify(
+              { timestamp, message, level, ...rest },
+              null,
+              2 // Pretty print JSON with indentation
             );
+          
+            // If there is a stack trace, format it nicely
+            if (typeof stack === 'string') {
+              logOutput += `\nStack Trace:\n${stack.replace(/\n/g, '\n    ')}`; // Indent the stack trace for readability
+            }
+          
+            // Add custom separator for better readability between logs
+            logOutput += "\n====================================\n";
+            
+            return logOutput;
           }),
           format.colorize({ all: true }), 
         ),

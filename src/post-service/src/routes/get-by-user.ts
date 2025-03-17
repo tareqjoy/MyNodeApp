@@ -1,5 +1,5 @@
 import express from "express";
-import { getFileLogger } from "@tareqjoy/utils";
+import { ATTR_HEADER_USER_ID, getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
 import axios from "axios";
 import {
@@ -17,6 +17,7 @@ import {
   toResPosts,
   getTimeSortedGetPostIdsByUserListQuery,
 } from "./common/common";
+import { RedisClientType } from "redis";
 
 const logger = getFileLogger(__filename);
 
@@ -24,10 +25,13 @@ const userServiceHostUrl: string =
   process.env.USER_SERVICE_USERID_URL ||
   "http://127.0.0.1:5002/v1/user/userid/";
 
-export const createGetByUserRouter = (mongoClient: Mongoose) => {
+export const createGetByUserRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any>,) => {
   const router = express.Router();
   router.post("/", async (req, res, next) => {
     logger.silly(`POST /get-by-user called`);
+
+    // loggedInUserId can be null as this endpoint will be called internally by other services
+    const loggedInUserId: string | undefined= req.headers[ATTR_HEADER_USER_ID] as string | undefined;
     try {
       const getPostReq = plainToInstance(GetPostByUserReq, req.body);
       const errors = await validate(getPostReq);
@@ -115,11 +119,16 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
         .status(200)
         .json(
           await toResPosts(
+            redisClient,
             userServiceHostUrl,
             dbPosts,
             getPostReq.returnOnlyPostId,
-            getPostReq.returnAsUsername,
-            paging
+            getPostReq.returnAsUsername, 
+            {
+              paging: paging,
+              myUserId: loggedInUserId,
+            }
+            
           )
         );
     } catch (error) {

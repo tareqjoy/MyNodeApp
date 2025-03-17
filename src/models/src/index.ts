@@ -42,6 +42,7 @@ export * from "./post-service/request/like-req";
 export * from "./post-service/request/unlike-req";
 
 export * from "./post-service/response/post-details-res";
+export * from "./post-service/response/like-res";
 
 export * from "./search-service/request/search-req";
 

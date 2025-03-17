@@ -1,5 +1,5 @@
 import express from "express";
-import { getFileLogger } from "@tareqjoy/utils";
+import { ATTR_HEADER_USER_ID, getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
 import {
   TooLargeRequest,
@@ -12,6 +12,7 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { toResPosts } from "./common/common";
 import axios from "axios";
+import { RedisClientType } from "redis";
 
 const logger = getFileLogger(__filename);
 
@@ -24,9 +25,10 @@ const maxGetPostLimit: number = parseInt(
 
 const router = express.Router();
 
-export const createGetRouter = (mongoClient: Mongoose) => {
+export const createGetRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any>,) => {
   router.post("/", async (req, res, next) => {
     logger.silly(`POST /get called`);
+    const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
     try {
       const getPostReq = plainToInstance(GetPostReq, req.body);
       const errors = await validate(getPostReq);
@@ -62,10 +64,13 @@ export const createGetRouter = (mongoClient: Mongoose) => {
         .status(200)
         .json(
           await toResPosts(
+            redisClient,
             userServiceHostUrl,
             dbPosts,
             false,
-            getPostReq.returnAsUsername,
+            getPostReq.returnAsUsername, {
+              myUserId: loggedInUserId
+            }
           ),
         );
     } catch (error) {
@@ -82,3 +87,4 @@ export const createGetRouter = (mongoClient: Mongoose) => {
 
   return router;
 };
+
