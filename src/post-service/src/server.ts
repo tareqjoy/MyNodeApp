@@ -12,6 +12,7 @@ import { connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
 import { createCreateRouter } from "./routes/create";
 import { createGetRouter } from "./routes/get";
 import { createGetByUserRouter } from "./routes/get-by-user";
+import { createLikeRouter } from "./routes/like";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "post";
 
@@ -59,6 +60,11 @@ async function main() {
     getApiPath(api_path_root, "get-by-user"),
     authorize,
     createGetByUserRouter(mongoClient),
+  );
+  app.use(
+    getApiPath(api_path_root, "like"),
+    authorize,
+    createLikeRouter(mongoClient),
   );
 
   app.use(

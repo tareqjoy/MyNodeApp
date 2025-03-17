@@ -37,6 +37,8 @@ export * from "./post-service/common/post-by-user-paging-raw";
 export * from "./post-service/request/create-post-req";
 export * from "./post-service/request/get-post-req";
 export * from "./post-service/request/get-post-by-user-req";
+export * from "./post-service/request/like-req";
+export * from "./post-service/request/unlike-req";
 
 export * from "./post-service/response/post-details-res";
 
