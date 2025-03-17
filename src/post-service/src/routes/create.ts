@@ -1,14 +1,13 @@
 import express from "express";
 import { getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
-import { PostSchema } from "../db/PostSchema";
 import { Producer } from "kafkajs";
 import axios from "axios";
 import {
   InternalServerError,
   MessageResponse
 } from "@tareqjoy/models";
-import { CreatePostReq } from "@tareqjoy/models";
+import { CreatePostReq, Post } from "@tareqjoy/models";
 import { InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
@@ -37,11 +36,9 @@ export const createCreateRouter = (
         return;
       }
 
-      const Post = mongoClient.model("Post", PostSchema);
-
       const post = new Post({
         _id: new mongoose.Types.ObjectId(),
-        userid: loggedInUserId,
+        userId: loggedInUserId,
         body: createPostReq.body,
         time: createPostReq.postTime,
       });
@@ -51,7 +48,7 @@ export const createCreateRouter = (
 
       const kafkaMsg = new NewPostKafkaMsg(
         dbResult.id,
-        dbResult.userid!.toString(),
+        dbResult.userId!.toString(),
         dbResult.time,
       );
       logger.debug(`publishing Kafka: topic: ${kafka_new_post_fanout_topic}`);

@@ -1,9 +1,8 @@
 import express from "express";
 import { Mongoose } from "mongoose";
-import { UserSchema } from "../schema/user-schema";
 import { getFileLogger } from "@tareqjoy/utils";
 import { plainToInstance } from "class-transformer";
-import { UserSignInReq, UserSignInRes } from "@tareqjoy/models";
+import { User, UserSignInReq, UserSignInRes } from "@tareqjoy/models";
 import { InternalServerError, InvalidRequest } from "@tareqjoy/models";
 import { validate } from "class-validator";
 import argon2 from "argon2";
@@ -24,7 +23,6 @@ export const createSignInRouter = (mongoClient: Mongoose) => {
     }
 
     try {
-      const User = mongoClient.model("User", UserSchema);
 
       const dbUser = await User.findOne(
         { $or: [{ username: signInObj.username }, { email: signInObj.email }] },

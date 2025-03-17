@@ -1,11 +1,11 @@
 import express from "express";
 import { Mongoose, isValidObjectId } from "mongoose";
-import { UserSchema } from "../schema/user-schema";
 import { getFileLogger } from "@tareqjoy/utils";
 import {
   InternalServerError,
   InvalidRequest,
-  UserDetailsRes,
+  User,
+  UserDetailsRes
 } from "@tareqjoy/models";
 
 const logger = getFileLogger(__filename);
@@ -23,9 +23,6 @@ export const createUserDetailsRouter = (mongoClient: Mongoose) => {
        res.status(400).json(new InvalidRequest("Invalid userid"));
        return;
     }
-
-
-    const User = mongoClient.model("User", UserSchema);
 
     const query = provided === "userid"?  { _id: usernameOrId }: { username: usernameOrId };
 

@@ -8,8 +8,8 @@ async function setupDatabase(createIndex: boolean, createShard: boolean) {
   const db = client.db("mydatabase");
 
   if (createIndex) {
-    await db.collection("posts").createIndex({ userid: 1, time: -1 });
-    await db.collection("posts").createIndex({ userid: 1 });
+    await db.collection("posts").createIndex({ userId: 1, time: -1 });
+    await db.collection("posts").createIndex({ userId: 1 });
     console.log("Indexes created successfully.");
   }
 
@@ -20,7 +20,7 @@ async function setupDatabase(createIndex: boolean, createShard: boolean) {
 
     await db.admin().command({
       shardCollection: "mydatabase.posts",
-      key: { userid: 1, time: -1 },
+      key: { userId: 1, time: -1 },
     });
 
     console.log("Shard created successfully.");

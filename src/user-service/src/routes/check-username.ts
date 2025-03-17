@@ -1,8 +1,7 @@
 import express from "express";
 import { Mongoose } from "mongoose";
-import { UserSchema } from "../schema/user-schema";
 import { getFileLogger } from "@tareqjoy/utils";
-import { InternalServerError, CheckUsernameResponse } from "@tareqjoy/models";
+import { InternalServerError, CheckUsernameResponse, User } from "@tareqjoy/models";
 
 const logger = getFileLogger(__filename);
 
@@ -23,8 +22,6 @@ export const createCheckUsernameRouter = (mongoClient: Mongoose) => {
    }
 
     try {
-      const User = mongoClient.model("User", UserSchema);
-
       const dbUser = await User.findOne(
          { username }
       ).exec();

@@ -1,10 +1,9 @@
 import express from "express";
 import mongoose, { Mongoose } from "mongoose";
-import { UserSchema } from "../schema/user-schema";
 import { getFileLogger } from "@tareqjoy/utils";
 import { RedisClientType } from "redis";
 import { plainToInstance } from "class-transformer";
-import { UserInternalReq } from "@tareqjoy/models";
+import { User, UserInternalReq } from "@tareqjoy/models";
 import {
   InvalidRequest,
   InternalServerError,
@@ -61,7 +60,6 @@ export const createUserInternalRouter = (
         }
 
         logger.silly(`not found in redis: ${nameOrId}`);
-        const User = mongoClient.model("User", UserSchema);
 
         const query =
           tag == "uname"

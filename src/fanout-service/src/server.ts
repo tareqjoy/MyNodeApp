@@ -6,12 +6,13 @@ import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";
 
-import { connectKafkaConsumer, connectRedis } from "@tareqjoy/clients";
+import { connectKafkaConsumer, connectMongo, connectRedis } from "@tareqjoy/clients";
 import { createFanoutRouter } from "./routes/fanout";
 import { newPostFanout } from "./workers/new-post-worker";
 import { iFollowedFanout } from "./workers/i-followed-worker";
 import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
+import { postLikeWorker } from "./workers/post-like-worker";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
 const kafka_new_post_fanout_topic =
@@ -20,6 +21,8 @@ const kafka_i_followed_fanout_topic =
   process.env.KAFKA_I_FOLLOWED_FANOUT_TOPIC || "i-followed";
 const kafka_i_unfollowed_fanout_topic =
   process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || "i-unfollowed";
+const kafka_post_like_fanout_topic =
+  process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-like";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
 const logger =  getFileLogger(__filename);
@@ -48,12 +51,14 @@ async function main() {
       kafka_new_post_fanout_topic,
       kafka_i_followed_fanout_topic,
       kafka_i_unfollowed_fanout_topic,
+      kafka_post_like_fanout_topic
     ],
   );
   const redisClient = await connectRedis();
+  const mongoClient = await connectMongo();
   await newPostConsumer.run({
     eachMessage: async ({ topic, partition, message }) => {
-      logger.silly("Kafka message received: ", {
+      logger.debug("Kafka message received: ", {
         topic,
         partition,
         offset: message.offset,
@@ -78,10 +83,16 @@ async function main() {
               redisClient,
               message.value?.toString(),
             );
+          } else if (topic === kafka_post_like_fanout_topic) {
+            isProcessed = await postLikeWorker(
+              redisClient,
+              mongoClient,
+              message.value.toString(),
+            );
           }
 
           if (isProcessed) {
-            logger.silly(
+            logger.debug(
               `Message is processed by worker. topic: ${topic}. Committing offset`,
             );
             await newPostConsumer.commitOffsets([
@@ -96,7 +107,7 @@ async function main() {
           }
           const durationInS = timerEndFn();
 
-          logger.silly(`took ${durationInS}s to process the message`);
+          logger.debug(`took ${durationInS}s to process the message`);
         } catch (error) {
           logger.error("error while executing task", error);
         }

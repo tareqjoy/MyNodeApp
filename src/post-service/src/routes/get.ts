@@ -1,11 +1,11 @@
 import express from "express";
 import { getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
-import { PostSchema } from "../db/PostSchema";
 import {
   TooLargeRequest,
   GetPostReq,
   InternalServerError,
+  Post,
 } from "@tareqjoy/models";
 import { InvalidRequest } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
@@ -54,7 +54,6 @@ export const createGetRouter = (mongoClient: Mongoose) => {
         return;
       }
 
-      const Post = mongoClient.model("Post", PostSchema);
       const dbPosts = await Post.find({
         _id: { $in: Array.from(postObjectIds) },
       });

@@ -11,3 +11,5 @@ export * from "./metric/metric";
 export * from "./constant/constant";
 
 export * from "./logging/winston";
+
+export * from "./common/methods";

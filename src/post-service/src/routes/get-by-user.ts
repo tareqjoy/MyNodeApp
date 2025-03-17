@@ -1,7 +1,6 @@
 import express from "express";
 import { getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
-import { PostSchema } from "../db/PostSchema";
 import axios from "axios";
 import {
   GetPostByUserReq,
@@ -9,6 +8,7 @@ import {
   UserInternalRes,
   InternalServerError,
   PostByUserPagingRaw,
+  Post,
 } from "@tareqjoy/models";
 import { InvalidRequest } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
@@ -68,8 +68,6 @@ export const createGetByUserRouter = (mongoClient: Mongoose) => {
           userMongoIds.push(new mongoose.Types.ObjectId(item));
         }
       });
-
-      const Post = mongoClient.model("Post", PostSchema);
 
       const projection = getPostReq.returnOnlyPostId ? { _id: 1, time: 1 } : {};
 

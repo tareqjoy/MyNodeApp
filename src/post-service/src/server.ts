@@ -36,7 +36,7 @@ async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
 
-  const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
+  const kafkaProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
 
   //Only for internal use, should be protected from public access
@@ -49,7 +49,7 @@ async function main() {
   app.use(
     getApiPath(api_path_root, "create"),
     authorize,
-    createCreateRouter(mongoClient, kafkaNewPostProducer),
+    createCreateRouter(mongoClient, kafkaProducer),
   );
   app.use(
     getApiPath(api_path_root, "get"),
@@ -64,7 +64,7 @@ async function main() {
   app.use(
     getApiPath(api_path_root, "like"),
     authorize,
-    createLikeRouter(mongoClient),
+    createLikeRouter(mongoClient, kafkaProducer),
   );
 
   app.use(
@@ -100,7 +100,7 @@ async function main() {
   process.on("SIGINT", async () => {
     try {
       logger.info("Caught interrupt signal, shutting down...");
-      await kafkaNewPostProducer.disconnect();
+      await kafkaProducer.disconnect();
       logger.info(`Producer disconnected`);
       await mongoClient.disconnect();
       logger.info(`MongoDB disconnected`);

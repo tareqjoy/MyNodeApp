@@ -60,7 +60,7 @@ export const newPostFanout = async (
       });
 
       if(newAddCount === 0) {
-        logger.warn(`post failed to add, post: ${newPostKafkaMsg.postId}, userid: ${uid}`);
+        logger.warn(`post failed to add, post: ${newPostKafkaMsg.postId}, userId: ${uid}`);
       }
 
       const setSize = await redisClient.zCard(redisKey);

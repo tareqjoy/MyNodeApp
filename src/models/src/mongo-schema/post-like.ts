@@ -1,6 +1,6 @@
-import { Schema, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
-export const PostLikeSchema = new Schema({
+const PostLikeSchema = new Schema({
   postId: { type: Types.ObjectId, ref: "Post", required: true, index: true },
   userId: { type: Types.ObjectId, ref: "User", required: true, index: true },
   likeType: { type: String, required: true },
@@ -8,3 +8,6 @@ export const PostLikeSchema = new Schema({
 });
 
 PostLikeSchema.index({ userId: 1, postId: 1 }, { unique: true });
+
+export const PostLike = model("PostLike", PostLikeSchema);
+

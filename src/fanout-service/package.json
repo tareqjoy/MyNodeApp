@@ -21,8 +21,8 @@
         "class-transformer": "^0.5.1",
         "reflect-metadata": "^0.2.2",
         "@tareqjoy/clients": "^1.0.24",
-        "@tareqjoy/models": "^1.0.87",
-        "@tareqjoy/utils": "^1.0.62",
+        "@tareqjoy/models": "^1.0.99",
+        "@tareqjoy/utils": "^1.0.67",
         "prom-client": "^15.1.3"
     },
     "devDependencies": {

@@ -31,6 +31,7 @@ export * from "./follow-service/response/do-i-follow-res";
 export * from "./fanout-service/request/new-post-kafka-msg";
 export * from "./fanout-service/request/i-followed-kafka-msg";
 export * from "./fanout-service/request/i-unfollowed-kafka-msg";
+export * from "./fanout-service/request/post-like-kafka-msg";
 
 export * from "./post-service/common/post-by-user-paging-raw";
 
@@ -57,3 +58,7 @@ export * from "./auth-service/response/auth-signIn-res";
 export * from "./auth-service/response/auth-verify-res";
 export * from "./auth-service/response/auth-refresh-res";
 export * from "./auth-service/response/authorize-client-res";
+
+export * from "./mongo-schema/post";
+export * from "./mongo-schema/post-like";
+export * from "./mongo-schema/user";

@@ -19,7 +19,7 @@ export function getTimeSortedGetPostIdsByUserListQuery(
   lastPostId?: string,
 ): any {
   var query: any = {
-    userid: { $in: userMongoIds },
+    userId: { $in: userMongoIds },
   };
 
   if (lastPostId) {
@@ -57,7 +57,7 @@ export async function toResPosts(
       const pUserIds: string[] = [];
 
       for (const dbp of dbPosts) {
-        pUserIds.push(dbp.userid!.toString());
+        pUserIds.push(dbp.userId!.toString());
       }
 
       const pUserInternalReq = new UserInternalReq(pUserIds, false);
@@ -74,7 +74,7 @@ export async function toResPosts(
       for (const dbp of dbPosts) {
         resPosts.push(
           new SinglePost(dbp.id, dbp.time, {
-            userIdOrUsername: pUserResObj.toUsernames![dbp.userid?.toString()],
+            userIdOrUsername: pUserResObj.toUsernames![dbp.userId?.toString()],
             isUserName: true,
             body: dbp.body,
           }),
@@ -84,7 +84,7 @@ export async function toResPosts(
       for (const dbp of dbPosts) {
         resPosts.push(
           new SinglePost(dbp.id, dbp.time, {
-            userIdOrUsername: dbp.userid?.toString(),
+            userIdOrUsername: dbp.userId?.toString(),
             isUserName: false,
             body: dbp.body,
           }),

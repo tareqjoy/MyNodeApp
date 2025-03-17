@@ -1,4 +1,4 @@
-import { Schema, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
 export const UserSchema = new Schema({
   _id: Types.ObjectId,
@@ -9,3 +9,5 @@ export const UserSchema = new Schema({
   birthDay: { type: Date, required: true },
   gender: { type: String, required: true },
 });
+
+export const User = model("User", UserSchema);

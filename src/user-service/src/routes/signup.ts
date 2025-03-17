@@ -1,9 +1,8 @@
 import express from "express";
 import mongoose, { Mongoose } from "mongoose";
-import { UserSchema } from "../schema/user-schema";
 import { getFileLogger } from "@tareqjoy/utils";
 import { plainToInstance } from "class-transformer";
-import { SignUpReq } from "@tareqjoy/models";
+import { SignUpReq, User } from "@tareqjoy/models";
 import {
   InternalServerError,
   InvalidRequest,
@@ -32,8 +31,6 @@ export const createSignUpRouter = (mongoClient: Mongoose) => {
       res.status(400).json(new InvalidRequest(errors));
       return;
     }
-
-    const User = mongoClient.model("User", UserSchema);
 
     const existUser = await User.findOne({
       $or: [{ username: signUpDto.username }, { email: signUpDto.email }],
