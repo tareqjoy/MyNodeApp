@@ -2,12 +2,13 @@ import express from "express";
 import mongoose, { Mongoose } from "mongoose";
 import { getFileLogger } from "@tareqjoy/utils";
 import { plainToInstance } from "class-transformer";
-import { SignUpReq, User } from "@tareqjoy/models";
+import { SignUpReq } from "@tareqjoy/models";
 import {
   InternalServerError,
   InvalidRequest,
   MessageResponse,
 } from "@tareqjoy/models";
+import { User } from "@tareqjoy/clients";
 import { validate } from "class-validator";
 import argon2 from "argon2";
 

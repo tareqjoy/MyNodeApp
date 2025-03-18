@@ -1,13 +1,15 @@
 import {
   InvalidRequest,
   LikeReq,
-  Post,
-  PostLike,
   PostLikeKafkaMsg,
   UnlikeReq,
 } from "@tareqjoy/models";
+import {
+  Post,
+  PostLike,
+} from "@tareqjoy/clients";
 import axios from "axios";
-import { RedisClientType } from "redis";
+import { RedisClientType  } from "redis";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";

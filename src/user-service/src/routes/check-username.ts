@@ -1,7 +1,8 @@
 import express from "express";
 import { Mongoose } from "mongoose";
 import { getFileLogger } from "@tareqjoy/utils";
-import { InternalServerError, CheckUsernameResponse, User } from "@tareqjoy/models";
+import { InternalServerError, CheckUsernameResponse } from "@tareqjoy/models";
+import { User } from "@tareqjoy/clients";
 
 const logger = getFileLogger(__filename);
 

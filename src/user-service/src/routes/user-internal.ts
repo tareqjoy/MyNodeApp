@@ -3,12 +3,13 @@ import mongoose, { Mongoose } from "mongoose";
 import { getFileLogger } from "@tareqjoy/utils";
 import { RedisClientType } from "redis";
 import { plainToInstance } from "class-transformer";
-import { User, UserInternalReq } from "@tareqjoy/models";
+import { UserInternalReq } from "@tareqjoy/models";
 import {
   InvalidRequest,
   InternalServerError,
   UserInternalRes,
 } from "@tareqjoy/models";
+import { User } from "@tareqjoy/clients";
 import { validate } from "class-validator";
 
 const logger = getFileLogger(__filename);

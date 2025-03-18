@@ -4,9 +4,9 @@ import { getFileLogger } from "@tareqjoy/utils";
 import {
   InternalServerError,
   InvalidRequest,
-  User,
   UserDetailsRes
 } from "@tareqjoy/models";
+import { User } from "@tareqjoy/clients";
 
 const logger = getFileLogger(__filename);
 

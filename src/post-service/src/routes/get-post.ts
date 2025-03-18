@@ -5,8 +5,8 @@ import {
   TooLargeRequest,
   GetPostReq,
   InternalServerError,
-  Post,
 } from "@tareqjoy/models";
+import { Post } from "@tareqjoy/clients";
 import { InvalidRequest } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";

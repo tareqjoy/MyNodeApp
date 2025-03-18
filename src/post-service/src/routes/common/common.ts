@@ -12,9 +12,11 @@ import {
   UserInternalRes,
   PostByUserPagingRaw,
   PostByUserPaging,
-  PostLike,
   SingleLike,
 } from "@tareqjoy/models";
+import {
+  PostLike,
+} from "@tareqjoy/clients";
 import { plainToInstance } from "class-transformer";
 import { RedisClientType } from "redis";
 

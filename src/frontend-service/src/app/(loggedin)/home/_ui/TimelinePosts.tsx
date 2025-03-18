@@ -14,6 +14,10 @@ export default function TimelinePosts({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const handleReact = async (postId: string, reaction: string) => {
+ 
+  };
+
   const fetchPosts = async (loadMore = false) => {
     if (loading) return;
 
@@ -62,7 +66,7 @@ export default function TimelinePosts({ userId }: { userId: string }) {
 
       <div className="space-y-4">
         {posts.map((post) => (
-          <PostCard key={post.postId} post={post} />
+          <PostCard post={post} onReact={handleReact} />
         ))}
       </div>
 

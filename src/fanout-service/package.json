@@ -20,8 +20,8 @@
         "class-validator": "^0.14.1",
         "class-transformer": "^0.5.1",
         "reflect-metadata": "^0.2.2",
-        "@tareqjoy/clients": "^1.0.24",
-        "@tareqjoy/models": "^1.0.99",
+        "@tareqjoy/clients": "^1.0.25",
+        "@tareqjoy/models": "^1.0.111",
         "@tareqjoy/utils": "^1.0.67",
         "prom-client": "^15.1.3"
     },

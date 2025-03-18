@@ -2,8 +2,9 @@ import express from "express";
 import { Mongoose } from "mongoose";
 import { getFileLogger } from "@tareqjoy/utils";
 import { plainToInstance } from "class-transformer";
-import { User, UserSignInReq, UserSignInRes } from "@tareqjoy/models";
+import { UserSignInReq, UserSignInRes } from "@tareqjoy/models";
 import { InternalServerError, InvalidRequest } from "@tareqjoy/models";
+import { User } from "@tareqjoy/clients";
 import { validate } from "class-validator";
 import argon2 from "argon2";
 

@@ -8,7 +8,6 @@ import {
   UserInternalRes,
   InternalServerError,
   PostByUserPagingRaw,
-  Post,
 } from "@tareqjoy/models";
 import { InvalidRequest } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
@@ -17,6 +16,7 @@ import {
   toResPosts,
   getTimeSortedGetPostIdsByUserListQuery,
 } from "./common/common";
+import { Post } from "@tareqjoy/clients";
 import { RedisClientType } from "redis";
 
 const logger = getFileLogger(__filename);

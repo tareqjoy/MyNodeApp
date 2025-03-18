@@ -9,7 +9,6 @@ import {
   LikeReq,
   MessageResponse,
   PostLikeKafkaMsg,
-  PostLike,
   UnlikeReq,
   SingleLike,
   UserLike,
@@ -24,6 +23,7 @@ import {
   REDIS_KEY_POST_LIKE_COUNT,
 } from "@tareqjoy/utils";
 import { RedisClientType } from "redis";
+import { PostLike } from "@tareqjoy/clients";
 import {
   getPostLikeCount,
 } from "./common/common";

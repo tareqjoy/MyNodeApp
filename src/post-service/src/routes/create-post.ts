@@ -7,7 +7,8 @@ import {
   InternalServerError,
   MessageResponse
 } from "@tareqjoy/models";
-import { CreatePostReq, Post } from "@tareqjoy/models";
+import { CreatePostReq } from "@tareqjoy/models";
+import { Post } from "@tareqjoy/clients";
 import { InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
