@@ -1,12 +1,25 @@
 "use client";
 import { useEffect, useState } from "react";
 import { axiosAuthClient } from "@/lib/auth";
-import { GetPostReq, PostDetailsRes, SinglePost, TimelineHomeReq, TimelineHomeRes } from "@tareqjoy/models";
+import {
+  GetPostReq,
+  LikeReq,
+  PostDetailsRes,
+  SinglePost,
+  TimelineHomeReq,
+  TimelineHomeRes,
+  UnlikeReq,
+} from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
-import PostCard from "./PostCard";  // Import the new PostCard component
+import PostCard from "./PostCard"; // Import the new PostCard component
 
-const timelineUrl: string = process.env.NEXT_PUBLIC_TIMELINE_HOME_URL || "http://localhost:80/v1/timeline/home";
-const getPostsUrl: string = process.env.NEXT_PUBLIC_GET_POSTS_URL || "http://localhost:80/v1/post/get";
+const timelineUrl: string =
+  process.env.NEXT_PUBLIC_TIMELINE_HOME_URL ||
+  "http://localhost:80/v1/timeline/home";
+const getPostsUrl: string =
+  process.env.NEXT_PUBLIC_GET_POSTS_URL || "http://localhost:80/v1/post/get";
+const likeUnlikeUrl: string =
+  process.env.NEXT_PUBLIC_LIKE_UNLIKE_URL || "http://localhost:80/v1/post/like";
 
 export default function TimelinePosts({ userId }: { userId: string }) {
   const [posts, setPosts] = useState<SinglePost[]>([]);
@@ -15,7 +28,29 @@ export default function TimelinePosts({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   const handleReact = async (postId: string, reaction: string) => {
- 
+    try {
+      const likeReq = new LikeReq(postId, reaction, Date.now());
+      const axiosTimelineHomeResp = await axiosAuthClient.post(
+        `${likeUnlikeUrl}?type=like`,
+        likeReq
+      );
+    } catch (err) {
+      setError("Failed to react.");
+    } finally {
+    }
+  };
+
+  const handleUnreact = async (postId: string) => {
+    try {
+      const unlikeReq = new UnlikeReq(postId);
+      const axiosTimelineHomeResp = await axiosAuthClient.post(
+        `${likeUnlikeUrl}?type=unlike`,
+        unlikeReq
+      );
+    } catch (err) {
+      setError("Failed to react.");
+    } finally {
+    }
   };
 
   const fetchPosts = async (loadMore = false) => {
@@ -26,16 +61,28 @@ export default function TimelinePosts({ userId }: { userId: string }) {
       const timelineHomeReq = nextToken
         ? new TimelineHomeReq(nextToken, 10)
         : new TimelineHomeReq(10);
-      const axiosTimelineHomeResp = await axiosAuthClient.post(timelineUrl, timelineHomeReq);
+      const axiosTimelineHomeResp = await axiosAuthClient.post(
+        timelineUrl,
+        timelineHomeReq
+      );
 
-      const timelineHomeResObj = plainToInstance(TimelineHomeRes, axiosTimelineHomeResp.data);
+      const timelineHomeResObj = plainToInstance(
+        TimelineHomeRes,
+        axiosTimelineHomeResp.data
+      );
 
       const postIds = timelineHomeResObj.posts.map((tpost) => tpost.postId);
 
       const getPostsReq = new GetPostReq(postIds, true);
-      const axiosGetPostsResp = await axiosAuthClient.post(getPostsUrl, getPostsReq);
+      const axiosGetPostsResp = await axiosAuthClient.post(
+        getPostsUrl,
+        getPostsReq
+      );
 
-      const postDetailsResObj = plainToInstance(PostDetailsRes, axiosGetPostsResp.data);
+      const postDetailsResObj = plainToInstance(
+        PostDetailsRes,
+        axiosGetPostsResp.data
+      );
 
       const singlePostMap: Map<string, SinglePost> = new Map(
         postDetailsResObj.posts.map((post) => [post.postId, post])
@@ -45,7 +92,9 @@ export default function TimelinePosts({ userId }: { userId: string }) {
         .filter((obj) => obj !== undefined) as SinglePost[];
 
       setPosts((prev) =>
-        loadMore ? [...prev, ...postsAsTimelinePostOrder] : postsAsTimelinePostOrder
+        loadMore
+          ? [...prev, ...postsAsTimelinePostOrder]
+          : postsAsTimelinePostOrder
       );
       setNextToken(timelineHomeResObj.paging?.nextToken || null);
     } catch (err) {
@@ -62,11 +111,18 @@ export default function TimelinePosts({ userId }: { userId: string }) {
   return (
     <div className="w-full max-w-5xl mt-6">
       {error && <p className="text-red-500">{error}</p>}
-      {posts.length === 0 && !loading && <p className="text-gray-500">No posts available.</p>}
+      {posts.length === 0 && !loading && (
+        <p className="text-gray-500">No posts available.</p>
+      )}
 
       <div className="space-y-4">
         {posts.map((post) => (
-          <PostCard post={post} onReact={handleReact} />
+          <PostCard
+          key={post.postId}
+            post={post}
+            onReact={handleReact}
+            onUnreact={handleUnreact}
+          />
         ))}
       </div>
 

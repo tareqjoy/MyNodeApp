@@ -9,7 +9,7 @@ export class LikeReq {
 
   @IsString()
   @IsNotEmpty()
-  @IsIn(["love", "like"])
+  @IsIn(["love", "haha", "angry", "sad"])
   reactType: string = "";
 
   @IsNotEmpty()
