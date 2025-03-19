@@ -1,5 +1,5 @@
 {
-  "artificialDelayMilliseconds": 5,
+  "artificialDelayMilliseconds": 30,
   "keepExistingTerminalsOpen": false,
   "runOnStartup": true,
   "terminals": [
@@ -15,7 +15,7 @@
       "splitTerminals": [
         {
           "name": "timeline-service",
-          "commands": ["cd src/timeline-service"]
+          "commands": ["cd src/timeline-service && npm run dev"]
         }
       ]
     },
@@ -23,7 +23,7 @@
       "splitTerminals": [
         {
           "name": "user-service",
-          "commands": ["cd src/user-service"]
+          "commands": ["cd src/user-service && npm run dev"]
         }
       ]
     },
@@ -31,7 +31,7 @@
       "splitTerminals": [
         {
           "name": "follower-service",
-          "commands": ["cd src/follower-service"]
+          "commands": ["cd src/follower-service && npm run dev"]
         }
       ]
     },
@@ -39,7 +39,7 @@
       "splitTerminals": [
         {
           "name": "fanout-service",
-          "commands": ["cd src/fanout-service"]
+          "commands": ["cd src/fanout-service && npm run dev"]
         }
       ]
     },
@@ -47,7 +47,7 @@
       "splitTerminals": [
         {
           "name": "post-service",
-          "commands": ["cd src/post-service"]
+          "commands": ["cd src/post-service && npm run dev"]
         }
       ]
     },
@@ -55,7 +55,7 @@
       "splitTerminals": [
         {
           "name": "search-service",
-          "commands": ["cd src/search-service"]
+          "commands": ["cd src/search-service && npm run dev"]
         }
       ]
     },
@@ -63,7 +63,7 @@
       "splitTerminals": [
         {
           "name": "auth-service",
-          "commands": ["cd src/auth-service"]
+          "commands": ["cd src/auth-service && npm run dev"]
         }
       ]
     },
@@ -71,7 +71,7 @@
       "splitTerminals": [
         {
           "name": "frontend-service",
-          "commands": ["cd src/frontend-service"]
+          "commands": ["cd src/frontend-service && npm run dev"]
         }
       ]
     },
