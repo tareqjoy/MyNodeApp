@@ -1,8 +1,10 @@
 import express from "express";
 import { Driver } from "neo4j-driver";
+import { isValidObjectId } from "mongoose";
 import { ATTR_HEADER_USER_ID, getFileLogger } from "@tareqjoy/utils";
-import { DoIFollowResponse, InternalServerError, InvalidRequest } from "@tareqjoy/models";
+import { DoIFollowResponse, InternalServerError, InvalidRequest, UserInternalReq, UserInternalRes } from "@tareqjoy/models";
 import axios from "axios";
+import { plainToInstance } from "class-transformer";
 
 const logger = getFileLogger(__filename);
 
@@ -14,28 +16,55 @@ export const createDoIFollowRouter = (
   neo4jDriver: Driver
 ) => {
   const router = express.Router();
-  router.get("/:userId", async (req, res, next) => {
+  router.get("/:usernameOrId", async (req, res, next) => {
     logger.silly(`GET /do-i-follow called`);
 
     const loggedInUserId = req.headers[ATTR_HEADER_USER_ID] as string;
-    const otherUserId: string = req.params.userId;
+    const otherUsernameOrId: string = req.params.usernameOrId;
 
-    if(!otherUserId) {
-        res.status(400).json(new InvalidRequest("no userid provided"));
-        return;
+    if(!otherUsernameOrId) {
+      res.status(400).json(new InvalidRequest("no userid provided"));
+      return;
+  }
+    
+    const { provided } = req.query;
+
+    if(provided === "userid" && !isValidObjectId(otherUsernameOrId)) {
+       res.status(400).json(new InvalidRequest("Invalid userid"));
+       return;
+    }
+
+    let userIdToUse: string;
+    if(provided === "username") {
+      const userInternalReq = new UserInternalReq(
+        [otherUsernameOrId],
+        true,
+      );
+      const userIdResponse = await axios.post(
+        userServiceHostUrl,
+        userInternalReq,
+      );
+
+      const userInternalResponse = plainToInstance(
+        UserInternalRes,
+        userIdResponse.data,
+      );
+      userIdToUse=userInternalResponse.toUserIds![otherUsernameOrId];
+    } else {
+      userIdToUse=otherUsernameOrId;
     }
 
     const session = neo4jDriver.session();
     try {
-      const doIFollowQuery = `
-          MATCH (me:User {userId: $myUserId})-[:FOLLOW]->(otherUser:User {userId: $otherUserId})
-          RETURN COUNT(otherUser) > 0 AS isFollowing
-            `;
-      const session = neo4jDriver.session();
+      const alreadyFollows = await session.run(
+        `
+                MATCH (a:User {userId: $userId1})-[r:FOLLOW]->(b:User {userId: $userId2})
+                RETURN COUNT(r) > 0 AS exists
+                `,
+        { userId1: loggedInUserId, userId2: userIdToUse },
+      );
 
-      const isFollowingObj = await session.run(doIFollowQuery, { myUserId: loggedInUserId, otherUserId: otherUserId });
-      
-      const doIFollow: boolean = isFollowingObj.records[0].get("isFollowing");
+      const doIFollow: boolean = alreadyFollows.records[0].get("exists") as boolean;
       res.status(200).json(new DoIFollowResponse(doIFollow));
     } catch (error) {
       if (axios.isAxiosError(error)) {

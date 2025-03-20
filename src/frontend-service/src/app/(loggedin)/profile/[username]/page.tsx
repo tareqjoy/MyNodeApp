@@ -86,28 +86,22 @@ export default function ProfilePage({
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userDetailsRequest = axiosAuthClient.get(
+        const userDetailsResp = await axiosAuthClient.get(
           `${userDetailsUrl}/${usernameOrId}`,
           {
             params: { provided: isProvidedUsername ? "username" : "userid" },
           }
         );
 
-        const doIFollowRequest = axiosAuthClient.get(
-          `${doIFollowUrl}/${usernameOrId}`
-        );
-
-        // Run both requests in parallel
-        const [userDetailsResp, doIFollowResp] = await Promise.all([
-          userDetailsRequest,
-          doIFollowRequest,
-        ]);
-
         const userDetailsResObj = plainToInstance(
           UserDetailsRes,
           userDetailsResp.data
         );
         setUser(userDetailsResObj);
+
+        const doIFollowResp = await axiosAuthClient.get(
+          `${doIFollowUrl}/${userDetailsResObj.userId}`
+        );
 
         setIsItMe(userDetailsResObj.userId === getUserId()!);
 

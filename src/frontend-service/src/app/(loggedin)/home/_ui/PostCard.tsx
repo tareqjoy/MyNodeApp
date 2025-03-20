@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 // Define available reactions
 const REACTIONS = [
   { type: "love", icon: <span>❤️</span> },
-  { type: "angry", icon: <span>😢</span> },
+  { type: "angry", icon: <span>😡</span> },
   { type: "haha", icon: <span>😂</span> },
   { type: "sad", icon: <span>😢</span> },
 ];
@@ -26,7 +26,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
     post.myLikeType
   );
   const [hovering, setHovering] = useState<boolean>(false);
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [hoverTimeout, setHoverTimeout] = useState<any | null>(null);
 
   // Convert likes array into a map for easier lookup
   const reactionsMap = post.likes.reduce((acc, like) => {
@@ -57,6 +57,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
   };
 
   const handleReactionSelect = (type: string) => {
+    console.log("found: "+type )
     if (selectedReaction === type) {
       setSelectedReaction(undefined);
       onUnreact(post.postId); 
@@ -79,7 +80,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
       <p className="text-sm text-gray-600">
         {new Date(post.time).toLocaleString()}
       </p>
-      <p className="text-gray-200">{post.body}</p>
+      <p className="text-gray-00">{post.body}</p>
 
       {/* Reaction and Comment Section */}
       <div className="mt-4 flex w-full relative">
@@ -90,7 +91,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
             className="relative flex items-center space-x-2 cursor-pointer"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            onClick={() => handleReactionSelect("love")}
+            
           >
             <motion.div
               whileHover={{ scale: 1.2 }}

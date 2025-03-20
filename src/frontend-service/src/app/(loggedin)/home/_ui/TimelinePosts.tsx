@@ -30,27 +30,25 @@ export default function TimelinePosts({ userId }: { userId: string }) {
   const handleReact = async (postId: string, reaction: string) => {
     try {
       const likeReq = new LikeReq(postId, reaction, Date.now());
-      const axiosTimelineHomeResp = await axiosAuthClient.post(
+      await axiosAuthClient.post(
         `${likeUnlikeUrl}?type=like`,
         likeReq
       );
     } catch (err) {
       setError("Failed to react.");
-    } finally {
-    }
+    } 
   };
 
   const handleUnreact = async (postId: string) => {
     try {
       const unlikeReq = new UnlikeReq(postId);
-      const axiosTimelineHomeResp = await axiosAuthClient.post(
+      await axiosAuthClient.post(
         `${likeUnlikeUrl}?type=unlike`,
         unlikeReq
       );
     } catch (err) {
       setError("Failed to react.");
-    } finally {
-    }
+    } 
   };
 
   const fetchPosts = async (loadMore = false) => {
