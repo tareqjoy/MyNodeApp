@@ -21,7 +21,7 @@ const getPostsUrl: string =
 const likeUnlikeUrl: string =
   process.env.NEXT_PUBLIC_LIKE_UNLIKE_URL || "http://localhost:80/v1/post/like";
 
-export default function TimelinePosts({ userId }: { userId: string }) {
+export default function TimelinePosts({ username }: { username: string }) {
   const [posts, setPosts] = useState<SinglePost[]>([]);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,25 +30,19 @@ export default function TimelinePosts({ userId }: { userId: string }) {
   const handleReact = async (postId: string, reaction: string) => {
     try {
       const likeReq = new LikeReq(postId, reaction, Date.now());
-      await axiosAuthClient.post(
-        `${likeUnlikeUrl}?type=like`,
-        likeReq
-      );
+      await axiosAuthClient.post(`${likeUnlikeUrl}?type=like`, likeReq);
     } catch (err) {
       setError("Failed to react.");
-    } 
+    }
   };
 
   const handleUnreact = async (postId: string) => {
     try {
       const unlikeReq = new UnlikeReq(postId);
-      await axiosAuthClient.post(
-        `${likeUnlikeUrl}?type=unlike`,
-        unlikeReq
-      );
+      await axiosAuthClient.post(`${likeUnlikeUrl}?type=unlike`, unlikeReq);
     } catch (err) {
       setError("Failed to react.");
-    } 
+    }
   };
 
   const fetchPosts = async (loadMore = false) => {
@@ -116,7 +110,8 @@ export default function TimelinePosts({ userId }: { userId: string }) {
       <div className="space-y-4">
         {posts.map((post) => (
           <PostCard
-          key={post.postId}
+            key={post.postId}
+            loggedInUsername={username}
             post={post}
             onReact={handleReact}
             onUnreact={handleUnreact}

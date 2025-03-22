@@ -14,7 +14,7 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import {
   toResPosts,
-  getTimeSortedGetPostIdsByUserListQuery,
+  addPaginationToQuery,
 } from "./common/common";
 import { Post } from "@tareqjoy/clients";
 import { RedisClientType } from "redis";
@@ -97,9 +97,12 @@ export const createGetByUserRouter = (mongoClient: Mongoose, redisClient: RedisC
         }
       }
 
+      var query: any = {
+        userId: { $in: userMongoIds },
+      };
       const dbPosts = await Post.find(
-        getTimeSortedGetPostIdsByUserListQuery(
-          userMongoIds,
+        addPaginationToQuery(
+          query,
           lastPostTime,
           lastPostId
         ),

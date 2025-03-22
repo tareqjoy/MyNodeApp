@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { UserDetailsRes } from '@tareqjoy/models';
-import { axiosAuthClient,  getUserId } from '@/lib/auth';
+import { axiosAuthClient,  getUserId, getUserName } from '@/lib/auth';
 import { plainToInstance } from 'class-transformer';
 import ProfilePost from './_ui/ProfilePost';
 import TimelinePosts from './_ui/TimelinePosts';
@@ -46,7 +46,7 @@ export default function ProfilePage() {
         <ProfilePost />
       </div>
 
-      <TimelinePosts userId={getUserId()!} />
+      <TimelinePosts username={getUserName()!} />
     </div>
   );
 };

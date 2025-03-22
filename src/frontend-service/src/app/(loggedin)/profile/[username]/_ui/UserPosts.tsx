@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { axiosAuthClient } from "@/lib/auth";
+import { axiosAuthClient, getUserName } from "@/lib/auth";
 import {
   GetPostByUserReq,
   LikeReq,
@@ -11,11 +11,19 @@ import {
 import { plainToInstance } from "class-transformer";
 import PostCard from "../../../home/_ui/PostCard"; // Import the new PostCard component
 
-  const userPostsUrl: string = process.env.NEXT_PUBLIC_USER_POSTS_URL || "http://localhost:80/v1/post/get-by-user";
+const userPostsUrl: string =
+  process.env.NEXT_PUBLIC_USER_POSTS_URL ||
+  "http://localhost:80/v1/post/get-by-user";
 const likeUnlikeUrl: string =
   process.env.NEXT_PUBLIC_LIKE_UNLIKE_URL || "http://localhost:80/v1/post/like";
 
-export default function UserPosts({ userIdOrName, isProvidedUsername }: { userIdOrName: string; isProvidedUsername: boolean }) {
+export default function UserPosts({
+  userIdOrName,
+  isProvidedUsername,
+}: {
+  userIdOrName: string;
+  isProvidedUsername: boolean;
+}) {
   const [posts, setPosts] = useState<SinglePost[]>([]);
   const [nextToken, setNextToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -24,25 +32,19 @@ export default function UserPosts({ userIdOrName, isProvidedUsername }: { userId
   const handleReact = async (postId: string, reaction: string) => {
     try {
       const likeReq = new LikeReq(postId, reaction, Date.now());
-      await axiosAuthClient.post(
-        `${likeUnlikeUrl}?type=like`,
-        likeReq
-      );
+      await axiosAuthClient.post(`${likeUnlikeUrl}?type=like`, likeReq);
     } catch (err) {
       setError("Failed to react.");
-    } 
+    }
   };
 
   const handleUnreact = async (postId: string) => {
     try {
       const unlikeReq = new UnlikeReq(postId);
-      await axiosAuthClient.post(
-        `${likeUnlikeUrl}?type=unlike`,
-        unlikeReq
-      );
+      await axiosAuthClient.post(`${likeUnlikeUrl}?type=unlike`, unlikeReq);
     } catch (err) {
       setError("Failed to react.");
-    } 
+    }
   };
 
   const fetchPosts = async (loadMore = false) => {
@@ -50,11 +52,18 @@ export default function UserPosts({ userIdOrName, isProvidedUsername }: { userId
 
     setLoading(true);
     try {
-      const postByUserReq = new GetPostByUserReq([userIdOrName], isProvidedUsername, {nextToken: nextToken || undefined, returnOnlyPostId: false, limit: 10});
+      const postByUserReq = new GetPostByUserReq(
+        [userIdOrName],
+        isProvidedUsername,
+        {
+          nextToken: nextToken || undefined,
+          returnOnlyPostId: false,
+          limit: 10,
+        }
+      );
       const axiosResp = await axiosAuthClient.post(userPostsUrl, postByUserReq);
 
       const postDetailsResObj = plainToInstance(PostDetailsRes, axiosResp.data);
-
 
       setPosts((prev) =>
         loadMore
@@ -83,7 +92,8 @@ export default function UserPosts({ userIdOrName, isProvidedUsername }: { userId
       <div className="space-y-4">
         {posts.map((post) => (
           <PostCard
-          key={post.postId}
+            loggedInUsername={getUserName()!}
+            key={post.postId}
             post={post}
             onReact={handleReact}
             onUnreact={handleUnreact}

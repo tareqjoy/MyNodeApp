@@ -5,27 +5,28 @@ import { SinglePost } from "@tareqjoy/models";
 import { FaComment } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { formatDistanceToNow, format } from "date-fns";
-
-// Define available reactions
-const REACTIONS = [
-  { type: "love", icon: <span>❤️</span> },
-  { type: "angry", icon: <span>😡</span> },
-  { type: "haha", icon: <span>😂</span> },
-  { type: "sad", icon: <span>😢</span> },
-];
+import ReactionsDialog from "./WhoReactedDialog";
+import { REACTIONS } from "../../_ui/ReactionMap";
 
 interface PostCardProps {
+  loggedInUsername: string;
   post: SinglePost;
   onReact: (postId: string, reaction: string) => void;
   onUnreact: (postId: string) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
+const PostCard: React.FC<PostCardProps> = ({
+  loggedInUsername,
+  post,
+  onReact,
+  onUnreact,
+}) => {
   const [selectedReaction, setSelectedReaction] = useState<string | undefined>(
     post.myLikeType
   );
   const [hovering, setHovering] = useState<boolean>(false);
   const [hoverTimeout, setHoverTimeout] = useState<any | null>(null);
+  const [isDialogOpen, setDialogOpen] = useState(false);
 
   // Convert likes array into a map for easier lookup
   const reactionsMap = post.likes.reduce((acc, like) => {
@@ -77,35 +78,51 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
       >
         {post.username}
       </a>
-      <p className="text-sm text-gray-600" title={format(new Date(post.time), "PPpp")} >
-      {formatDistanceToNow(new Date(post.time), { addSuffix: true })}
+      <p
+        className="text-sm text-gray-600"
+        title={format(new Date(post.time), "PPpp")}
+      >
+        {formatDistanceToNow(new Date(post.time), { addSuffix: true })}
       </p>
       <p className="mt-2 mb-2">{post.body}</p>
 
       {/* Reactions Summary */}
       <div className="mt-1 flex items-center space-x-2">
-        <div className="flex items-center space-x-1">
-          {topReactions.map(([reactionType], index) => {
-            const reaction = REACTIONS.find((r) => r.type === reactionType);
-            return (
-              <div
-                key={reactionType}
-                className="w-2.5 h-6"
-                style={{ zIndex: -topReactions.length - index }}
-              >
-                {reaction?.icon}
-              </div>
-            );
-          })}
+        <div
+          className="flex items-center space-x-1 cursor-pointer"
+          onClick={() => totalReactions > 0 && setDialogOpen(true)}
+        >
+          <div className="flex items-center space-x-1">
+            {topReactions.map(([reactionType], index) => {
+              const reaction = REACTIONS.get(reactionType);
+              return (
+                <div
+                  key={reactionType}
+                  className="w-2.5 h-6"
+                  style={{ zIndex: -topReactions.length - index }}
+                >
+                  {reaction}
+                </div>
+              );
+            })}
+          </div>
+          {totalReactions > 0 && (
+            <span className="text-sm font-semibold text-gray-600 ml-3 hover:underline">
+              {totalReactions} {totalReactions <= 1 ? "reaction" : "reactions"}
+            </span>
+          )}
+
+          {/* Dialog for viewing all reactions */}
+          <ReactionsDialog
+            loggedInUsername={loggedInUsername}
+            postId={post.postId}
+            isOpen={isDialogOpen}
+            onClose={() => setDialogOpen(false)}
+          />
         </div>
-        {totalReactions > 0 && (
-          <span className="text-sm font-semibold text-gray-600 ml-3">
-            {totalReactions} {totalReactions <= 1 ? "reaction" : "reactions"}
-          </span>
-        )}
         {/* Separator & Comment Count */}
         <span className="text-sm text-gray-400 ">•</span>
-        <span className="text-sm font-semibold text-gray-600">
+        <span className="text-sm font-semibold text-gray-600 cursor-pointer hover:underline">
           {0} comments
         </span>
       </div>
@@ -123,7 +140,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
               whileHover={{ scale: 1.2 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
             >
-              {REACTIONS.find((r) => r.type === selectedReaction)?.icon || "🤍"}
+              {selectedReaction ? REACTIONS.get(selectedReaction) : "🤍"}
             </motion.div>
 
             {hovering && (
@@ -136,7 +153,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.01 }}
               >
-                {REACTIONS.map(({ type, icon }) => (
+                {[...REACTIONS].map(([type, icon]) => (
                   <motion.div
                     key={type}
                     className={`cursor-pointer text-2xl p-1 rounded-lg transition ${
@@ -155,15 +172,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
         </div>
 
         {/* Comments */}
-        
+
         <div className="flex-1 flex justify-center items-center cursor-pointer">
-        <motion.div
-              whileHover={{ scale: 1.2 }}
-              transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            >
+          <motion.div
+            whileHover={{ scale: 1.2 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+          >
             <FaComment size={18} color="white" />
-            </motion.div>
-          
+          </motion.div>
         </div>
       </div>
     </div>

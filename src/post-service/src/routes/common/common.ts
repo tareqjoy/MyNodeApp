@@ -22,30 +22,28 @@ import { RedisClientType } from "redis";
 
 const logger = getFileLogger(__filename);
 
-export function getTimeSortedGetPostIdsByUserListQuery(
-  userMongoIds: mongoose.Types.ObjectId[],
-  highTime: number,
-  lastPostId?: string
+export function addPaginationToQuery(
+  query: any,
+  highTime?: number,
+  lastPostId?: string,
+  timeField: string = 'time' // Default to 'time' if not provided
 ): any {
-  var query: any = {
-    userId: { $in: userMongoIds },
-  };
-
-  if (lastPostId) {
+  if (lastPostId && highTime) {
     query = {
       ...query,
       $or: [
-        { time: { $lt: highTime } },
-        { time: highTime, _id: { $lt: lastPostId } },
+        { [timeField]: { $lt: highTime } }, // Dynamically use the time field
+        { [timeField]: highTime, _id: { $lt: lastPostId } }, // Dynamically use the time field
       ],
     };
-  } else {
+  } else if (highTime) {
     query = {
       ...query,
-      time: { $lte: highTime },
+      [timeField]: { $lte: highTime }, // Dynamically use the time field
     };
   }
-  logger.info(`running this query: ${JSON.stringify(query)}`);
+
+  logger.debug(`running this query: ${JSON.stringify(query)}`);
   return query;
 }
 

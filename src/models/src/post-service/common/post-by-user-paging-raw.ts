@@ -9,3 +9,5 @@ export class PostByUserPagingRaw {
     this.lastPostId = lastPostId || "";
   }
 }
+
+export class WhoLikedPagingRaw extends PostByUserPagingRaw {}

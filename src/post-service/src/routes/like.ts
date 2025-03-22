@@ -10,28 +10,27 @@ import {
   MessageResponse,
   PostLikeKafkaMsg,
   UnlikeReq,
-  SingleLike,
+  UserInternalReq,
+  UserInternalRes,
   UserLike,
+  WhoLikedPagingRaw,
   WhoLikedRes,
 } from "@tareqjoy/models";
 import { InvalidRequest } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import {
-  ATTR_HEADER_USER_ID,
-  fillString,
-  REDIS_KEY_POST_LIKE_COUNT,
-} from "@tareqjoy/utils";
+import { ATTR_HEADER_USER_ID } from "@tareqjoy/utils";
 import { RedisClientType } from "redis";
 import { PostLike } from "@tareqjoy/clients";
-import {
-  getPostLikeCount,
-} from "./common/common";
+import { addPaginationToQuery, getPostLikeCount } from "./common/common";
 
 const logger = getFileLogger(__filename);
 
 const kafka_post_like_fanout_topic =
   process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-like";
+const userServiceHostUrl: string =
+  process.env.USER_SERVICE_USERID_URL ||
+  "http://127.0.0.1:5002/v1/user/userid/";
 
 const router = express.Router();
 
@@ -161,8 +160,11 @@ export const createLikeRouter = (
   router.get("/who", async (req, res, next) => {
     logger.silly(`GET /like/who called`);
 
+    const returnLimit = 50;
+
     try {
-      const { postId } = req.query;
+      const postId = req.query.postId as string;
+      const nextToken = req.query.nextToken as string;
 
       if (!postId) {
         res
@@ -171,17 +173,76 @@ export const createLikeRouter = (
         return;
       }
 
+      let pagingRaw: WhoLikedPagingRaw | undefined = undefined;
+      if (nextToken) {
+        try {
+          const rawPagingJson = JSON.parse(
+            Buffer.from(nextToken, "base64").toString("utf-8")
+          );
+          pagingRaw = plainToInstance(WhoLikedPagingRaw, rawPagingJson);
+        } catch (error) {
+          res.status(400).json(new InvalidRequest("Invalid nextToken"));
+          return;
+        }
+      }
+
       if (!mongoose.isValidObjectId(postId)) {
         res.status(400).json(new InvalidRequest("bad postId"));
         return;
       }
 
+      var query: any = {
+        postId: new mongoose.Types.ObjectId(postId),
+      };
+
       const dbResult = await PostLike.find(
-        { postId },
-        { userId: 1, createdAt: 1 }
+        addPaginationToQuery(
+          query,
+          pagingRaw?.lastPostTime,
+          pagingRaw?.lastPostId,
+          'createdAt'
+        ),
+        { userId: 1, createdAt: 1, likeType: 1 }
+      )
+        .sort({ createdAt: -1, userId: -1 })
+        .limit(returnLimit);
+
+      const userIds: string[] = dbResult.map((postLike) =>
+        postLike.userId.toString()
       );
 
-      res.status(200).json(new MessageResponse(JSON.stringify(dbResult)));
+      const userInternalReq = new UserInternalReq(userIds, false);
+      const usernameAxiosResponse = await axios.post(
+        userServiceHostUrl,
+        userInternalReq
+      );
+
+      const userInternalResponse = plainToInstance(
+        UserInternalRes,
+        usernameAxiosResponse.data
+      );
+      const useridToName = userInternalResponse.toUsernames!;
+
+      const userLikes: UserLike[] = dbResult
+        .filter((postLike) => postLike.userId.toString() in useridToName)
+        .map(
+          (postLike) =>
+            new UserLike(postLike.likeType, {
+              username: useridToName[postLike.userId.toString()],
+            })
+        );
+
+      if(dbResult.length < returnLimit || dbResult.length==0) {
+        res.status(200).json(new WhoLikedRes(userLikes));
+      } else {
+        const lastRow = dbResult[dbResult.length-1];
+        let pagingRawForReturn: WhoLikedPagingRaw = new WhoLikedPagingRaw(lastRow.createdAt, lastRow.userId.toString());
+        const pagingJsonString = JSON.stringify(pagingRawForReturn);
+        const nextPageToken = Buffer.from(pagingJsonString).toString("base64");
+        res.status(200).json(new WhoLikedRes(userLikes, nextPageToken));
+      }
+      
+      
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
@@ -219,4 +280,3 @@ export const createLikeRouter = (
 
   return router;
 };
-
