@@ -56,6 +56,13 @@
       "request": "launch",
       "command": "npm run build && npm run start",
       "cwd": "${workspaceFolder}/src/frontend-service"
-    }
+    },
+    {
+      "type": "java",
+      "name": "Debug analytics",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/src/analytics",
+      "mainClass": "demo.App"
+    },
   ]
 }
