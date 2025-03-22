@@ -28,7 +28,7 @@
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "ES2017"
+    "target": "es2024"
   },
   "include": [
     "next-env.d.ts",

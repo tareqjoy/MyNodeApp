@@ -201,12 +201,12 @@ export async function getPostLikeCount(
     // For all posts, check if they exist in Redis or MongoDB, and update Redis if necessary
     const likeCountsPromises = redisKeys.map(
       async (postRedisKey, index): Promise<[string, SingleLike[]]> => {
-        const redisReactions: Record<string, string> = {};
+        const redisReactions: Record<string, number> = {};
         if (redisExistence[index] !== 0) {
           // If the post exists in Redis, return the data from Redis
           const redisReactionsData = await redisClient.hGetAll(postRedisKey);
           Object.entries(redisReactionsData).forEach(([type, count]) => {
-            redisReactions[type] = count;
+            redisReactions[type] = parseInt(count);
           });
         } else {
           // If the post doesn't exist in Redis, load from MongoDB and then update Redis
@@ -218,13 +218,17 @@ export async function getPostLikeCount(
               redisData[reaction.type] = reaction.count;
             });
             await redisClient.hSet(postRedisKey, redisData);
+
+            Object.entries(redisData).forEach(([type, count]) => {
+              redisReactions[type] = count;
+            });
           }
         }
 
         // Return the result in the format expected
         const singleLikes: SingleLike[] = Object.entries(redisReactions).map(
           ([type, count]) => {
-            return new SingleLike(type, parseInt(count)); // parseInt to convert string to number
+            return new SingleLike(type, count); // parseInt to convert string to number
           }
         );
         const postId = postIds[index];
@@ -233,8 +237,8 @@ export async function getPostLikeCount(
     );
 
     // Wait for all operations (both MongoDB and Redis)
-    const results = await Promise.all(likeCountsPromises);
-    logger.debug(`returning reaction results for posts: total ids: ${postIds.length}, like found on: ${results.length}`);
+    const results: [string, SingleLike[]][] = await Promise.all(likeCountsPromises);
+    logger.debug(`returning reaction results for posts: total ids: ${postIds.length}, like found on: ${JSON.stringify(results)}`);
     return new Map<string, SingleLike[]>(results);
   } catch (error) {
     logger.error(`Error fetching post like counts`, error);
