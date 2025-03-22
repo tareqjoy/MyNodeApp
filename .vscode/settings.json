@@ -5,7 +5,13 @@
     "yaml.schemas": {
         "https://gitlab.com/gitlab-org/cluster-integration/gitlab-agent/-/raw/master/pkg/agentcfg/agentcfg_schemas/ConfigurationFile.json": "file:///home/tareqjoy/workspace/MyNodeApp/my-node-app-pod.yml"
     },
+    "java.project.sourcePaths": [
+        "src/analytics"
+    ],
     "editor.fontSize": 14,
     "terminal.integrated.fontSize": 14,
-    "window.zoomLevel": 0.2
+    "window.zoomLevel": 0.2,
+    "java.compile.nullAnalysis.mode": "automatic",
+    "typescript.validate.enable": true,
+    "javascript.validate.enable": true
 }

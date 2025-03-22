@@ -14,8 +14,6 @@ import { connectRedis } from "@tareqjoy/clients";
 
 const logger = getFileLogger(__filename);
 
-
-
 const appport = process.env.PORT || 5001;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/timeline";
 
