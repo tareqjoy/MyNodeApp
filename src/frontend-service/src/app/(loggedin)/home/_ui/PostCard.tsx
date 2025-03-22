@@ -2,10 +2,9 @@
 
 import React, { useState } from "react";
 import { SinglePost } from "@tareqjoy/models";
-import {
-  FaComment,
-} from "react-icons/fa";
+import { FaComment } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { formatDistanceToNow, format } from "date-fns";
 
 // Define available reactions
 const REACTIONS = [
@@ -17,7 +16,7 @@ const REACTIONS = [
 
 interface PostCardProps {
   post: SinglePost;
-  onReact: (postId: string, reaction: string) => void; // Callback for updating reaction
+  onReact: (postId: string, reaction: string) => void;
   onUnreact: (postId: string) => void;
 }
 
@@ -30,7 +29,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
 
   // Convert likes array into a map for easier lookup
   const reactionsMap = post.likes.reduce((acc, like) => {
-    acc[like.type] = like.count;
+    if (like.count > 0) {
+      acc[like.type] = like.count;
+    }
     return acc;
   }, {} as Record<string, number>);
 
@@ -46,64 +47,88 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
 
   const handleMouseEnter = () => {
     if (hoverTimeout) clearTimeout(hoverTimeout);
-    const timeout = setTimeout(() => setHovering(true), 700); // 700ms delay before showing
+    const timeout = setTimeout(() => setHovering(true), 700);
     setHoverTimeout(timeout);
   };
 
   const handleMouseLeave = () => {
     if (hoverTimeout) clearTimeout(hoverTimeout);
-    const timeout = setTimeout(() => setHovering(false), 700); // Hide after 3s
+    const timeout = setTimeout(() => setHovering(false), 700);
     setHoverTimeout(timeout);
   };
 
   const handleReactionSelect = (type: string) => {
-    console.log("found: "+type )
     if (selectedReaction === type) {
       setSelectedReaction(undefined);
-      onUnreact(post.postId); 
+      onUnreact(post.postId);
     } else {
       setSelectedReaction(type);
-      onReact(post.postId, type); 
+      onReact(post.postId, type);
     }
     setHovering(false);
   };
 
   return (
     <div className="p-4 border rounded-lg shadow-sm relative">
-      {/* Clickable Username */}
+      {/* User Info */}
       <a
         href={`/profile/${post.username}`}
         className="text-blue-500 hover:underline"
       >
         {post.username}
       </a>
-      <p className="text-sm text-gray-600">
-        {new Date(post.time).toLocaleString()}
+      <p className="text-sm text-gray-600" title={format(new Date(post.time), "PPpp")} >
+      {formatDistanceToNow(new Date(post.time), { addSuffix: true })}
       </p>
-      <p className="text-gray-00">{post.body}</p>
+      <p className="mt-2 mb-2">{post.body}</p>
+
+      {/* Reactions Summary */}
+      <div className="mt-1 flex items-center space-x-2">
+        <div className="flex items-center space-x-1">
+          {topReactions.map(([reactionType], index) => {
+            const reaction = REACTIONS.find((r) => r.type === reactionType);
+            return (
+              <div
+                key={reactionType}
+                className="w-2.5 h-6"
+                style={{ zIndex: -topReactions.length - index }}
+              >
+                {reaction?.icon}
+              </div>
+            );
+          })}
+        </div>
+        {totalReactions > 0 && (
+          <span className="text-sm font-semibold text-gray-600 ml-4">
+            {totalReactions} {totalReactions <= 1 ? "reaction" : "reactions"}
+          </span>
+        )}
+        {/* Separator & Comment Count */}
+        <span className="text-sm text-gray-400 mx-2">•</span>
+        <span className="text-sm font-semibold text-gray-600">
+          {0} comments
+        </span>
+      </div>
 
       {/* Reaction and Comment Section */}
-      <div className="mt-4 flex w-full relative">
+      <div className="mt-2 flex w-full relative">
         {/* Reactions */}
-        <div className="flex-1 flex items-center">
-          {/* Selected Reaction with Hoverable Effect */}
+        <div className="flex-1 flex justify-center items-center cursor-pointer">
           <div
-            className="relative flex items-center space-x-2 cursor-pointer"
+            className="relative flex items-center space-x-2"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            
           >
             <motion.div
               whileHover={{ scale: 1.2 }}
-              transition={{ type: "spring", stiffness: 300 , damping: 15 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15 }}
             >
               {REACTIONS.find((r) => r.type === selectedReaction)?.icon || "🤍"}
             </motion.div>
-            <span className="text-sm font-semibold ml-1">{totalReactions}</span>
 
             {hovering && (
               <motion.div
-                className="absolute bottom-10 flex space-x-3 bg-white shadow-lg rounded-lg p-2"
+                className="absolute bottom-8 flex bg-white dark:bg-gray-800 shadow-lg rounded-lg p-1"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -130,9 +155,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
         </div>
 
         {/* Comments */}
+        
         <div className="flex-1 flex justify-center items-center cursor-pointer">
-          <FaComment size={18} color="gray" />
-          <span className="ml-1">{0}</span>
+        <motion.div
+              whileHover={{ scale: 1.2 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            >
+            <FaComment size={18} color="white" />
+            </motion.div>
+          
         </div>
       </div>
     </div>
