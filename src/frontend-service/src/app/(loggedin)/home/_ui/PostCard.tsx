@@ -99,12 +99,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onUnreact }) => {
           })}
         </div>
         {totalReactions > 0 && (
-          <span className="text-sm font-semibold text-gray-600 ml-4">
+          <span className="text-sm font-semibold text-gray-600 ml-3">
             {totalReactions} {totalReactions <= 1 ? "reaction" : "reactions"}
           </span>
         )}
         {/* Separator & Comment Count */}
-        <span className="text-sm text-gray-400 mx-2">•</span>
+        <span className="text-sm text-gray-400 ">•</span>
         <span className="text-sm font-semibold text-gray-600">
           {0} comments
         </span>
