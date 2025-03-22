@@ -13,5 +13,6 @@
     "window.zoomLevel": 0.2,
     "java.compile.nullAnalysis.mode": "automatic",
     "typescript.validate.enable": true,
-    "javascript.validate.enable": true
+    "javascript.validate.enable": true,
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
