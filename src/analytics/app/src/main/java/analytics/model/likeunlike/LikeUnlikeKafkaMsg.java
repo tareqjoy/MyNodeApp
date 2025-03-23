@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY,  property = "type", visible = true)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = LikeKafkaMsg.class, name = "like"),
         @JsonSubTypes.Type(value = UnlikeKafkaMsg.class, name = "unlike")
@@ -17,4 +17,6 @@ import lombok.NonNull;
 public abstract class LikeUnlikeKafkaMsg {
     @NonNull
     private String type;
+    @NonNull
+    private String userId;
 }
