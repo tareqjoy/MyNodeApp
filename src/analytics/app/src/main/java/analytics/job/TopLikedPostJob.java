@@ -12,6 +12,7 @@ import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 
 import java.time.Duration;
 
@@ -35,11 +36,7 @@ public class TopLikedPostJob {
         DataStream<LikeUnlikeKafkaMsg> rawStream = env
                 .fromSource(
                         source,
-                        WatermarkStrategy.<LikeUnlikeKafkaMsg>forBoundedOutOfOrderness(Duration.ofSeconds(5))
-                                .withTimestampAssigner((event, timestamp) -> {
-                                    return timestamp;
-                                }
-                        ).withIdleness(Duration.ofSeconds(5)),
+                        WatermarkStrategy.<LikeUnlikeKafkaMsg>forBoundedOutOfOrderness(Duration.ofSeconds(10)).withIdleness(Duration.ofSeconds(5)),
                         "Kafka Source"
                 );
        // rawStream.print();
@@ -57,7 +54,7 @@ public class TopLikedPostJob {
      //   keyedStream.print();
         // 6. Apply Windowing and Aggregate likes per post
         SingleOutputStreamOperator<PostLikeCount> aggregatedStream = keyedStream
-                .window(TumblingEventTimeWindows.of(Duration.ofSeconds(5)))
+                .window(TumblingProcessingTimeWindows.of(Duration.ofSeconds(5)))
                 .aggregate(new LikeCountAggregator(), new TopPostWindowFunction());
 
         // 7. Print the top liked post
