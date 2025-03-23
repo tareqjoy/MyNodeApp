@@ -16,6 +16,7 @@ sudo systemctl start elasticsearch.service && systemctl --no-pager status elasti
 #sudo systemctl start logstash.service && systemctl --no-pager status logstash.service 
 sudo systemctl start loki && systemctl --no-pager status loki
 sudo systemctl start jaeger && systemctl --no-pager status jaeger
+sudo systemctl start flink && systemctl --no-pager status flink
 sudo systemctl start kibana.service && systemctl --no-pager status kibana.service
 sudo systemctl start mongo-kafka-source.service && systemctl --no-pager status mongo-kafka-source.service
 sudo systemctl start elasticsearch-kafka-sink.service && systemctl --no-pager status elasticsearch-kafka-sink.service

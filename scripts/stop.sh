@@ -13,6 +13,7 @@ sudo systemctl stop kibana.service && systemctl --no-pager status kibana.service
 #sudo systemctl stop logstash.service && systemctl --no-pager status logstash.service 
 sudo systemctl stop loki && systemctl --no-pager status loki
 sudo systemctl stop jaeger && systemctl --no-pager status jaeger
+sudo systemctl stop flink && systemctl --no-pager status flink
 sudo systemctl stop elasticsearch.service && systemctl --no-pager status elasticsearch.service
 sudo systemctl stop mongo-kafka-source.service && systemctl --no-pager status mongo-kafka-source.service
 sudo systemctl stop elasticsearch-kafka-sink.service && systemctl --no-pager status elasticsearch-kafka-sink.service
