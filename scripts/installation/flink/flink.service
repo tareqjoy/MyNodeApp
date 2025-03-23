@@ -1,0 +1,16 @@
+[Unit]
+Description=Flink is designed to process continuous streams of data at a lightning fast pace
+Documentation=https://nightlies.apache.org/flink/flink-docs-release-1.20/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=flink
+Group=flink
+Type=forking
+ExecStart=/usr/local/flink/bin/start-cluster.sh
+ExecStop=/usr/local/flink/bin/stop-cluster.sh
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
