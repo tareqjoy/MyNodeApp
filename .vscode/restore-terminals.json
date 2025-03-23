@@ -15,7 +15,7 @@
       "splitTerminals": [
         {
           "name": "timeline-service",
-          "commands": ["cd src/timeline-service && npm run dev"]
+          "commands": ["(sudo lsof -ti:5001 | xargs kill -9 || true) && cd src/timeline-service && npm run dev"]
         }
       ]
     },
@@ -23,7 +23,7 @@
       "splitTerminals": [
         {
           "name": "user-service",
-          "commands": ["cd src/user-service && npm run dev"]
+          "commands": ["(sudo lsof -ti:5002 | xargs kill -9 || true) && cd src/user-service && npm run dev"]
         }
       ]
     },
@@ -31,7 +31,7 @@
       "splitTerminals": [
         {
           "name": "follower-service",
-          "commands": ["cd src/follower-service && npm run dev"]
+          "commands": ["(sudo lsof -ti:5003 | xargs kill -9 || true) && cd src/follower-service && npm run dev"]
         }
       ]
     },
@@ -39,7 +39,7 @@
       "splitTerminals": [
         {
           "name": "fanout-service",
-          "commands": ["cd src/fanout-service && npm run dev"]
+          "commands": ["(sudo lsof -ti:5004 | xargs kill -9 || true) && cd src/fanout-service && npm run dev"]
         }
       ]
     },
@@ -47,7 +47,7 @@
       "splitTerminals": [
         {
           "name": "post-service",
-          "commands": ["cd src/post-service && npm run dev"]
+          "commands": ["(sudo lsof -ti:5005 | xargs kill -9 || true) && cd src/post-service && npm run dev"]
         }
       ]
     },
@@ -55,7 +55,7 @@
       "splitTerminals": [
         {
           "name": "search-service",
-          "commands": ["cd src/search-service && npm run dev"]
+          "commands": ["(sudo lsof -ti:5006 | xargs kill -9 || true) && cd src/search-service && npm run dev"]
         }
       ]
     },
@@ -63,7 +63,7 @@
       "splitTerminals": [
         {
           "name": "auth-service",
-          "commands": ["cd src/auth-service && npm run dev"]
+          "commands": ["(sudo lsof -ti:5007 | xargs kill -9 || true) && cd src/auth-service && npm run dev"]
         }
       ]
     },
@@ -71,7 +71,7 @@
       "splitTerminals": [
         {
           "name": "frontend-service",
-          "commands": ["cd src/frontend-service && npm run dev"]
+          "commands": ["(sudo lsof -ti:5000 | xargs kill -9 || true) && cd src/frontend-service && npm run dev"]
         }
       ]
     },

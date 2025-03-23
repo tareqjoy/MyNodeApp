@@ -25,6 +25,7 @@ ext {
     javaVersion = '11'
     flinkVersion = '1.20.1'
     log4jVersion = '2.24.1'
+    lombokVersion = '1.18.36'
 }
 sourceCompatibility = javaVersion
 targetCompatibility = javaVersion
@@ -73,6 +74,13 @@ dependencies {
     implementation "org.apache.flink:flink-java:${flinkVersion}"
 
     runtimeOnly "org.apache.flink:flink-runtime:${flinkVersion}"
+
+    // lombok
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 }
 
 
