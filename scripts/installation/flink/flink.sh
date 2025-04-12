@@ -14,6 +14,8 @@ sudo mv /tmp/flink-1.20.1 /tmp/flink
 # move to right destination
 sudo mv /tmp/flink/ /usr/local/
 yes | sudo cp -rf "${SCRIPT_DIR}/config.yaml" "/usr/local/flink/conf/"
+sudo mkdir -p /usr/local/flink/data/checkpoints/
+sudo mkdir -p /usr/local/flink/data/savepoints/
 
 # giving ownership
 sudo chown -R flink:flink /usr/local/flink/
