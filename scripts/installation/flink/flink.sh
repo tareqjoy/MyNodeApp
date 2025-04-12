@@ -25,5 +25,9 @@ yes | sudo cp -rf "${SCRIPT_DIR}/flink.service" "/etc/systemd/system/"
 sudo chmod 644 "/etc/systemd/system/flink.service"
 systemctl daemon-reload
 
+# add to env variable
+echo 'export PATH=$PATH:$HOME/flink-1.17.1/bin' >> ~/.zshrc
+source ~/.zshrc # or source ~/.bashrc
+
 # runs at http://localhost:8081/#/overview
 
