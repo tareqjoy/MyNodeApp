@@ -5,13 +5,13 @@ import analytics.function.TopPostWindowFunction;
 import analytics.model.likeunlike.*;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 
 import java.time.Duration;
@@ -20,7 +20,9 @@ public class TopLikedPostJob {
 
     public static void run() throws Exception {
         // 1. Initialize Stream Execution Environment
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        Configuration config = new Configuration();
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(config);
 
 
         // 2. Define Kafka Source
@@ -36,7 +38,9 @@ public class TopLikedPostJob {
         DataStream<LikeUnlikeKafkaMsg> rawStream = env
                 .fromSource(
                         source,
-                        WatermarkStrategy.<LikeUnlikeKafkaMsg>forBoundedOutOfOrderness(Duration.ofSeconds(10)).withIdleness(Duration.ofSeconds(5)),
+                        WatermarkStrategy.<LikeUnlikeKafkaMsg>forBoundedOutOfOrderness(
+                                Duration.ofSeconds(10)).withIdleness(Duration.ofSeconds(5)
+                        ),
                         "Kafka Source"
                 );
        // rawStream.print();
