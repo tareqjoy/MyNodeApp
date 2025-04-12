@@ -6,3 +6,5 @@ build
 
 /gradlew
 /gradlew.bat
+/app/build/
+/app/bin
