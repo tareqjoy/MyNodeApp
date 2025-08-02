@@ -4,7 +4,7 @@ import { getFileLogger } from "@tareqjoy/utils";
 const logger = getFileLogger(__filename);
 
 const neo4j_host_port =
-  process.env.NEO4J_HOST_PORT || "neo4j://192.168.0.10:7687";
+  process.env.NEO4J_HOST_PORT || "neo4j://127.0.0.1:7687";
 const neo4j_username = process.env.NEO4J_USERNAME || "neo4j";
 const neo4j_password = process.env.NEO4J_PASSWORD || "12345678";
 

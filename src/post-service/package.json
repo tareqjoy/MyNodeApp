@@ -17,7 +17,7 @@
     "author": "Tareq Joy",
     "license": "ISC",
     "dependencies": {
-        "@tareqjoy/clients": "^1.0.25",
+        "@tareqjoy/clients": "^1.0.30",
         "@tareqjoy/models": "^1.0.113",
         "@tareqjoy/utils": "^1.0.68",
         "axios": "^1.8.2",

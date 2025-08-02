@@ -1,0 +1,11 @@
+[Unit]
+Description=MongoDB Replica Set - Instance 0
+After=network.target
+
+[Service]
+User=mongodb
+ExecStart=/usr/bin/mongod --replSet rs0 --port 27017 --bind_ip 0.0.0.0 --dbpath /srv/mongodb/rs0-0 --oplogSize 128 --logpath /var/log/mongodb/rs0-0.log --logappend
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

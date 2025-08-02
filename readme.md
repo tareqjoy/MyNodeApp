@@ -1,23 +1,41 @@
 # MyNodeApp
 
 ## Prerequisites
-1. Docker Engine: https://docs.docker.com/engine/install/ubuntu/
-2. Kubernetes: https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
-3. Minikube: https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download
-4. MongoDB: 
-   https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
-   1. Create replica set: https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-for-testing/#std-label-server-replica-set-deploy-test
+
+### Docker Engine
+
+<https://docs.docker.com/engine/install/ubuntu/>
+
+### Kubernetes
+
+<https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/>
+
+### Minikube
+
+<https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download>
+
+### MongoDB
+
+<https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/>
+
+   1. Create replica set: <https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-for-testing/#std-label-server-replica-set-deploy-test>
    2. get hostname: `hostname -I` and add the hostname in the replica set as well
-5. Apache Zookeeper & Kafka: https://anishmahapatra.medium.com/how-to-set-up-kafka-on-ubuntu-6f68f6f37b3e
+
+### Apache Zookeeper & Kafka
+
+https://anishmahapatra.medium.com/how-to-set-up-kafka-on-ubuntu-6f68f6f37b3e
    1. use this directory to install: **/usr/local/kafka/**
    2. get hostname: `hostname -I`
    3. edit Kafka server file: `sudo vim /usr/local/kafka/config/server.properties`
    4. set this: 
       ```nginx
       listeners=PLAINTEXT://0.0.0.0:9092
-      advertised.listeners=PLAINTEXT://<hostname>:9092 #Ex: 192.168.0.10:9092
+      advertised.listeners=PLAINTEXT://<hostname>:9092 #Ex: 127.0.0.1:9092
       ```
-6. Elasticsearch with apt-get: https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html
+
+### Elasticsearch with apt-get 
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html
    1. wll be installed here: **/usr/share/elasticsearch/**
    2. Reset password: `sudo bin/elasticsearch-reset-password -u elastic -i`
       1. Set password: **elastic**
@@ -37,12 +55,15 @@
    3. Test if it is running
       1. Add permission: `sudo chmod 777 -R /etc/elasticsearch`
       2. Run this command: `curl -u elastic:$ELASTIC_PASSWORD http://localhost:9200 `
-7. Kibana with apt-get: https://www.elastic.co/guide/en/kibana/current/deb.html
+
+### Kibana with apt-get
+
+https://www.elastic.co/guide/en/kibana/current/deb.html
    1. wll be installed here: **/usr/share/kibana/**
    2. Edit the config file: `sudo vim /etc/kibana/kibana.yml`
       ```nginx
-      elasticsearch.hosts: ['http://192.168.0.10:9200'] #change from https to http
-      xpack.fleet.outputs: [{id: fleet-default-output, name: default, is_default: true, is_default_monitoring: true, type: elasticsearch, hosts: ['http://192.168.0.10:9200'], ca_trusted_fingerprint: 381127340b477d41dc1e67ef11b64e380b2d183d9ce63c2cb5c266fff86c2c59}] #change from https to http
+      elasticsearch.hosts: ['http://127.0.0.1:9200'] #change from https to http
+      xpack.fleet.outputs: [{id: fleet-default-output, name: default, is_default: true, is_default_monitoring: true, type: elasticsearch, hosts: ['http://127.0.0.1:9200'], ca_trusted_fingerprint: 381127340b477d41dc1e67ef11b64e380b2d183d9ce63c2cb5c266fff86c2c59}] #change from https to http
       ```
    3. open in browser: http://localhost:5601/
    4. run this to get token & provide in the browser:
@@ -53,32 +74,50 @@
       ```sh
       sudo /usr/share/kibana/bin/kibana-verification-code
       ```
-8.  Redis with apt-get: https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/
-    1.  get hostname: `hostname -I`
-    2.  edit redis config file: `sudo vim /etc/redis/redis.conf`
-    3.  set this: 
+
+### Redis with apt-get
+
+https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/
+
+   1. edit redis config file: `sudo vim /etc/redis/redis.conf`
+   2. set this:
+
          ```nginx
-         bind <hostname> -::1 #Ex: bind 192.168.0.10 -::1
+         bind 0.0.0.0 -::1 
          protected-mode no
          ```
-9.   neo4j: https://neo4j.com/docs/operations-manual/current/installation/linux/debian/#debian-installation
-     1.  get hostname: `hostname -I`
-     2.  edit neo4j config file: `sudo vim /etc/neo4j/neo4j.conf`
-     3.  Set this:
+
+### neo4j
+
+https://neo4j.com/docs/operations-manual/current/installation/linux/debian/#debian-installation
+
+   1.  get hostname: `hostname -I`
+   2.  edit neo4j config file: `sudo vim /etc/neo4j/neo4j.conf`
+   3.  Set this:
          ```nginx
-         server.bolt.listen_address=<hostname>:7687 #Ex: 192.168.0.10:7687
-         server.bolt.advertised_address=<hostname>:7687 #Ex: 192.168.0.10:7687
+         server.bolt.listen_address=<hostname>:7687 #Ex: 127.0.0.1:7687
+         server.bolt.advertised_address=<hostname>:7687 #Ex: 127.0.0.1:7687
          ```
-     4.  Default username: **neo4j**, default password: **neo4j**
-     5.  Set password: `sudo neo4j-admin dbms set-initial-password 12345678` or `cypher-shell`
-10. Flink with file download: https://nightlies.apache.org/flink/flink-docs-release-1.14/docs/try-flink/local_installation/
+   4.  Default username: **neo4j**, default password: **neo4j**
+   5.  Set password: `sudo neo4j-admin dbms set-initial-password 12345678` or `cypher-shell`
+
+### Flink with file download
+
+https://nightlies.apache.org/flink/flink-docs-release-1.14/docs/try-flink/local_installation/
     1. use this directory to install: **/usr/local/flink/**
     2. See in UI: http://localhost:8081/
-11. Grafana with apt-get: https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
+
+### Grafana with apt-get
+
+https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
     1.  Grafana will start at: http://localhost:3000. username: **admin** & password: **admin**
     2.  See additional details to continue
-12. Prometheus: run the script here `<workspace>/scripts/installation/prometheus.sh`. For more details: https://reintech.io/blog/installing-configuring-prometheus-ubuntu-22
+
+### Prometheus
+
+run the script here `<workspace>/scripts/installation/prometheus.sh`. For more details: https://reintech.io/blog/installing-configuring-prometheus-ubuntu-22
     1.  Prometheus will run on http://localhost:9090/
+
 ## How To Run
    1. Run the following commands. If any error occurs, see the Prerequisites section to setup.
        ```sh
@@ -175,7 +214,7 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
 
       [Service]
       User=mongodb
-      ExecStart=/usr/bin/mongod --replSet rs0 --port 27017 --bind_ip localhost,192.168.0.10 --dbpath /srv/mongodb/rs0-0 --oplogSize 128 --logpath /var/log/mongodb/rs0-0.log --logappend
+      ExecStart=/usr/bin/mongod --replSet rs0 --port 27017 --bind_ip localhost,127.0.0.1 --dbpath /srv/mongodb/rs0-0 --oplogSize 128 --logpath /var/log/mongodb/rs0-0.log --logappend
       ExecStop=/bin/kill -TERM $MAINPID
       Restart=always
 

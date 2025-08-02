@@ -6,7 +6,7 @@ const logger = getFileLogger(__filename);
 
 const mongoUrl =
   process.env.MONGODB_URL ||
-  "mongodb://admin:admin@192.168.0.10:27017,192.168.0.10:27018,192.168.0.10:27019/mydatabase?replicaSet=rs0";
+  "mongodb://admin:admin@127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/mydatabase?replicaSet=rs0";
 
 const mongoOptions = {
   maxPoolSize: 100,
