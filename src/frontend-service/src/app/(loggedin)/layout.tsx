@@ -1,7 +1,7 @@
 "use client";
 import "reflect-metadata";
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import useVerifyAccessToken from "@/hooks/use-verify-access-token";
 import {
   getUserName,
@@ -24,6 +24,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [pathname]);
 
   const handleClickOutside = (event: MouseEvent) => {
     if (
@@ -160,7 +168,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }
 
       {/* Main Content */}
-      <main className="flex-grow overflow-y-auto">{children}</main>
+      <main ref={mainRef} className="flex-grow overflow-y-auto">{children}</main>
     </div>
   );
 }
