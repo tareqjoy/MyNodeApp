@@ -57,6 +57,13 @@
       "command": "npm run build && npm run start",
       "cwd": "${workspaceFolder}/src/frontend-service"
     },
+        {
+      "type": "node-terminal",
+      "name": "Debug file-service",
+      "request": "launch",
+      "command": "npm run build && npm run start",
+      "cwd": "${workspaceFolder}/src/file-service"
+    },
     {
       "type": "java",
       "name": "Debug analytics",

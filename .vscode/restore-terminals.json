@@ -78,6 +78,14 @@
     {
       "splitTerminals": [
         {
+          "name": "file-service",
+          "commands": ["(lsof -ti:5008 | xargs kill -9 || true) && cd src/file-service && npm run dev"]
+        }
+      ]
+    },
+    {
+      "splitTerminals": [
+        {
           "name": "clients",
           "commands": ["cd src/clients"]
         }

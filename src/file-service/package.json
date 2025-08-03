@@ -1,0 +1,45 @@
+{
+    "name": "file-service",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/server.js",
+    "scripts": {
+        "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "set-env": "node set-env.js",
+        "start": "export $(node set-env.js) && node dist/server.js",
+        "dev": "export $(node set-env.js) && ts-node src/server.ts",
+        "format": "prettier --write 'src/**/*.{ts,tsx}'",
+        "build": "tsc"
+    },
+    "author": "Tareq Joy",
+    "license": "ISC",
+    "dependencies": {
+        "@tareqjoy/clients": "^1.0.26",
+        "@tareqjoy/models": "^1.0.113",
+        "@tareqjoy/utils": "^1.0.68",
+        "apache-arrow": "^19.0.1",
+        "axios": "^1.8.2",
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.14.1",
+        "express": "^4.21.2",
+        "mongoose": "^8.12.1",
+        "redis": "^4.7.0",
+        "reflect-metadata": "^0.2.2"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.23.0",
+        "@types/express": "^5.0.0",
+        "@types/node": "^22.13.10",
+        "@typescript-eslint/eslint-plugin": "^8.27.0",
+        "@typescript-eslint/parser": "^8.27.0",
+        "eslint": "^9.23.0",
+        "globals": "^16.0.0",
+        "nodemon": "^3.1.9",
+        "prettier": "^3.5.3",
+        "rimraf": "^6.0.1",
+        "ts-node": "10.9.2",
+        "typescript": "^5.8.2",
+        "typescript-eslint": "^8.27.0"
+    }
+}
