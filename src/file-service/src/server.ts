@@ -8,8 +8,7 @@ import {
 import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";
-import { createHomeRouter } from "./routes/home";
-import { connectRedis } from "@tareqjoy/clients";
+import { createProfilePhotoRouter } from "./routes/profile-photo";
 
 
 const logger = getFileLogger(__filename);
@@ -33,12 +32,12 @@ async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
  // app.use(getExpressLogger());
 
-  const redisClient = await connectRedis();
+
 
   app.use(
-    getApiPath(api_path_root, "home"),
+    getApiPath(api_path_root, "profile-photo"),
     authorize,
-    createHomeRouter(redisClient),
+    createProfilePhotoRouter(),
   );
 
   app.use(
@@ -74,8 +73,7 @@ async function main() {
   process.on("SIGINT", async () => {
     try {
       logger.info("Caught interrupt signal, shutting down...");
-      await redisClient.quit();
-      logger.info(`Redis disconnected`);
+
       process.exit(0);
     } catch (error) {
       logger.error("Error during disconnect:", error);
