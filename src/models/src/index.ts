@@ -61,3 +61,4 @@ export * from "./auth-service/response/auth-refresh-res";
 export * from "./auth-service/response/authorize-client-res";
 
 export * from "./file-service/request/profile-photo-req"
+export * from "./file-service/request/photo-upload-kafka-msg";
