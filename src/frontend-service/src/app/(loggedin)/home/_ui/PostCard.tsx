@@ -136,12 +136,14 @@ const PostCard: React.FC<PostCardProps> = ({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            <motion.div
-              whileHover={{ scale: 1.2 }}
-              transition={{ type: "spring", stiffness: 300, damping: 15 }}
-            >
-              {selectedReaction ? REACTIONS.get(selectedReaction) : "🤍"}
-            </motion.div>
+            <div  onClick={() => handleReactionSelect(selectedReaction || "love")}>
+              <motion.div
+                whileHover={{ scale: 1.2 }}
+                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+              >
+                {selectedReaction ? REACTIONS.get(selectedReaction) : "🤍"}
+              </motion.div>
+            </div>
 
             {hovering && (
               <motion.div

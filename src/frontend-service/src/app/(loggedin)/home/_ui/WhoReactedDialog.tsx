@@ -27,20 +27,12 @@ const ReactionsDialog: React.FC<ReactionsDialogProps> = ({
   const [reactions, setReactions] = useState<UserLike[]>([]);
   const [loading, setLoading] = useState(false);
   const [nextToken, setNextToken] = useState<string | undefined>();
-  const [hasMore, setHasMore] = useState(true);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchReactions(undefined, true); // Reset on open
-    }
-  }, [isOpen]);
+  const [hasMore, setHasMore] = useState(false);
 
   const fetchReactions = async (
     nextToken: string | undefined,
     reset: boolean = false
   ) => {
-    if (!hasMore) return;
-
     setLoading(true);
     try {
       const axiosResponse = await axiosAuthClient.get(whoLikedUrl, {
@@ -61,6 +53,15 @@ const ReactionsDialog: React.FC<ReactionsDialogProps> = ({
     }
     setLoading(false);
   };
+
+    useEffect(() => {
+    if (isOpen) {
+      setReactions([]);
+      setNextToken(undefined);
+      setHasMore(false);
+      fetchReactions(undefined, true); // Reset on open
+    }
+  }, [isOpen]);
 
   return (
     <Dialog

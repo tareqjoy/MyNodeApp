@@ -27,10 +27,28 @@ export default function TimelinePosts({ username }: { username: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const refreshSinglePost = async (postId: string) => {
+  try {
+    const getPostReq = new GetPostReq([postId], true);
+    const axiosGetPostResp = await axiosAuthClient.post(getPostsUrl, getPostReq);
+    const postDetailsResObj = plainToInstance(PostDetailsRes, axiosGetPostResp.data);
+
+    const updatedPost = postDetailsResObj.posts[0];
+    if (!updatedPost) return;
+
+    setPosts((prevPosts) =>
+      prevPosts.map((p) => (p.postId === postId ? updatedPost : p))
+    );
+  } catch (err) {
+    setError("Failed to refresh post.");
+  }
+};
+
   const handleReact = async (postId: string, reaction: string) => {
     try {
       const likeReq = new LikeReq(postId, reaction, Date.now());
       await axiosAuthClient.post(`${likeUnlikeUrl}?type=like`, likeReq);
+      await refreshSinglePost(postId);
     } catch (err) {
       setError("Failed to react.");
     }
@@ -40,6 +58,7 @@ export default function TimelinePosts({ username }: { username: string }) {
     try {
       const unlikeReq = new UnlikeReq(postId);
       await axiosAuthClient.post(`${likeUnlikeUrl}?type=unlike`, unlikeReq);
+      await refreshSinglePost(postId);
     } catch (err) {
       setError("Failed to react.");
     }

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { axiosAuthClient, getUserName } from "@/lib/auth";
 import {
   GetPostByUserReq,
+  GetPostReq,
   LikeReq,
   PostDetailsRes,
   SinglePost,
@@ -16,6 +17,8 @@ const userPostsUrl: string =
   "http://localhost:80/v1/post/get-by-user";
 const likeUnlikeUrl: string =
   process.env.NEXT_PUBLIC_LIKE_UNLIKE_URL || "http://localhost:80/v1/post/like";
+  const getPostsUrl: string =
+  process.env.NEXT_PUBLIC_GET_POSTS_URL || "http://localhost:80/v1/post/get";
 
 export default function UserPosts({
   userIdOrName,
@@ -29,10 +32,29 @@ export default function UserPosts({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const refreshSinglePost = async (postId: string) => {
+    try {
+      const getPostReq = new GetPostReq([postId], true);
+      const axiosGetPostResp = await axiosAuthClient.post(getPostsUrl, getPostReq);
+      const postDetailsResObj = plainToInstance(PostDetailsRes, axiosGetPostResp.data);
+  
+      const updatedPost = postDetailsResObj.posts[0];
+      if (!updatedPost) return;
+  
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => (p.postId === postId ? updatedPost : p))
+      );
+    } catch (err) {
+      setError("Failed to refresh post.");
+    }
+  };
+  
+
   const handleReact = async (postId: string, reaction: string) => {
     try {
       const likeReq = new LikeReq(postId, reaction, Date.now());
       await axiosAuthClient.post(`${likeUnlikeUrl}?type=like`, likeReq);
+      await refreshSinglePost(postId);
     } catch (err) {
       setError("Failed to react.");
     }
@@ -42,6 +64,7 @@ export default function UserPosts({
     try {
       const unlikeReq = new UnlikeReq(postId);
       await axiosAuthClient.post(`${likeUnlikeUrl}?type=unlike`, unlikeReq);
+      await refreshSinglePost(postId);
     } catch (err) {
       setError("Failed to react.");
     }
@@ -64,6 +87,10 @@ export default function UserPosts({
       const axiosResp = await axiosAuthClient.post(userPostsUrl, postByUserReq);
 
       const postDetailsResObj = plainToInstance(PostDetailsRes, axiosResp.data);
+
+      for (const post of postDetailsResObj.posts) {
+        post.username = getUserName() || "";
+      }
 
       setPosts((prev) =>
         loadMore
