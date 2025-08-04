@@ -5,6 +5,7 @@ import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";
 import { getInternalFullPath } from "@tareqjoy/utils";
 import { getFileLogger } from "@tareqjoy/utils";
+import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
 import path from "path";
 import fs from "fs/promises";
 import sharp from "sharp";
@@ -15,11 +16,6 @@ const userUpdateProfilePhotoUrl: string =
   process.env.USER_UPDATE_PROFILE_PHOTO_URL ||
   "http://127.0.0.1:5002/v1/user/detail/:userId/profile-photo";
 
-const VARIANT_SIZES = {
-  large: 1024,
-  medium: 512,
-  small: 256,
-};
 
 const baseProfilePhotoPath: string =
   process.env.BASE_PROFILE_PHOTO_BASE_PATH ||
@@ -61,7 +57,7 @@ export const photoProcessWorker = async (
 
     // Ensure variant directories exist
     await Promise.all(
-      Object.keys(VARIANT_SIZES).map((variant) =>
+      Object.keys(PROFILE_PHOTO_VARIANT_SIZES).map((variant) =>
         fs.mkdir(path.join(baseProfilePhotoPath, variant, userId!), {
           recursive: true,
         })
@@ -70,20 +66,22 @@ export const photoProcessWorker = async (
 
     // Generate resized variants
     await Promise.all(
-      Object.entries(VARIANT_SIZES).map(async ([variant, width]) => {
-        const outputPath = path.join(
-          baseProfilePhotoPath,
-          variant,
-          userId!,
-          photoName
-        );
-        await originalImage
-          .clone()
-          .resize({ width, withoutEnlargement: true })
-          .jpeg({ quality: 80 })
-          .toFile(outputPath);
-        logger.debug(`Saved ${variant} variant: ${outputPath}`);
-      })
+      Object.entries(PROFILE_PHOTO_VARIANT_SIZES).map(
+        async ([variant, width]) => {
+          const outputPath = path.join(
+            baseProfilePhotoPath,
+            variant,
+            userId!,
+            photoName
+          );
+          await originalImage
+            .clone()
+            .resize({ width, withoutEnlargement: true })
+            .jpeg({ quality: 80 })
+            .toFile(outputPath);
+          logger.debug(`Saved ${variant} variant: ${outputPath}`);
+        }
+      )
     );
 
     const profilePhotoUpdateReq = new ProfilePhotoUpdateReq(

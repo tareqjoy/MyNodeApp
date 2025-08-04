@@ -5,6 +5,8 @@ import {
   InvalidRequest,
   MessageResponse,
   PhotoUploadKafkaMsg,
+  UserInternalReq,
+  UserInternalRes,
 } from "@tareqjoy/models";
 import { ATTR_HEADER_USER_ID, getFileLogger } from "@tareqjoy/utils";
 import path from "path";
@@ -12,6 +14,8 @@ import { v4 as uuidv4 } from "uuid";
 import fs from "fs-extra";
 import multer, { FileFilterCallback } from "multer";
 import { Producer } from "kafkajs";
+import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
+import { plainToInstance } from "class-transformer";
 
 const logger = getFileLogger(__filename);
 
@@ -20,6 +24,10 @@ const baseProfilePhotoPath: string =
   "/data/mynodeapp/uploads/profile-photo/";
 const kafka_photo_upload_topic =
   process.env.KAFKA_PHOTO_UPLOAD_TOPIC || "photo-upload";
+const userServiceHostUrl: string =
+    process.env.USER_SERVICE_USERID_URL ||
+    "http://127.0.0.1:5002/v1/user/userid/";
+
 
 const router = express.Router();
 
@@ -105,7 +113,7 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
           topic: kafka_photo_upload_topic,
           messages: [
             {
-              key: req.file.filename,
+              key: userId,
               value: JSON.stringify(kafkaMsg),
             },
           ],
@@ -122,6 +130,79 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
           logger.error("Unhandled error in upload:", error);
         }
         res.status(500).json(new InternalServerError());
+      }
+    }
+  );
+
+  router.get(
+    "/:userId/:variant/:fileName",
+    async (req: Request, res: Response) => {
+      const { userId, variant, fileName } = req.params;
+
+      if(!userId || !variant || !fileName) {
+        res.status(400).json(new InvalidRequest("Missing parameters, accepted: <>/userId/variant/fileName"));
+        return;
+      }
+
+      if (!Object.keys(PROFILE_PHOTO_VARIANT_SIZES).includes(variant)) {
+        res.status(400).json(new InvalidRequest(`Invalid variant: ${variant}`));
+        return;
+      }
+
+     
+      try {
+        const resultUserInternalReq = new UserInternalReq(userId, false);
+
+        const resultUserAxiosRes = await axios.post(
+          userServiceHostUrl,
+          resultUserInternalReq
+        );
+        const resultUserResObj = plainToInstance(
+          UserInternalRes,
+          resultUserAxiosRes.data
+        );
+
+        if (
+          resultUserResObj.toUsernames &&
+          userId in resultUserResObj.toUsernames &&
+          resultUserResObj.toUsernames[userId]
+        ) {
+          const photoPath = path.join(
+            baseProfilePhotoPath,
+            variant,
+            userId,
+            fileName
+          );
+
+          const photoBuffer = await fs.readFile(photoPath);
+          res.setHeader("Content-Type", "image/jpeg");
+          res.send(photoBuffer);
+        } else {
+          res.status(400).json(new InvalidRequest(`Invalid userId: ${userId}`));
+          return;
+        }
+      } catch (error: any) {
+        if (axios.isAxiosError(error)) {
+          logger.error(
+            `Error while /:userId/:variant/:fileName: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
+          );
+          if( error.response?.status === 404 || error.response?.status === 400) {
+            res
+              .status(400)
+              .json(new InvalidRequest(`Invalid userId: ${userId}`));
+          } else {
+            res.status(500).json(new InternalServerError());
+          }
+        } else {
+          const code = error.code;
+          if (code === "ENOENT") {
+            // File or directory doesn't exist
+            res
+              .status(404)
+              .json(new InvalidRequest(`Invalid fileName`));
+          }
+        }
+
       }
     }
   );
