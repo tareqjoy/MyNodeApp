@@ -99,7 +99,7 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
       const userId = req.headers[ATTR_HEADER_USER_ID] as string;
 
       try {
-        const kafkaMsg = new PhotoUploadKafkaMsg(req.file.filename, { userId });
+        const kafkaMsg = new PhotoUploadKafkaMsg(req.file.filename, new Date().toISOString(), { userId });
 
         const kafkaResp = await kafkaProducer.send({
           topic: kafka_photo_upload_topic,
@@ -116,7 +116,7 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
       } catch (error) {
         if (axios.isAxiosError(error)) {
           logger.error(
-            `Axios error in upload: url=${error.config?.url}, status=${error.response?.status}, message=${error.message}`
+            `Axios error in upload: url=${error.config?.url}, status=${error.response?.status}, message=${JSON.stringify(error.response?.data)}`
           );
         } else {
           logger.error("Unhandled error in upload:", error);

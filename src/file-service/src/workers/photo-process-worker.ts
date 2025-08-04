@@ -1,4 +1,4 @@
-import { InvalidRequest, PhotoUploadKafkaMsg } from "@tareqjoy/models";
+import { InvalidRequest, PhotoUploadKafkaMsg, ProfilePhotoUpdateReq } from "@tareqjoy/models";
 import axios from "axios";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
@@ -10,6 +10,10 @@ import fs from "fs/promises";
 import sharp from "sharp";
 
 const logger = getFileLogger(__filename);
+
+const userUpdateProfilePhotoUrl: string =
+  process.env.USER_UPDATE_PROFILE_PHOTO_URL ||
+  "http://127.0.0.1:5002/v1/user/detail/:userId/profile-photo";
 
 const VARIANT_SIZES = {
   large: 1024,
@@ -36,13 +40,13 @@ export const photoProcessWorker = async (
       return true;
     }
 
-    const { userId, photoPath } = photoUploadKafkaMsg;
+    const { userId, photoName, uploadedAt } = photoUploadKafkaMsg;
 
     const originalPath = path.join(
       baseProfilePhotoPath,
       "original",
       userId!,
-      photoPath
+      photoName
     );
 
     // Ensure original file exists
@@ -71,7 +75,7 @@ export const photoProcessWorker = async (
           baseProfilePhotoPath,
           variant,
           userId!,
-          photoPath
+          photoName
         );
         await originalImage
           .clone()
@@ -82,6 +86,22 @@ export const photoProcessWorker = async (
       })
     );
 
+    const profilePhotoUpdateReq = new ProfilePhotoUpdateReq(
+      photoName,
+      uploadedAt
+    );
+    const userUpdateProfilePhotoUrlInternal = getInternalFullPath(userUpdateProfilePhotoUrl).replace(":userId", userId!);
+    const userUpdateProfilePhotoAxiosRes = await axios.patch(
+      userUpdateProfilePhotoUrlInternal,
+      profilePhotoUpdateReq
+    );
+
+    if (userUpdateProfilePhotoAxiosRes.status !== 200) {
+      logger.error(
+        `Failed to update user profile photo: ${userUpdateProfilePhotoAxiosRes.statusText}`
+      );
+      return false;
+    }
 
     await fs.unlink(originalPath);
     logger.debug(`Deleted original file: ${originalPath}`);
@@ -90,7 +110,7 @@ export const photoProcessWorker = async (
   } catch (error) {
     if (axios.isAxiosError(error)) {
       logger.error(
-        `Error while new-post worker: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`
+        `Error while profile-photo-process worker: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
       );
     } else {
       logger.error("Error while new-post worker: ", error);

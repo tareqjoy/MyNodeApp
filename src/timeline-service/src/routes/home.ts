@@ -123,7 +123,7 @@ export const createHomeRouter = (
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`
+          `Error while /new-post: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
         );
       } else {
         logger.error("Error while /new-post: ", error);

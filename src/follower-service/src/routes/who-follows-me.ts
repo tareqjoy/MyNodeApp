@@ -44,7 +44,7 @@ export const createWhoFollowsMeRouter = (
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /who-follows-me: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+          `Error while /who-follows-me: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
         logger.error("Error while /who-follows-me: ", error);

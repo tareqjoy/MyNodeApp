@@ -137,7 +137,7 @@ export const createGetByUserRouter = (mongoClient: Mongoose, redisClient: RedisC
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /get-by-user: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`
+          `Error while /get-by-user: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
         );
       } else {
         logger.error("Error while /get-by-user: ", error);

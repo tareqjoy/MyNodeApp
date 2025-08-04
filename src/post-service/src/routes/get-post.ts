@@ -76,7 +76,7 @@ export const createGetRouter = (mongoClient: Mongoose, redisClient: RedisClientT
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /get: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+          `Error while /get: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
         logger.error("Error while /get: ", error);

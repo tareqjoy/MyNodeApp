@@ -118,7 +118,7 @@ export const createUnfollowRouter = (
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /unfollow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+          `Error while /unfollow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
         logger.error("Error while /unfollow: ", error);

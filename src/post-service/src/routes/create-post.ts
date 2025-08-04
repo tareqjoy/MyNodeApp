@@ -67,7 +67,7 @@ export const createCreateRouter = (
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+          `Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
         logger.error("Error while /create: ", error);

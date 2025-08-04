@@ -74,7 +74,7 @@ export const createSignInRouter = (
           res.status(401).json(new UnauthorizedRequest(error.response.data));
         } else {
           logger.error(
-            `Error while /auth-signin: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+            `Error while /auth-signin: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
           );
           res.status(500).json(new InternalServerError());
         }

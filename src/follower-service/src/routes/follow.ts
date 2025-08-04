@@ -117,7 +117,7 @@ export const createFollowRouter = (
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /follow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${error.message}`,
+          `Error while /follow: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
         logger.error("Error while /follow: ", error);

@@ -136,6 +136,9 @@ async function main() {
     try {
       logger.info("Caught interrupt signal, shutting down...");
       await kafkaProducer.disconnect();
+      logger.info(`Producer disconnected`);
+      await fileUploadConsumer.disconnect();
+      logger.info(`Consumer disconnected`);
       process.exit(0);
     } catch (error) {
       logger.error("Error during disconnect:", error);
