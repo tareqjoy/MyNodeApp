@@ -8,6 +8,10 @@ export const UserSchema = new Schema({
   name: { type: String, required: true },
   birthDay: { type: Date, required: true },
   gender: { type: String, required: true },
+  profilePhoto: {
+    fileName: { type: String },
+    uploadedAt: { type: Date },
+  },
 });
 
 export const User = model("User", UserSchema);

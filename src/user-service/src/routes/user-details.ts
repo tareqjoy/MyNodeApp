@@ -4,6 +4,7 @@ import { getFileLogger } from "@tareqjoy/utils";
 import {
   InternalServerError,
   InvalidRequest,
+  ProfilePhoto,
   UserDetailsRes
 } from "@tareqjoy/models";
 import { User } from "@tareqjoy/clients";
@@ -41,7 +42,8 @@ export const createUserDetailsRouter = (mongoClient: Mongoose) => {
                 doc.name,
                 doc.email,
                 doc.birthDay.toISOString().split('T')[0],
-                doc.gender
+                doc.gender,
+                doc.profilePhoto ? new ProfilePhoto(doc.profilePhoto?.fileName||"", doc.profilePhoto?.uploadedAt?.toISOString()||"") : undefined
               ),
             );
         }

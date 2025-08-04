@@ -2,18 +2,20 @@ import {
   authorize,
   commonServiceMetricsMiddleware,
   getApiPath,
-  getFileLogger
+  getFileLogger,
+  getInternalApiPath
 } from "@tareqjoy/utils";
 import express from "express";
 import "reflect-metadata";
 import { connectMongo, connectRedis } from "@tareqjoy/clients";
-import { createSignUpRouter } from "./routes/signup";
-import { createUserDetailsRouter } from "./routes/user";
-import { createUserInternalRouter } from "./routes/user-internal";
+import { createSignUpRouter } from "./routes/public/signup";
+import { createUserDetailsRouter } from "./routes/user-details";
+import { createUserIdRouter } from "./routes/public/userid";
 import bodyParser from "body-parser";
-import { createSignInRouter } from "./routes/signin";
+import { createSignInRouter } from "./routes/public/signin";
 import "source-map-support/register";
-import { createCheckUsernameRouter } from "./routes/check-username";
+import { createCheckUsernameRouter } from "./routes/public/check-username";
+import { createUserInternalRouter } from "./routes/internal/user-details";
 
 
 const logger = getFileLogger(__filename);
@@ -40,32 +42,40 @@ async function main() {
   const redisClient = await connectRedis();
   const mongoClient = await connectMongo();
 
-  //For public AuthZ use
+  //Only for internal use, should be protected from public access
+  app.use(
+    getInternalApiPath(api_path_root, "detail"),
+    createUserInternalRouter(mongoClient)
+  );
+
+  //For AuthZ use
   app.use(
     getApiPath(api_path_root, "detail"),
     authorize,
-    createUserDetailsRouter(mongoClient),
+    createUserDetailsRouter(mongoClient)
   );
 
-  //For public non-AuthZ use
+  //For public/non-AuthZ use
   app.use(getApiPath(api_path_root, "signup"), createSignUpRouter(mongoClient));
   app.use(
     getApiPath(api_path_root, "userid"),
-    createUserInternalRouter(mongoClient, redisClient),
+    createUserIdRouter(mongoClient, redisClient)
   );
   app.use(getApiPath(api_path_root, "signin"), createSignInRouter(mongoClient));
-  app.use(getApiPath(api_path_root, "check-username"), createCheckUsernameRouter(mongoClient));
-
+  app.use(
+    getApiPath(api_path_root, "check-username"),
+    createCheckUsernameRouter(mongoClient)
+  );
 
   app.use(
     (
       req: express.Request,
       res: express.Response,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       const error = new HttpError("Not found", 404);
       next(error);
-    },
+    }
   );
 
   app.use(
@@ -73,14 +83,14 @@ async function main() {
       error: any,
       req: express.Request,
       res: express.Response,
-      next: express.NextFunction,
+      next: express.NextFunction
     ) => {
       res.status(error.statusCode || 500);
       res.json({
         message: error,
         path: req.url,
       });
-    },
+    }
   );
 
   // Start the server and listen to the port

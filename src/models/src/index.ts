@@ -13,6 +13,7 @@ export * from "./timeline-service/response/timeline-home-res";
 export * from "./user-service/request/user-signin-req";
 export * from "./user-service/request/signup-req";
 export * from "./user-service/request/user-internal-req";
+export * from "./user-service/request/user-info-patch-req";
 
 export * from "./user-service/response/user-signIn-res";
 export * from "./user-service/response/user-details-res";

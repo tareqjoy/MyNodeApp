@@ -19,7 +19,7 @@ const redisUsernameTtlSec: string =
 
 const router = express.Router();
 
-export const createUserInternalRouter = (
+export const createUserIdRouter = (
   mongoClient: Mongoose,
   redisClient: RedisClientType<any, any, any>,
 ) => {
