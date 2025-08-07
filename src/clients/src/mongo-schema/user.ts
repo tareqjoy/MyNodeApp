@@ -9,8 +9,9 @@ export const UserSchema = new Schema({
   birthDay: { type: Date, required: true },
   gender: { type: String, required: true },
   profilePhoto: {
-    fileName: { type: String },
-    uploadedAt: { type: Date },
+    type: Types.ObjectId,
+    ref: "Attachment", // references the Attachment model
+    default: null,
   },
 });
 

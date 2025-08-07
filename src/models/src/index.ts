@@ -63,3 +63,6 @@ export * from "./auth-service/response/authorize-client-res";
 
 export * from "./file-service/request/profile-photo-req"
 export * from "./file-service/request/photo-upload-kafka-msg";
+
+export * from "./file-service/response/profile-photo-res";
+export * from "./file-service/response/post-attachment-res";

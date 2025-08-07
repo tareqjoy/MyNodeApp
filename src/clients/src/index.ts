@@ -8,3 +8,4 @@ export * from "./elastic-search-client";
 export * from "./mongo-schema/post";
 export * from "./mongo-schema/post-like";
 export * from "./mongo-schema/user";
+export * from "./mongo-schema/attachment";

@@ -8,7 +8,7 @@ import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";
 import { createProfilePhotoRouter } from "./routes/profile-photo";
-import { connectKafkaConsumer, connectKafkaProducer } from "@tareqjoy/clients";
+import { connectKafkaConsumer, connectKafkaProducer, connectMongo } from "@tareqjoy/clients";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 import { photoProcessWorker } from "./workers/photo-process-worker";
 
@@ -41,6 +41,9 @@ async function main() {
     kafka_file_group,
     [kafka_photo_upload_topic]
   );
+
+  const kafkaProducer = await connectKafkaProducer(kafka_client_id);
+  const mongoClient = await connectMongo();
 
   await fileUploadConsumer.run({
     eachMessage: async ({ topic, partition, message }) => {
@@ -90,7 +93,7 @@ async function main() {
     autoCommit: false,
   });
 
-  const kafkaProducer = await connectKafkaProducer(kafka_client_id);
+
   
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
@@ -99,7 +102,7 @@ async function main() {
   app.use(
     getApiPath(api_path_root, "profile-photo"),
     authorize,
-    createProfilePhotoRouter(kafkaProducer)
+    createProfilePhotoRouter(mongoClient, kafkaProducer)
   );
 
   app.use(
@@ -139,6 +142,8 @@ async function main() {
       logger.info(`Producer disconnected`);
       await fileUploadConsumer.disconnect();
       logger.info(`Consumer disconnected`);
+      await mongoClient.disconnect();
+      logger.info(`MongoDB disconnected`);
       process.exit(0);
     } catch (error) {
       logger.error("Error during disconnect:", error);

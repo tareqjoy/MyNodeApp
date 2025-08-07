@@ -5,6 +5,7 @@ import {
   InvalidRequest,
   MessageResponse,
   PhotoUploadKafkaMsg,
+  ProfilePhotoRes,
   UserInternalReq,
   UserInternalRes,
 } from "@tareqjoy/models";
@@ -16,6 +17,9 @@ import multer, { FileFilterCallback } from "multer";
 import { Producer } from "kafkajs";
 import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
 import { plainToInstance } from "class-transformer";
+import mongoose, { Mongoose } from "mongoose";
+import { Attachment } from "@tareqjoy/clients";
+import { metadata } from "reflect-metadata/no-conflict";
 
 const logger = getFileLogger(__filename);
 
@@ -58,7 +62,7 @@ const validateProfilePhotoMid = async (
   next();
 };
 
-export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
+export const createProfilePhotoRouter = (mongoClient: Mongoose, kafkaProducer: Producer) => {
   router.post(
     "/",
     validateProfilePhotoMid,
@@ -107,7 +111,29 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
       const userId = req.headers[ATTR_HEADER_USER_ID] as string;
 
       try {
-        const kafkaMsg = new PhotoUploadKafkaMsg(req.file.filename, new Date().toISOString(), { userId });
+        const savedFilePath = path.resolve(req.file.path);
+
+        const attachment = new Attachment({
+          _id: new mongoose.Types.ObjectId(),
+          userId: userId,
+          type: "image",
+          uploadedAt: new Date(),
+          versions: [
+            {
+              name: "original",
+              filePath: savedFilePath,
+              status: "uploaded",
+            },
+          ],
+        });
+
+        await attachment.save();
+
+        const kafkaMsg = new PhotoUploadKafkaMsg(
+          savedFilePath,
+          new Date().toISOString(),
+          { userId }
+        );
 
         const kafkaResp = await kafkaProducer.send({
           topic: kafka_photo_upload_topic,
@@ -120,7 +146,7 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
         });
 
         logger.debug(`Kafka response: ${JSON.stringify(kafkaResp)}`);
-        res.status(200).json(new MessageResponse("File uploaded successfully"));
+        res.status(200).json(new ProfilePhotoRes(savedFilePath));
       } catch (error) {
         if (axios.isAxiosError(error)) {
           logger.error(
@@ -139,8 +165,14 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
     async (req: Request, res: Response) => {
       const { userId, variant, fileName } = req.params;
 
-      if(!userId || !variant || !fileName) {
-        res.status(400).json(new InvalidRequest("Missing parameters, accepted: <>/userId/variant/fileName"));
+      if (!userId || !variant || !fileName) {
+        res
+          .status(400)
+          .json(
+            new InvalidRequest(
+              "Missing parameters, accepted: <>/userId/variant/fileName"
+            )
+          );
         return;
       }
 
@@ -149,7 +181,6 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
         return;
       }
 
-     
       try {
         const resultUserInternalReq = new UserInternalReq(userId, false);
 
@@ -186,7 +217,10 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
           logger.error(
             `Error while /:userId/:variant/:fileName: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
           );
-          if( error.response?.status === 404 || error.response?.status === 400) {
+          if (
+            error.response?.status === 404 ||
+            error.response?.status === 400
+          ) {
             res
               .status(400)
               .json(new InvalidRequest(`Invalid userId: ${userId}`));
@@ -197,12 +231,9 @@ export const createProfilePhotoRouter = (kafkaProducer: Producer) => {
           const code = error.code;
           if (code === "ENOENT") {
             // File or directory doesn't exist
-            res
-              .status(404)
-              .json(new InvalidRequest(`Invalid fileName`));
+            res.status(404).json(new InvalidRequest(`Invalid fileName`));
           }
         }
-
       }
     }
   );
