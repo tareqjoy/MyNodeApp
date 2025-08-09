@@ -13,12 +13,12 @@ import {
   PostByUserPagingRaw,
   PostByUserPaging,
   SingleLike,
+  NewPostKafkaMsg,
 } from "@tareqjoy/models";
-import {
-  PostLike,
-} from "@tareqjoy/clients";
+import { Post, PostLike } from "@tareqjoy/clients";
 import { plainToInstance } from "class-transformer";
 import { RedisClientType } from "redis";
+import { Producer } from "kafkajs";
 
 const logger = getFileLogger(__filename);
 
@@ -26,7 +26,7 @@ export function addPaginationToQuery(
   query: any,
   highTime?: number,
   lastPostId?: string,
-  timeField: string = 'time' // Default to 'time' if not provided
+  timeField: string = "time" // Default to 'time' if not provided
 ): any {
   if (lastPostId && highTime) {
     query = {
@@ -54,8 +54,8 @@ export async function toResPosts(
   returnOnlyPostId: boolean,
   returnAsUsername: boolean,
   options?: {
-    paging?: PostByUserPagingRaw,
-    myUserId?: string
+    paging?: PostByUserPagingRaw;
+    myUserId?: string;
   }
 ): Promise<PostDetailsRes> {
   const resPosts: SinglePost[] = [];
@@ -103,8 +103,7 @@ export async function toResPosts(
       }
     }
 
-
-    if(options?.myUserId) {
+    if (options?.myUserId) {
       const myLikeMap = await getPostsILiked(
         options.myUserId,
         resPosts.map((post) => post.postId)
@@ -114,9 +113,8 @@ export async function toResPosts(
         const myLike = myLikeMap.get(post.postId);
         if (myLike) {
           post.myLikeType = myLike; // Fill the singleLikes array for the post
-        } 
+        }
       });
-
     }
     const postReactionCount = await getPostLikeCount(
       redisClient,
@@ -153,12 +151,14 @@ export async function getPostLikeCount(
     const redisExistence = await Promise.all(
       redisKeys.map((key) => redisClient.exists(key))
     );
-    
+
     const keysToLoadFromMongo = postIds.filter(
       (_, index) => redisExistence[index] === 0
     );
-    if(keysToLoadFromMongo.length > 0) {
-      logger.debug(`post ids not in redis, will be looking in Mongodb count: ${keysToLoadFromMongo.length}`);
+    if (keysToLoadFromMongo.length > 0) {
+      logger.debug(
+        `post ids not in redis, will be looking in Mongodb count: ${keysToLoadFromMongo.length}`
+      );
     }
 
     let mongoData: Record<string, SingleLike[]> = {};
@@ -195,7 +195,9 @@ export async function getPostLikeCount(
       });
     }
 
-    logger.debug(`post ids loaded from mongodb: ${Object.keys(mongoData).length}`);
+    logger.debug(
+      `post ids loaded from mongodb: ${Object.keys(mongoData).length}`
+    );
     // For all posts, check if they exist in Redis or MongoDB, and update Redis if necessary
     const likeCountsPromises = redisKeys.map(
       async (postRedisKey, index): Promise<[string, SingleLike[]]> => {
@@ -208,7 +210,7 @@ export async function getPostLikeCount(
           });
         } else {
           // If the post doesn't exist in Redis, load from MongoDB and then update Redis
-          logger.debug(`not in redis! ${postIds[index]}`)
+          logger.debug(`not in redis! ${postIds[index]}`);
           const reactions = mongoData[postIds[index]] || [];
           if (reactions.length > 0) {
             const redisData: Record<string, number> = {};
@@ -235,15 +237,17 @@ export async function getPostLikeCount(
     );
 
     // Wait for all operations (both MongoDB and Redis)
-    const results: [string, SingleLike[]][] = await Promise.all(likeCountsPromises);
-    logger.debug(`returning reaction results for posts: total ids: ${postIds.length}, like found on: ${JSON.stringify(results)}`);
+    const results: [string, SingleLike[]][] =
+      await Promise.all(likeCountsPromises);
+    logger.debug(
+      `returning reaction results for posts: total ids: ${postIds.length}, like found on: ${JSON.stringify(results)}`
+    );
     return new Map<string, SingleLike[]>(results);
   } catch (error) {
     logger.error(`Error fetching post like counts`, error);
     throw error;
   }
 }
-
 
 export async function getPostsILiked(
   userId: string,
@@ -256,17 +260,57 @@ export async function getPostsILiked(
     const existingLikes = await PostLike.find({
       userId: new Types.ObjectId(userId),
       postId: { $in: postObjectIds },
-    }).select('postId likeType'); // Select both postId and likeType
+    }).select("postId likeType"); // Select both postId and likeType
 
     // Create a map of postId -> likeType
     const likedPostsMap = new Map<string, string>();
     existingLikes.forEach((like) => {
       likedPostsMap.set(like.postId.toString(), like.likeType);
     });
-    logger.debug(`returning i liked results. total ids: ${postIds.length}, i-liked: ${likedPostsMap.size}`);
+    logger.debug(
+      `returning i liked results. total ids: ${postIds.length}, i-liked: ${likedPostsMap.size}`
+    );
     return likedPostsMap;
   } catch (error) {
     logger.error(`Error fetching posts I liked`, error);
     throw error;
   }
+}
+
+
+export async function writePost(
+  loggedInUserId: string,
+  body: string,
+  postTime: number,
+  attachmentIds: string[] | undefined,
+  newPostKafkaProducer: Producer,
+  fanoutTopic: string
+): Promise<String> {
+  const post = new Post({
+    _id: new mongoose.Types.ObjectId(),
+    userId: loggedInUserId,
+    body: body,
+    time: postTime,
+    attachments: attachmentIds?.map((id) => new mongoose.Types.ObjectId(id)),
+  });
+
+  const dbResult = await post.save();
+  logger.debug(`saved to mongodb with postId: ${dbResult.id}`);
+
+  const kafkaMsg = new NewPostKafkaMsg(
+    dbResult.id,
+    dbResult.userId!.toString(),
+    dbResult.time
+  );
+  logger.debug(`publishing Kafka: topic: ${fanoutTopic}`);
+  await newPostKafkaProducer.send({
+    topic: fanoutTopic,
+    messages: [
+      {
+        key: dbResult.id,
+        value: JSON.stringify(kafkaMsg),
+      },
+    ],
+  });
+  return dbResult.id.toString;
 }

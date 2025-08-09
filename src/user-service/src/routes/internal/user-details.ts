@@ -39,10 +39,8 @@ export const createUserInternalRouter = (mongoClient: Mongoose) => {
         userId,
         {
           $set: {
-            profilePhoto: {
-              fileName: profilePhotoUpdateReq.fileName,
-              uploadedAt: new Date(profilePhotoUpdateReq.uploadedAt),
-            },
+            profilePhoto: profilePhotoUpdateReq.photoPostId,
+
           },
         },
         { new: true } // return the updated document

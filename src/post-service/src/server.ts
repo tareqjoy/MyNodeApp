@@ -13,6 +13,7 @@ import { createCreateRouter } from "./routes/create-post";
 import { createGetRouter } from "./routes/get-post";
 import { createGetByUserRouter } from "./routes/get-by-user";
 import { createLikeRouter } from "./routes/like";
+import { createProfilePhotoRouter } from "./routes/create-post-profile-photo";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "post";
 
@@ -51,6 +52,11 @@ async function main() {
     getApiPath(api_path_root, "create"),
     authorize,
     createCreateRouter(mongoClient, kafkaProducer),
+  );
+  app.use(
+    getApiPath(api_path_root, "profile-photo"),
+    authorize,
+    createProfilePhotoRouter(mongoClient, kafkaProducer)
   );
   app.use(
     getApiPath(api_path_root, "get"),

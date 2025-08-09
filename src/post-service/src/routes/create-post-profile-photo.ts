@@ -3,10 +3,7 @@ import { getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
 import { Producer } from "kafkajs";
 import axios from "axios";
-import {
-  InternalServerError,
-  MessageResponse
-} from "@tareqjoy/models";
+import { CreateProfilePhotoPostReq, InternalServerError, MessageResponse } from "@tareqjoy/models";
 import { CreatePostReq } from "@tareqjoy/models";
 import { Post } from "@tareqjoy/clients";
 import { InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
@@ -22,36 +19,38 @@ const kafka_new_post_fanout_topic =
 
 const router = express.Router();
 
-export const createCreateRouter = (
+export const createProfilePhotoRouter = (
   mongoClient: Mongoose,
-  newPostKafkaProducer: Producer,
+  newPostKafkaProducer: Producer
 ) => {
   router.post("/", async (req, res, next) => {
-    logger.silly(`POST /create called`);
+    logger.silly(`POST /profile-photo called`);
     const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
     try {
-      const createPostReq = plainToInstance(CreatePostReq, req.body);
-      const errors = await validate(createPostReq);
+      const createProfilePhotoPostReq = plainToInstance(CreateProfilePhotoPostReq, req.body);
+      const errors = await validate(createProfilePhotoPostReq);
 
       if (errors.length > 0) {
         res.status(400).json(new InvalidRequest(errors));
         return;
       }
-      
+
       await writePost(
         loggedInUserId,
-        createPostReq.body,
-        createPostReq.postTime,
-        createPostReq.attachmentIds,
+        createProfilePhotoPostReq.body,
+        createProfilePhotoPostReq.postTime,
+        createProfilePhotoPostReq.attachmentId
+          ? [createProfilePhotoPostReq.attachmentId]
+          : undefined,
         newPostKafkaProducer,
         kafka_new_post_fanout_topic
-      )
+      );
 
       res.status(200).json(new MessageResponse("Posted"));
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
+          `Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
         );
       } else {
         logger.error("Error while /create: ", error);

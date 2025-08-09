@@ -83,7 +83,7 @@ export const photoProcessWorker = async (
         }
       )
     );
-
+/*
     const profilePhotoUpdateReq = new ProfilePhotoUpdateReq(
       photoName,
       uploadedAt
@@ -100,7 +100,7 @@ export const photoProcessWorker = async (
       );
       return false;
     }
-
+*/
     await fs.unlink(originalPath);
     logger.debug(`Deleted original file: ${originalPath}`);
 

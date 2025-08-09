@@ -10,7 +10,7 @@ export const UserSchema = new Schema({
   gender: { type: String, required: true },
   profilePhoto: {
     type: Types.ObjectId,
-    ref: "Attachment", // references the Attachment model
+    ref: "Post", 
     default: null,
   },
 });

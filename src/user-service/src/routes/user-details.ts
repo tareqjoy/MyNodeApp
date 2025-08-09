@@ -1,13 +1,17 @@
 import express from "express";
 import { Mongoose, isValidObjectId } from "mongoose";
-import { getFileLogger } from "@tareqjoy/utils";
+import { ATTR_HEADER_USER_ID, getFileLogger } from "@tareqjoy/utils";
 import {
   InternalServerError,
   InvalidRequest,
+  MessageResponse,
   ProfilePhoto,
-  UserDetailsRes
+  ProfilePhotoUpdateReq,
+  UserDetailsRes,
 } from "@tareqjoy/models";
 import { User } from "@tareqjoy/clients";
+import { plainToInstance } from "class-transformer";
+import { validate } from "class-validator";
 
 const logger = getFileLogger(__filename);
 
@@ -20,12 +24,15 @@ export const createUserDetailsRouter = (mongoClient: Mongoose) => {
     const { provided } = req.query;
 
     const usernameOrId: string = req.params.usernameOrId;
-    if(provided === "userid" && !isValidObjectId(usernameOrId)) {
-       res.status(400).json(new InvalidRequest("Invalid userid"));
-       return;
+    if (provided === "userid" && !isValidObjectId(usernameOrId)) {
+      res.status(400).json(new InvalidRequest("Invalid userid"));
+      return;
     }
 
-    const query = provided === "userid"?  { _id: usernameOrId }: { username: usernameOrId };
+    const query =
+      provided === "userid"
+        ? { _id: usernameOrId }
+        : { username: usernameOrId };
 
     User.findOne(query)
       .exec()
@@ -41,10 +48,15 @@ export const createUserDetailsRouter = (mongoClient: Mongoose) => {
                 doc.username,
                 doc.name,
                 doc.email,
-                doc.birthDay.toISOString().split('T')[0],
+                doc.birthDay.toISOString().split("T")[0],
                 doc.gender,
-                doc.profilePhoto ? new ProfilePhoto(doc.profilePhoto?.fileName||"", doc.profilePhoto?.uploadedAt?.toISOString()||"") : undefined
-              ),
+                doc.profilePhoto
+                  ? new ProfilePhoto(
+                      doc.profilePhoto?.toString() || "",
+                      doc.profilePhoto?.toString() || ""
+                    )
+                  : undefined
+              )
             );
         }
       })
@@ -53,5 +65,6 @@ export const createUserDetailsRouter = (mongoClient: Mongoose) => {
         res.status(500).json(new InternalServerError());
       });
   });
+
   return router;
 };

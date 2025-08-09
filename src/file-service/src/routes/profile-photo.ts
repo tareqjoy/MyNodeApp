@@ -128,7 +128,7 @@ export const createProfilePhotoRouter = (mongoClient: Mongoose, kafkaProducer: P
         });
 
         await attachment.save();
-
+        /*
         const kafkaMsg = new PhotoUploadKafkaMsg(
           savedFilePath,
           new Date().toISOString(),
@@ -146,7 +146,16 @@ export const createProfilePhotoRouter = (mongoClient: Mongoose, kafkaProducer: P
         });
 
         logger.debug(`Kafka response: ${JSON.stringify(kafkaResp)}`);
-        res.status(200).json(new ProfilePhotoRes(savedFilePath));
+        */
+        if (attachment._id) {
+          res
+            .status(200)
+            .json(new ProfilePhotoRes(attachment?._id?.toString()));
+        } else {
+          logger.error("Attachment ID is missing after save");
+          res.status(500).json(new InternalServerError());
+        }
+
       } catch (error) {
         if (axios.isAxiosError(error)) {
           logger.error(

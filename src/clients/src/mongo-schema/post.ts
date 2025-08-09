@@ -9,11 +9,17 @@ const PostSchema = new Schema({
     type: [
       {
         reactType: { type: String, required: true },
-        count: { type: Number, required: true, default: 0 }
-      }
+        count: { type: Number, required: true, default: 0 },
+      },
     ],
-    default: []
+    default: [],
   },
+  attachments: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Attachment",
+    },
+  ],
 });
 
 export const Post = model("Post", PostSchema);

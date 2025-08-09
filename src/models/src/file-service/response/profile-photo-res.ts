@@ -1,10 +1,10 @@
 
 export class ProfilePhotoRes {
-  photoPath: string;
+  photoAttachmentId: string;
 
   constructor();
-  constructor(photoPath: string);
-  constructor(photoPath?: string) {
-    this.photoPath = photoPath || "";
+  constructor(photoAttachmentId: string);
+  constructor(photoAttachmentId?: string) {
+    this.photoAttachmentId = photoAttachmentId || "";
   }
 }
