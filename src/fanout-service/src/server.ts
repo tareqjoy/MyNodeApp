@@ -8,7 +8,7 @@ import bodyParser from "body-parser";
 
 import { connectKafkaConsumer, connectMongo, connectRedis } from "@tareqjoy/clients";
 import { createFanoutRouter } from "./routes/fanout";
-import { newPostFanout } from "./workers/new-post-worker";
+import { newPostFanout } from "./workers/post-fanout-worker";
 import { iFollowedFanout } from "./workers/i-followed-worker";
 import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";

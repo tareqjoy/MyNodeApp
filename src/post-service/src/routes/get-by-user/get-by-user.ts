@@ -15,7 +15,7 @@ import { validate } from "class-validator";
 import {
   toResPosts,
   addPaginationToQuery,
-} from "./common/common";
+} from "../common/common";
 import { Post } from "@tareqjoy/clients";
 import { RedisClientType } from "redis";
 
@@ -127,9 +127,9 @@ export const createGetByUserRouter = (mongoClient: Mongoose, redisClient: RedisC
             dbPosts,
             getPostReq.returnOnlyPostId,
             getPostReq.returnAsUsername, 
+            loggedInUserId!,
             {
               paging: paging,
-              myUserId: loggedInUserId,
             }
             
           )

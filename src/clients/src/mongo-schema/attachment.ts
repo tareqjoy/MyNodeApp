@@ -1,4 +1,4 @@
-import { model, Schema, Types } from "mongoose";
+import { InferSchemaType, model, Schema, Types } from "mongoose";
 
 const AttachmentTypes = ["image", "audio", "video", "document"] as const;
 type AttachmentType = (typeof AttachmentTypes)[number];
@@ -79,3 +79,4 @@ AttachmentSchema.index({ userId: 1, linkedTo: 1, uploadedAt: -1 });
 AttachmentSchema.index({ linkedTo: 1, uploadedAt: -1 });  
 
 export const Attachment = model("Attachment", AttachmentSchema);
+export type AttachmentObject = InferSchemaType<typeof AttachmentSchema>;

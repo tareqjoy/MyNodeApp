@@ -1,4 +1,4 @@
-import { model, Schema, Types } from "mongoose";
+import { InferSchemaType, model, Schema, Types } from "mongoose";
 
 export const UserSchema = new Schema({
   _id: Types.ObjectId,
@@ -16,3 +16,5 @@ export const UserSchema = new Schema({
 });
 
 export const User = model("User", UserSchema);
+
+export type UserObject = InferSchemaType<typeof UserSchema>;

@@ -10,7 +10,7 @@ import { Post } from "@tareqjoy/clients";
 import { InvalidRequest } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import { toResPosts } from "./common/common";
+import { toResPosts } from "../common/common";
 import axios from "axios";
 import { RedisClientType } from "redis";
 
@@ -68,9 +68,8 @@ export const createGetRouter = (mongoClient: Mongoose, redisClient: RedisClientT
             userServiceHostUrl,
             dbPosts,
             false,
-            getPostReq.returnAsUsername, {
-              myUserId: loggedInUserId
-            }
+            getPostReq.returnAsUsername,
+            loggedInUserId
           ),
         );
     } catch (error) {
@@ -86,5 +85,6 @@ export const createGetRouter = (mongoClient: Mongoose, redisClient: RedisClientT
   });
 
   return router;
+
 };
 

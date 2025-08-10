@@ -3,7 +3,7 @@ import {
   fillString,
   REDIS_KEY_POST_LIKE_COUNT,
 } from "@tareqjoy/utils";
-import mongoose, { Types } from "mongoose";
+import mongoose, { InferSchemaType, Types } from "mongoose";
 import axios from "axios";
 import {
   PostDetailsRes,
@@ -15,10 +15,9 @@ import {
   SingleLike,
   NewPostKafkaMsg,
 } from "@tareqjoy/models";
-import { Post, PostLike } from "@tareqjoy/clients";
+import { PostObject, PostLike } from "@tareqjoy/clients";
 import { plainToInstance } from "class-transformer";
 import { RedisClientType } from "redis";
-import { Producer } from "kafkajs";
 
 const logger = getFileLogger(__filename);
 
@@ -50,92 +49,132 @@ export function addPaginationToQuery(
 export async function toResPosts(
   redisClient: RedisClientType<any, any, any>,
   userServiceHostUrl: string,
-  dbPosts: any,
+  dbPosts: PostObject[],
   returnOnlyPostId: boolean,
   returnAsUsername: boolean,
+  myUserId: string,
   options?: {
     paging?: PostByUserPagingRaw;
-    myUserId?: string;
   }
 ): Promise<PostDetailsRes> {
   const resPosts: SinglePost[] = [];
   if (returnOnlyPostId) {
     for (const dbp of dbPosts) {
-      resPosts.push(new SinglePost(dbp.id, dbp.time));
+      resPosts.push(new SinglePost(dbp._id.toString(), dbp.time, dbp.postType));
     }
   } else {
-    if (returnAsUsername) {
-      const pUserIds: string[] = [];
-
-      for (const dbp of dbPosts) {
-        pUserIds.push(dbp.userId!.toString());
-      }
-
-      const pUserInternalReq = new UserInternalReq(pUserIds, false);
-      const pUserIdAxiosResponse = await axios.post(
-        userServiceHostUrl,
-        pUserInternalReq
-      );
-
-      const pUserResObj = plainToInstance(
-        UserInternalRes,
-        pUserIdAxiosResponse.data
-      );
-
-      for (const dbp of dbPosts) {
-        resPosts.push(
-          new SinglePost(dbp.id, dbp.time, {
-            userIdOrUsername: pUserResObj.toUsernames![dbp.userId?.toString()],
-            isUserName: true,
-            body: dbp.body,
-          })
-        );
-      }
-    } else {
-      for (const dbp of dbPosts) {
-        resPosts.push(
-          new SinglePost(dbp.id, dbp.time, {
-            userIdOrUsername: dbp.userId?.toString(),
-            isUserName: false,
-            body: dbp.body,
-          })
-        );
-      }
-    }
-
-    if (options?.myUserId) {
-      const myLikeMap = await getPostsILiked(
-        options.myUserId,
-        resPosts.map((post) => post.postId)
-      );
-
-      resPosts.forEach((post) => {
-        const myLike = myLikeMap.get(post.postId);
-        if (myLike) {
-          post.myLikeType = myLike; // Fill the singleLikes array for the post
-        }
-      });
-    }
-    const postReactionCount = await getPostLikeCount(
-      redisClient,
-      resPosts.map((post) => post.postId)
+    resPosts.push(
+      ...toSinglePost(dbPosts)
     );
-    resPosts.forEach((post) => {
-      const likes = postReactionCount.get(post.postId);
-      if (likes) {
-        post.likes = likes; // Fill the singleLikes array for the post
-      } else {
-        logger.warn(`No likes found for postId: ${post.postId}`);
-      }
-    });
+
+    returnAsUsername && (await addUserNameToPosts(userServiceHostUrl, resPosts));
+    await addILikedToPosts(myUserId, resPosts);
+    await addLikeCountToPosts(redisClient, resPosts);
   }
-  if (options?.paging) {
-    const pagingJsonString = JSON.stringify(options.paging);
-    const nextPageToken = Buffer.from(pagingJsonString).toString("base64");
-    return new PostDetailsRes(resPosts, new PostByUserPaging(nextPageToken));
-  } else {
-    return new PostDetailsRes(resPosts);
+
+  return new PostDetailsRes(
+    resPosts,
+    options?.paging
+      ? new PostByUserPaging(
+          Buffer.from(JSON.stringify(options.paging)).toString("base64")
+        )
+      : undefined
+  );
+}
+
+
+export async function toResPostsOnly(
+  dbPosts: PostObject[],
+  options?: {
+    paging?: PostByUserPagingRaw;
   }
+): Promise<PostDetailsRes> {
+  const resPosts: SinglePost[] = toSinglePost(dbPosts);
+  return new PostDetailsRes(
+    resPosts,
+    options?.paging
+      ? new PostByUserPaging(
+          Buffer.from(JSON.stringify(options.paging)).toString("base64")
+        )
+      : undefined
+  );
+}
+
+
+function toSinglePost(
+  dbPosts: PostObject[]
+): SinglePost[] {
+  return dbPosts.map(
+    (dbp) =>
+      new SinglePost(dbp._id.toString(), dbp.time, dbp.postType, {
+        userIdOrUsername: dbp.userId!.toString(),
+        isUserName: false,
+        body: dbp.body,
+      })
+  );
+}
+
+async function addUserNameToPosts(userServiceHostUrl: string, resPosts: SinglePost[]): Promise<void> {
+  const pUserResObj = await getUsernamesByIds(
+    userServiceHostUrl,
+    resPosts.map((post) => post.userId!)
+  );
+  const toUsernames = pUserResObj.toUsernames!;
+
+  resPosts.forEach((post) => {
+    // Replace userIdOrUsername with username and update flag
+    const userIdStr = post.userId;
+    if (userIdStr && toUsernames[userIdStr]) {
+      post.username = toUsernames[userIdStr];
+    }
+  });
+}
+
+async function addILikedToPosts(
+  myUserId: string,
+  resPosts: SinglePost[]
+): Promise<void> {
+  const myLikeMap = await getPostsILiked(
+    myUserId,
+    resPosts.map((post) => post.postId)
+  );
+
+  resPosts.forEach((post) => {
+    const myLike = myLikeMap.get(post.postId);
+    if (myLike) {
+      post.myLikeType = myLike; // Fill the singleLikes array for the post
+    }
+  });
+}
+async function addLikeCountToPosts(
+  redisClient: RedisClientType<any, any, any>,
+  resPosts: SinglePost[]
+): Promise<void> {
+  const postReactionCount = await getPostLikeCount(
+    redisClient,
+    resPosts.map((post) => post.postId)
+  );
+  resPosts.forEach((post) => {
+    const likes = postReactionCount.get(post.postId);
+    if (likes) {
+      post.likes = likes; // Fill the singleLikes array for the post
+    } else {
+      logger.warn(`No likes found for postId: ${post.postId}`);
+    }
+  });
+}
+
+async function getUsernamesByIds(
+  userServiceHostUrl: string,
+  userIds: string[]
+): Promise<UserInternalRes> {
+  const pUserInternalReq = new UserInternalReq(userIds, false);
+  const pUserIdAxiosResponse = await axios.post(
+    userServiceHostUrl,
+    pUserInternalReq
+  );
+
+  return plainToInstance(UserInternalRes, pUserIdAxiosResponse.data);
 }
 
 export async function getPostLikeCount(
@@ -275,42 +314,4 @@ export async function getPostsILiked(
     logger.error(`Error fetching posts I liked`, error);
     throw error;
   }
-}
-
-
-export async function writePost(
-  loggedInUserId: string,
-  body: string,
-  postTime: number,
-  attachmentIds: string[] | undefined,
-  newPostKafkaProducer: Producer,
-  fanoutTopic: string
-): Promise<String> {
-  const post = new Post({
-    _id: new mongoose.Types.ObjectId(),
-    userId: loggedInUserId,
-    body: body,
-    time: postTime,
-    attachments: attachmentIds?.map((id) => new mongoose.Types.ObjectId(id)),
-  });
-
-  const dbResult = await post.save();
-  logger.debug(`saved to mongodb with postId: ${dbResult.id}`);
-
-  const kafkaMsg = new NewPostKafkaMsg(
-    dbResult.id,
-    dbResult.userId!.toString(),
-    dbResult.time
-  );
-  logger.debug(`publishing Kafka: topic: ${fanoutTopic}`);
-  await newPostKafkaProducer.send({
-    topic: fanoutTopic,
-    messages: [
-      {
-        key: dbResult.id,
-        value: JSON.stringify(kafkaMsg),
-      },
-    ],
-  });
-  return dbResult.id.toString;
 }

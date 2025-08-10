@@ -10,7 +10,8 @@ import { InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { ATTR_HEADER_USER_ID } from "@tareqjoy/utils";
-import { writePost } from "./common/common";
+import { writePost } from "./common";
+
 
 const logger = getFileLogger(__filename);
 
@@ -42,8 +43,10 @@ export const createProfilePhotoRouter = (
         createProfilePhotoPostReq.attachmentId
           ? [createProfilePhotoPostReq.attachmentId]
           : undefined,
+        "profile_photo",
         newPostKafkaProducer,
-        kafka_new_post_fanout_topic
+        kafka_new_post_fanout_topic,
+
       );
 
       res.status(200).json(new MessageResponse("Posted"));

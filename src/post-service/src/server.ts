@@ -9,11 +9,13 @@ import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";
 import { connectKafkaProducer, connectMongo, connectRedis } from "@tareqjoy/clients";
-import { createCreateRouter } from "./routes/create-post";
-import { createGetRouter } from "./routes/get-post";
-import { createGetByUserRouter } from "./routes/get-by-user";
+import { createCreateRouter } from "./routes/create-post/create-post";
+import { createGetRouter } from "./routes/get-post/get-post";
+import { createGetByUserRouter } from "./routes/get-by-user/get-by-user";
 import { createLikeRouter } from "./routes/like";
-import { createProfilePhotoRouter } from "./routes/create-post-profile-photo";
+import { createProfilePhotoRouter } from "./routes/create-post/create-post-profile-photo";
+import { createInternalGetByUserRouter } from "./routes/get-by-user/get-by-user-internal";
+import { createInternalGetRouter } from "./routes/get-post/get-post-internal";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "post";
 
@@ -44,7 +46,11 @@ async function main() {
   //Only for internal use, should be protected from public access
   app.use(
     getInternalApiPath(api_path_root, "get-by-user"),
-    createGetByUserRouter(mongoClient, redisClient),
+    createInternalGetByUserRouter(mongoClient, redisClient),
+  );
+  app.use(
+    getInternalApiPath(api_path_root, "get"),
+    createInternalGetRouter(mongoClient, redisClient)
   );
 
   //For public use

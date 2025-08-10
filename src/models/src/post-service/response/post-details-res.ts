@@ -10,12 +10,27 @@ export class SingleLike {
   }
 }
 
+export class SingleAttachment {
+  type: string;
+  count: number;
+
+  constructor();
+  constructor(type: string, count: number);
+  constructor(type?: string, count?: number) {
+    this.type = type || "";
+    this.count = count || 0;
+  }
+}
+
+
 export class SinglePost {
   postId: string;
   userId?: string;
   username?: string;
   body: string;
   time: number;
+  postType: string;
+  attachments?: SingleAttachment[];
   likes: SingleLike[];
   myLikeType?: string;
 
@@ -23,24 +38,28 @@ export class SinglePost {
   constructor(
     postId: string,
     time: number,
+    postType: string,
     options?: {
       userIdOrUsername?: string;
       isUserName?: boolean;
       body?: string;
+      attachments?: SingleAttachment[];
       likes?: SingleLike[];
       myLikeType?: string;
-    },
+    }
   );
   constructor(
     postId?: string,
     time?: number,
+    postType?: string,
     options?: {
       userIdOrUsername?: string;
       isUserName?: boolean;
       body?: string;
+      attachments?: SingleAttachment[];
       likes?: SingleLike[];
       myLikeType?: string;
-    },
+    }
   ) {
     this.postId = postId || "";
     if (options?.isUserName) {
@@ -50,6 +69,8 @@ export class SinglePost {
       this.userId = options?.userIdOrUsername;
     }
     this.body = options?.body || "";
+    this.postType = postType || "";
+    this.attachments = options?.attachments || [];
     this.likes = options?.likes || [];
     this.time = time || 0;
     this.myLikeType = options?.myLikeType;
