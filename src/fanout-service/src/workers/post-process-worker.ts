@@ -1,4 +1,10 @@
-import { InvalidRequest, NewPostKafkaMsg, PhotoUploadKafkaMsg, ProfilePhotoUpdateReq } from "@tareqjoy/models";
+import {
+  AttachmentInfos,
+  InvalidRequest,
+  NewPostKafkaMsg,
+  PhotoUploadKafkaMsg,
+  ProfilePhotoUpdateReq,
+} from "@tareqjoy/models";
 import axios from "axios";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
@@ -9,46 +15,96 @@ import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
 import path from "path";
 import fs from "fs/promises";
 import sharp from "sharp";
+import { Producer } from "kafkajs";
+import { Attachment } from "@tareqjoy/clients";
 
 const logger = getFileLogger(__filename);
 
-const userUpdateProfilePhotoUrl: string =
+const getAttachmentUrl: string =
   process.env.USER_UPDATE_PROFILE_PHOTO_URL ||
-  "http://127.0.0.1:5002/v1/user/detail/:userId/profile-photo";
-
+  "http://127.0.0.1:5008/v1/file/attachment-info";
 
 const baseProfilePhotoPath: string =
   process.env.BASE_PROFILE_PHOTO_BASE_PATH ||
   "/data/mynodeapp/uploads/profile-photo/";
 
 export const postProcessWorker = async (
-  messageStr: string
+  messageStr: string,
+  kafkaProducer: Producer
 ): Promise<boolean> => {
   try {
-        const newPostKafkaMsg = plainToInstance(
-          NewPostKafkaMsg,
-          JSON.parse(messageStr),
-        );
-        const errors = await validate(newPostKafkaMsg);
-    
-        if (errors.length > 0) {
-          logger.warn(`Bad data found from Kafka: ${new InvalidRequest(errors)}`);
-          return true;
-        }
-    
-    const photoUploadKafkaMsg = plainToInstance(
-      PhotoUploadKafkaMsg,
+    const newPostKafkaMsg = plainToInstance(
+      NewPostKafkaMsg,
       JSON.parse(messageStr)
     );
-    const errors = await validate(photoUploadKafkaMsg);
+    const errors = await validate(newPostKafkaMsg);
 
     if (errors.length > 0) {
-      logger.warn(`Bad data found from Kafka: ${JSON.stringify(new InvalidRequest(errors))}`);
+      logger.warn(`Bad data found from Kafka: ${new InvalidRequest(errors)}`);
       return true;
     }
 
-    const { userId, photoName, uploadedAt } = photoUploadKafkaMsg;
+    const { userId, attachmentIds, postTime } = newPostKafkaMsg;
 
+    const attachmentInfoAxiosRes = await axios.get(
+      getInternalFullPath(getAttachmentUrl),
+      {
+        params: {
+          ids: attachmentIds,
+        },
+      }
+    );
+
+    const attachmentInfosResponseObj = plainToInstance(
+      AttachmentInfos,
+      attachmentInfoAxiosRes.data
+    );
+
+    for (const attachmentInfo of attachmentInfosResponseObj.attachments) {
+      if (attachmentInfo.type !== "image") {
+
+        const originalPath = attachmentInfo.versions.original?.filePath;
+
+        // Ensure original file exists
+        try {
+          await fs.access(originalPath);
+        } catch {
+          logger.warn(`Original photo not found at path: ${originalPath}`);
+          return true;
+        }
+
+        const originalImage = sharp(originalPath);
+
+        // Ensure variant directories exist
+        await Promise.all(
+          Object.keys(PROFILE_PHOTO_VARIANT_SIZES).map((variant) =>
+            fs.mkdir(path.join(baseProfilePhotoPath, variant, userId!), {
+              recursive: true,
+            })
+          )
+        );
+
+        // Generate resized variants
+        await Promise.all(
+          Object.entries(PROFILE_PHOTO_VARIANT_SIZES).map(
+            async ([variant, width]) => {
+              const outputPath = path.join(
+                baseProfilePhotoPath,
+                variant,
+                userId!,
+                photoName
+              );
+              await originalImage
+                .clone()
+                .resize({ width, withoutEnlargement: true })
+                .jpeg({ quality: 80 })
+                .toFile(outputPath);
+              logger.debug(`Saved ${variant} variant: ${outputPath}`);
+            }
+          )
+        );
+      }
+    }
     const originalPath = path.join(
       baseProfilePhotoPath,
       "original",
@@ -94,7 +150,7 @@ export const postProcessWorker = async (
         }
       )
     );
-/*
+    /*
     const profilePhotoUpdateReq = new ProfilePhotoUpdateReq(
       photoName,
       uploadedAt

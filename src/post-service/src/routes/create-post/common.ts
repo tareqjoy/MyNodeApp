@@ -31,7 +31,11 @@ export async function writePost(
   const kafkaMsg = new NewPostKafkaMsg(
     dbResult.id,
     dbResult.userId!.toString(),
-    dbResult.time
+    dbResult.time,
+    dbResult.postType,
+    dbResult.attachments!.map((id) => id.toString())
+  );
+  logger.debug(`kafka message created: `, kafkaMsg
   );
   logger.debug(`publishing Kafka: topic: ${fanoutTopic}`);
   await newPostKafkaProducer.send({

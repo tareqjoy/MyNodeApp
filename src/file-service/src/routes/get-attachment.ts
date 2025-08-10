@@ -1,13 +1,16 @@
 import express, { NextFunction, Request, Response } from "express";
 import axios from "axios";
 import {
+  AttachmentInfos,
   InternalServerError,
   InvalidRequest,
   MessageResponse,
   PhotoUploadKafkaMsg,
   ProfilePhotoRes,
+  SingleAttachmentInfo,
   UserInternalReq,
   UserInternalRes,
+  VersionInfo,
 } from "@tareqjoy/models";
 import { ATTR_HEADER_USER_ID, getFileLogger } from "@tareqjoy/utils";
 import path from "path";
@@ -17,7 +20,7 @@ import multer, { FileFilterCallback } from "multer";
 import { Producer } from "kafkajs";
 import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
 import { plainToInstance } from "class-transformer";
-import mongoose, { Mongoose } from "mongoose";
+import mongoose, { Mongoose, Types } from "mongoose";
 import { Attachment } from "@tareqjoy/clients";
 import { metadata } from "reflect-metadata/no-conflict";
 
@@ -34,119 +37,91 @@ const userServiceHostUrl: string =
 
 const router = express.Router();
 
-const fileFilter = (
-  req: Request,
-  file: Express.Multer.File,
-  cb: FileFilterCallback
-) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
+function validateObjectIds(ids: unknown): string[] {
+  let idList: unknown[] = [];
+
+  if (typeof ids === "string") {
+    idList = [ids];
+  } else if (Array.isArray(ids)) {
+    idList = ids;
   } else {
-    cb(new Error("Only image files are allowed"));
+    throw new Error("ids must be a string or an array of strings");
   }
-};
 
-const validateProfilePhotoMid = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.headers[ATTR_HEADER_USER_ID];
-  if (!userId || typeof userId !== "string") {
-    return res
-      .status(400)
-      .json(new InvalidRequest(`${ATTR_HEADER_USER_ID} header missing`));
-  }
-  next();
-};
+  const validIds: string[] = [];
 
-export const createProfilePhotoRouter = (mongoClient: Mongoose) => {
-  router.post(
-    "/",
-    validateProfilePhotoMid,
-    (req, res, next) => {
-      const userId = req.headers[ATTR_HEADER_USER_ID] as string;
-      const userDir = path.join(baseProfilePhotoPath, "original", userId);
-
-      fs.ensureDirSync(userDir); // Ensure directory exists
-
-      const storage = multer.diskStorage({
-        destination: (req, file, cb) => {
-          cb(null, userDir);
-        },
-        filename: (req, file, cb) => {
-          const ext = path.extname(file.originalname).toLowerCase();
-          const uniqueName = uuidv4() + ext;
-          cb(null, uniqueName);
-        },
-      });
-
-      const upload = multer({
-        storage,
-        fileFilter,
-        limits: {
-          fileSize: 5 * 1024 * 1024, // 5MB
-        },
-      }).single("file");
-
-      upload(req, res, function (err) {
-        if (err instanceof multer.MulterError) {
-          return res.status(400).json({ error: err.message });
-        } else if (err) {
-          logger.error(`Error during upload`, err);
-          return res.status(500).json(new InternalServerError());
-        }
-        next(); // proceed to handler
-      });
-    },
-    async (req, res) => {
-      if (!req.file) {
-        return res
-          .status(400)
-          .json(new InvalidRequest("No file uploaded or invalid file type"));
-      }
-
-      const userId = req.headers[ATTR_HEADER_USER_ID] as string;
-
-      try {
-        const savedFilePath = path.resolve(req.file.path);
-
-        const attachment = new Attachment({
-          _id: new mongoose.Types.ObjectId(),
-          userId: userId,
-          type: "image",
-          uploadedAt: new Date(),
-          versions: {
-            original: {
-              filePath: savedFilePath,
-              status: "uploaded",
-            },
-          },
-        });
-
-        await attachment.save();
-
-        if (attachment._id) {
-          res
-            .status(200)
-            .json(new ProfilePhotoRes(attachment?._id?.toString()));
-        } else {
-          logger.error("Attachment ID is missing after save");
-          res.status(500).json(new InternalServerError());
-        }
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          logger.error(
-            `Axios error in upload: url=${error.config?.url}, status=${error.response?.status}, message=${JSON.stringify(error.response?.data)}`
-          );
-        } else {
-          logger.error("Unhandled error in upload:", error);
-        }
-        res.status(500).json(new InternalServerError());
-      }
+  for (const id of idList) {
+    if (typeof id !== "string" || !Types.ObjectId.isValid(id)) {
+      throw new Error(`Invalid ObjectId: ${id}`);
     }
-  );
+    validIds.push(id);
+  }
+
+  return validIds;
+}
+
+export const createInternalGetAttachmentRouter = (mongoClient: Mongoose) => {
+  router.get("/", async (req, res, next) => {
+    logger.silly(`POST /get-attachment is called`);
+    let validated: string[] = [];
+    try {
+      const idsParam = req.query.ids as string | undefined;
+      if (!idsParam) {
+        return res.status(400).json({ error: "ids query param is required" });
+      }
+
+      const ids = idsParam.includes(",") ? idsParam.split(",") : idsParam;
+      validated = validateObjectIds(ids);
+    } catch (error: any) {
+      res.status(400).json(new InvalidRequest(error.message));
+      return;
+    }
+
+    try {
+      const attachmentIds = validated.map((id) => new Types.ObjectId(id));
+      const dbAttachments = await Attachment.find({
+        _id: { $in: attachmentIds },
+      });
+
+      const attachmentsDto = dbAttachments.map((attachment) => {
+        const versionsObj: Record<string, VersionInfo> = {};
+        for (const [name, v] of attachment.versions.entries()) {
+          versionsObj[name] = new VersionInfo(v.filePath, v.status, {
+            manifestUrl: v.manifestUrl || undefined,
+            metadata:
+              v.metadata && Object.keys(v.metadata).length > 0
+                ? Object.fromEntries(
+                    Object.entries(v.metadata).map(([k, val]) => [
+                      k,
+                      val === null ? undefined : val,
+                    ])
+                  )
+                : undefined,
+          });
+        }
+
+        return new SingleAttachmentInfo(
+          attachment._id.toString(),
+          attachment.userId.toString(),
+          attachment.type,
+          attachment.uploadedAt,
+          attachment.updatedAt,
+          versionsObj
+        );
+      });
+
+      res.status(200).json(new AttachmentInfos(attachmentsDto));
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        logger.error(
+          `Axios error in upload: url=${error.config?.url}, status=${error.response?.status}, message=${JSON.stringify(error.response?.data)}`
+        );
+      } else {
+        logger.error("Unhandled error in upload:", error);
+      }
+      res.status(500).json(new InternalServerError());
+    }
+  });
 
   router.get(
     "/:userId/:variant/:fileName",

@@ -6,13 +6,14 @@ import express from "express";
 import "reflect-metadata";
 import bodyParser from "body-parser";
 
-import { connectKafkaConsumer, connectMongo, connectRedis } from "@tareqjoy/clients";
+import { connectKafkaConsumer, connectKafkaProducer, connectMongo, connectRedis } from "@tareqjoy/clients";
 import { createFanoutRouter } from "./routes/fanout";
 import { newPostFanout } from "./workers/post-fanout-worker";
 import { iFollowedFanout } from "./workers/i-followed-worker";
 import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 import { postLikeWorker } from "./workers/post-like-worker";
+import { postProcessWorker } from "./workers/post-process-worker";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
 const kafka_new_post_fanout_topic =
@@ -23,7 +24,10 @@ const kafka_i_unfollowed_fanout_topic =
   process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || "i-unfollowed";
 const kafka_post_like_fanout_topic =
   process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-like";
+const kafka_photo_upload_topic =
+    process.env.KAFKA_PHOTO_UPLOAD_TOPIC || "photo-upload";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
+
 
 const logger =  getFileLogger(__filename);
 
@@ -43,7 +47,8 @@ class HttpError extends Error {
 
 async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
-
+  const kafkaProducer = await connectKafkaProducer(kafka_client_id);
+  
   const newPostConsumer = await connectKafkaConsumer(
     kafka_client_id,
     kafka_fanout_group,
@@ -89,7 +94,13 @@ async function main() {
               mongoClient,
               message.value.toString(),
             );
-          }
+          } else if (topic === kafka_photo_upload_topic) {
+            isProcessed = await postProcessWorker(
+              message.value?.toString(),
+              kafkaProducer
+            );
+          } 
+
 
           if (isProcessed) {
             logger.debug(
@@ -161,7 +172,8 @@ async function main() {
       logger.info("Caught interrupt signal, shutting down...");
       await newPostConsumer.disconnect();
       logger.info(`Consumer disconnected`);
-
+      await kafkaProducer.disconnect();
+      logger.info(`Producer disconnected`);
       if (redisClient.isOpen) {
         await redisClient.quit();
         logger.info(`Redis disconnected`);

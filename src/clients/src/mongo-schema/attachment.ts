@@ -17,27 +17,20 @@ type LinkedEntity = (typeof LinkedEntities)[number];
 
 const VersionSchema = new Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      // Examples: "original", "small", "medium", "large", "720p-hls", "mp3", "aac"
-    },
-    filePath: { type: String, required: true }, // For direct file versions (images, audio, non-segmented video)
-    manifestUrl: { type: String }, // For segmented streaming video (e.g. HLS playlist)
-
+    filePath: { type: String, required: true },
+    manifestUrl: { type: String },
     status: {
       type: String,
       enum: AttachmentStatuses,
       default: "uploaded",
-      required: true
+      required: true,
     },
-
     metadata: {
-      width: Number, // for images and videos
-      height: Number, // for images and videos
-      duration: Number, // seconds, for audio/video
-      bitrate: Number, // kbps, for audio/video
-      codec: String, // optional codec info
+      width: Number,
+      height: Number,
+      duration: Number,
+      bitrate: Number,
+      codec: String,
     },
   },
   { _id: false }
@@ -45,9 +38,9 @@ const VersionSchema = new Schema(
 
 const AttachmentSchema = new Schema(
   {
-    _id: Types.ObjectId,
+    _id: { type: Types.ObjectId, required: true },
 
-    userId: { type: Types.ObjectId, required: true, ref: "User", index: true }, // Reference to User
+    userId: { type: Types.ObjectId, required: true, ref: "User", index: true },
     linkedTo: {
       type: String,
       enum: LinkedEntities,
@@ -58,10 +51,13 @@ const AttachmentSchema = new Schema(
       default: null,
       index: true,
     },
+
     versions: {
-      type: [VersionSchema],
-      default: [],
+      type: Map,
+      of: VersionSchema,
+      default: {},
     },
+
     uploadedAt: { type: Date, default: Date.now },
 
     type: {
@@ -73,10 +69,9 @@ const AttachmentSchema = new Schema(
   { timestamps: true }
 );
 
-
-AttachmentSchema.index({ userId: 1, linkedTo: 1, type: 1, uploadedAt: -1 }); 
-AttachmentSchema.index({ userId: 1, linkedTo: 1, uploadedAt: -1 });   
-AttachmentSchema.index({ linkedTo: 1, uploadedAt: -1 });  
+AttachmentSchema.index({ userId: 1, linkedTo: 1, type: 1, uploadedAt: -1 });
+AttachmentSchema.index({ userId: 1, linkedTo: 1, uploadedAt: -1 });
+AttachmentSchema.index({ linkedTo: 1, uploadedAt: -1 });
 
 export const Attachment = model("Attachment", AttachmentSchema);
 export type AttachmentObject = InferSchemaType<typeof AttachmentSchema>;
