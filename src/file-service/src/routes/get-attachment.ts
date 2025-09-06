@@ -29,8 +29,6 @@ const logger = getFileLogger(__filename);
 const baseProfilePhotoPath: string =
   process.env.BASE_PROFILE_PHOTO_BASE_PATH ||
   "/data/mynodeapp/uploads/profile-photo/";
-const kafka_photo_upload_topic =
-  process.env.KAFKA_PHOTO_UPLOAD_TOPIC || "photo-upload";
 const userServiceHostUrl: string =
   process.env.USER_SERVICE_USERID_URL ||
   "http://127.0.0.1:5002/v1/user/userid/";

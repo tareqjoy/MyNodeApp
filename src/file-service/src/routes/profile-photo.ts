@@ -18,7 +18,7 @@ import { Producer } from "kafkajs";
 import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
 import { plainToInstance } from "class-transformer";
 import mongoose, { Mongoose } from "mongoose";
-import { Attachment } from "@tareqjoy/clients";
+import { Attachment, VersionType } from "@tareqjoy/clients";
 import { metadata } from "reflect-metadata/no-conflict";
 
 const logger = getFileLogger(__filename);
@@ -67,7 +67,7 @@ export const createProfilePhotoRouter = (mongoClient: Mongoose) => {
     validateProfilePhotoMid,
     (req, res, next) => {
       const userId = req.headers[ATTR_HEADER_USER_ID] as string;
-      const userDir = path.join(baseProfilePhotoPath, "original", userId);
+      const userDir = path.join(baseProfilePhotoPath, VersionType.ORIGINAL, userId);
 
       fs.ensureDirSync(userDir); // Ensure directory exists
 

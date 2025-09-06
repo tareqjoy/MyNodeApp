@@ -1,28 +1,62 @@
 import { InferSchemaType, model, Schema, Types } from "mongoose";
 
-const AttachmentTypes = ["image", "audio", "video", "document"] as const;
-type AttachmentType = (typeof AttachmentTypes)[number];
+/**
+ * Attachment type enum
+ */
+export const AttachmentType = {
+  IMAGE: "image",
+  AUDIO: "audio",
+  VIDEO: "video",
+  DOCUMENT: "document",
+} as const;
+export type AttachmentType =
+  (typeof AttachmentType)[keyof typeof AttachmentType];
 
-const AttachmentStatuses = [
-  "uploaded",
-  "processing",
-  "ready",
-  "failed",
-  "deleted",
-] as const;
-type AttachmentStatus = (typeof AttachmentStatuses)[number];
+/**
+ * Attachment status enum
+ */
+export const AttachmentStatus = {
+  UPLOADED: "uploaded",
+  PROCESSING: "processing",
+  READY: "ready",
+  FAILED: "failed",
+  DELETED: "deleted",
+} as const;
+export type AttachmentStatus =
+  (typeof AttachmentStatus)[keyof typeof AttachmentStatus];
 
-const LinkedEntities = ["Post", "Chat", "Comment"] as const;
-type LinkedEntity = (typeof LinkedEntities)[number];
+/**
+ * Linked entity enum
+ */
+export const LinkedEntity = {
+  POST: "Post",
+  CHAT: "Chat",
+  COMMENT: "Comment",
+} as const;
+export type LinkedEntity = (typeof LinkedEntity)[keyof typeof LinkedEntity];
 
+/**
+ * Version type enum
+ */
+export const VersionType = {
+  ORIGINAL: "original",
+  SMALL: "small",
+  MEDIUM: "medium",
+  LARGE: "large",
+} as const;
+export type VersionType = (typeof VersionType)[keyof typeof VersionType];
+
+/**
+ * Version schema
+ */
 const VersionSchema = new Schema(
   {
     filePath: { type: String, required: true },
     manifestUrl: { type: String },
     status: {
       type: String,
-      enum: AttachmentStatuses,
-      default: "uploaded",
+      enum: Object.values(AttachmentStatus),
+      default: AttachmentStatus.UPLOADED,
       required: true,
     },
     metadata: {
@@ -36,6 +70,9 @@ const VersionSchema = new Schema(
   { _id: false }
 );
 
+/**
+ * Attachment schema
+ */
 const AttachmentSchema = new Schema(
   {
     _id: { type: Types.ObjectId, required: true },
@@ -43,7 +80,7 @@ const AttachmentSchema = new Schema(
     userId: { type: Types.ObjectId, required: true, ref: "User", index: true },
     linkedTo: {
       type: String,
-      enum: LinkedEntities,
+      enum: Object.values(LinkedEntity),
       default: null,
     },
     linkedId: {
@@ -62,7 +99,7 @@ const AttachmentSchema = new Schema(
 
     type: {
       type: String,
-      enum: AttachmentTypes,
+      enum: Object.values(AttachmentType),
       required: true,
     },
   },

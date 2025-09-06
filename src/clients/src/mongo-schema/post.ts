@@ -1,15 +1,22 @@
 import { InferSchemaType, model, Schema, Types } from "mongoose";
 
-const PostTypes = [
-  "normal",
-  "profile_photo",
-  "cover_photo",
-  "shared_post",
-  "memory",
-  "event",
-] as const;
-type PostType = (typeof PostTypes)[number];
+/**
+ * Post type enum
+ */
+export const PostType = {
+  NORMAL: "normal",
+  PROFILE_PHOTO: "profile_photo",
+  COVER_PHOTO: "cover_photo",
+  SHARED_POST: "shared_post",
+  MEMORY: "memory",
+  EVENT: "event",
+} as const;
 
+export type PostType = (typeof PostType)[keyof typeof PostType];
+
+/**
+ * Post schema
+ */
 const PostSchema = new Schema({
   _id: { type: Types.ObjectId, required: true },
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
@@ -17,7 +24,7 @@ const PostSchema = new Schema({
   time: { type: Number, required: true },
   postType: {
     type: String,
-    enum: PostTypes,
+    enum: Object.values(PostType),
     required: true,
   },
   reactions: {

@@ -24,9 +24,10 @@ const getAttachmentUrl: string =
   process.env.USER_UPDATE_PROFILE_PHOTO_URL ||
   "http://127.0.0.1:5008/v1/file/attachment-info";
 
-const baseProfilePhotoPath: string =
-  process.env.BASE_PROFILE_PHOTO_BASE_PATH ||
-  "/data/mynodeapp/uploads/profile-photo/";
+
+const baseProfilePhotoVariantPath: string =
+    process.env.PROFILE_PHOTO_VARIANTS_BASE_PATH ||
+    "/data/mynodeapp/uploads/profile-photo/";
 
 export const postProcessWorker = async (
   messageStr: string,
@@ -64,7 +65,12 @@ export const postProcessWorker = async (
       if (attachmentInfo.type !== "image") {
 
         const originalPath = attachmentInfo.versions.original?.filePath;
-
+        if (!originalPath) {
+          logger.warn(
+            `Original file path not found for attachment: ${attachmentInfo.id}`
+          );
+          continue;
+        }
         // Ensure original file exists
         try {
           await fs.access(originalPath);
@@ -74,11 +80,12 @@ export const postProcessWorker = async (
         }
 
         const originalImage = sharp(originalPath);
+        const photoName = path.basename(originalPath);
 
         // Ensure variant directories exist
         await Promise.all(
           Object.keys(PROFILE_PHOTO_VARIANT_SIZES).map((variant) =>
-            fs.mkdir(path.join(baseProfilePhotoPath, variant, userId!), {
+            fs.mkdir(getProfilePhotoPath(variant, userId), {
               recursive: true,
             })
           )
@@ -89,9 +96,7 @@ export const postProcessWorker = async (
           Object.entries(PROFILE_PHOTO_VARIANT_SIZES).map(
             async ([variant, width]) => {
               const outputPath = path.join(
-                baseProfilePhotoPath,
-                variant,
-                userId!,
+                getProfilePhotoPath(variant, userId),
                 photoName
               );
               await originalImage
@@ -100,56 +105,13 @@ export const postProcessWorker = async (
                 .jpeg({ quality: 80 })
                 .toFile(outputPath);
               logger.debug(`Saved ${variant} variant: ${outputPath}`);
+
             }
           )
         );
       }
     }
-    const originalPath = path.join(
-      baseProfilePhotoPath,
-      "original",
-      userId!,
-      photoName
-    );
 
-    // Ensure original file exists
-    try {
-      await fs.access(originalPath);
-    } catch {
-      logger.warn(`Original photo not found at path: ${originalPath}`);
-      return true;
-    }
-
-    const originalImage = sharp(originalPath);
-
-    // Ensure variant directories exist
-    await Promise.all(
-      Object.keys(PROFILE_PHOTO_VARIANT_SIZES).map((variant) =>
-        fs.mkdir(path.join(baseProfilePhotoPath, variant, userId!), {
-          recursive: true,
-        })
-      )
-    );
-
-    // Generate resized variants
-    await Promise.all(
-      Object.entries(PROFILE_PHOTO_VARIANT_SIZES).map(
-        async ([variant, width]) => {
-          const outputPath = path.join(
-            baseProfilePhotoPath,
-            variant,
-            userId!,
-            photoName
-          );
-          await originalImage
-            .clone()
-            .resize({ width, withoutEnlargement: true })
-            .jpeg({ quality: 80 })
-            .toFile(outputPath);
-          logger.debug(`Saved ${variant} variant: ${outputPath}`);
-        }
-      )
-    );
     /*
     const profilePhotoUpdateReq = new ProfilePhotoUpdateReq(
       photoName,
@@ -168,8 +130,6 @@ export const postProcessWorker = async (
       return false;
     }
 */
-    await fs.unlink(originalPath);
-    logger.debug(`Deleted original file: ${originalPath}`);
 
     return true;
   } catch (error) {
@@ -183,3 +143,8 @@ export const postProcessWorker = async (
   }
   return false;
 };
+
+
+export const getProfilePhotoPath = (variant: string, userId: string): string => {
+  return path.join(baseProfilePhotoVariantPath, variant, userId);
+}
