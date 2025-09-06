@@ -34,7 +34,7 @@ export const iFollowedFanout = async (
     const errors = await validate(iFollowedKafkaMsg);
 
     if (errors.length > 0) {
-      logger.warn(`Bad data found from Kafka: ${new InvalidRequest(errors)}`);
+      logger.warn(`Bad data found from Kafka: ${JSON.stringify(errors)}`);
       return true;
     }
 

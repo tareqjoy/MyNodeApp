@@ -3,15 +3,18 @@ import { getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
 import { Producer } from "kafkajs";
 import axios from "axios";
-import { CreateProfilePhotoPostReq, InternalServerError, MessageResponse } from "@tareqjoy/models";
+import {
+  CreateProfilePhotoPostReq,
+  InternalServerError,
+  MessageResponse,
+} from "@tareqjoy/models";
 import { CreatePostReq } from "@tareqjoy/models";
-import { Post } from "@tareqjoy/clients";
+import { Post, PostType } from "@tareqjoy/clients";
 import { InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { ATTR_HEADER_USER_ID } from "@tareqjoy/utils";
 import { writePost } from "./common";
-
 
 const logger = getFileLogger(__filename);
 
@@ -28,7 +31,10 @@ export const createProfilePhotoRouter = (
     logger.silly(`POST /profile-photo called`);
     const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;
     try {
-      const createProfilePhotoPostReq = plainToInstance(CreateProfilePhotoPostReq, req.body);
+      const createProfilePhotoPostReq = plainToInstance(
+        CreateProfilePhotoPostReq,
+        req.body
+      );
       const errors = await validate(createProfilePhotoPostReq);
 
       if (errors.length > 0) {
@@ -43,10 +49,9 @@ export const createProfilePhotoRouter = (
         createProfilePhotoPostReq.attachmentId
           ? [createProfilePhotoPostReq.attachmentId]
           : undefined,
-        "profile_photo",
+        PostType.PROFILE_PHOTO,
         newPostKafkaProducer,
-        kafka_new_post_fanout_topic,
-
+        kafka_new_post_fanout_topic
       );
 
       res.status(200).json(new MessageResponse("Posted"));

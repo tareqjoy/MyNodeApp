@@ -1,5 +1,11 @@
-import { Type } from "class-transformer";
-import { IsMongoId, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import {
+  IsArray,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from "class-validator";
 
 export class NewPostKafkaMsg {
   @IsString()
@@ -21,7 +27,9 @@ export class NewPostKafkaMsg {
   @IsNotEmpty()
   postType: string;
 
-  @IsString()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsArray()
+  @IsMongoId({ each: true })
   @IsNotEmpty()
   attachmentIds: string[];
 

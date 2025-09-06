@@ -32,7 +32,7 @@ export const postLikeWorker = async (
     const errors = await validate(postLikeKafkaMsg);
 
     if (errors.length > 0) {
-      logger.warn(`Bad data found from Kafka: ${new InvalidRequest(errors)}`);
+      logger.warn(`Bad data found from Kafka: ${JSON.stringify(errors)}`);
       return true;
     }
 

@@ -18,7 +18,12 @@ import { Producer } from "kafkajs";
 import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
 import { plainToInstance } from "class-transformer";
 import mongoose, { Mongoose } from "mongoose";
-import { Attachment, VersionType } from "@tareqjoy/clients";
+import {
+  Attachment,
+  AttachmentType,
+  VersionType,
+  AttachmentStatus,
+} from "@tareqjoy/clients";
 import { metadata } from "reflect-metadata/no-conflict";
 
 const logger = getFileLogger(__filename);
@@ -115,12 +120,12 @@ export const createProfilePhotoRouter = (mongoClient: Mongoose) => {
         const attachment = new Attachment({
           _id: new mongoose.Types.ObjectId(),
           userId: userId,
-          type: "image",
+          type: AttachmentType.IMAGE,
           uploadedAt: new Date(),
           versions: {
             original: {
               filePath: savedFilePath,
-              status: "uploaded",
+              status: AttachmentStatus.UPLOADED,
             },
           },
         });
@@ -130,7 +135,7 @@ export const createProfilePhotoRouter = (mongoClient: Mongoose) => {
         if (attachment._id) {
           res
             .status(200)
-            .json(new ProfilePhotoRes(attachment?._id?.toString()));
+            .json(new ProfilePhotoRes(attachment._id.toString()));
         } else {
           logger.error("Attachment ID is missing after save");
           res.status(500).json(new InternalServerError());

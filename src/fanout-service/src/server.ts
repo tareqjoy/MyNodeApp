@@ -17,15 +17,15 @@ import { postProcessWorker } from "./workers/post-process-worker";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
 const kafka_new_post_fanout_topic =
-  process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "new-post";
+  process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-fanout";
+const kafka_post_topic =
+    process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "new-post";
 const kafka_i_followed_fanout_topic =
   process.env.KAFKA_I_FOLLOWED_FANOUT_TOPIC || "i-followed";
 const kafka_i_unfollowed_fanout_topic =
   process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || "i-unfollowed";
 const kafka_post_like_fanout_topic =
   process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-like";
-const kafka_photo_upload_topic =
-    process.env.KAFKA_PHOTO_UPLOAD_TOPIC || "photo-upload";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
 
@@ -53,6 +53,7 @@ async function main() {
     kafka_client_id,
     kafka_fanout_group,
     [
+      kafka_post_topic,
       kafka_new_post_fanout_topic,
       kafka_i_followed_fanout_topic,
       kafka_i_unfollowed_fanout_topic,
@@ -94,7 +95,7 @@ async function main() {
               mongoClient,
               message.value.toString(),
             );
-          } else if (topic === kafka_photo_upload_topic) {
+          } else if (topic === kafka_post_topic) {
             isProcessed = await postProcessWorker(
               message.value?.toString(),
               kafkaProducer
@@ -180,6 +181,8 @@ async function main() {
       } else {
         logger.info(`Redis was not connected at the first place`);
       }
+      await mongoClient.disconnect();
+      logger.info(`MongoDB disconnected`);
       process.exit(0);
     } catch (error) {
       logger.error("Error during disconnect:", error);

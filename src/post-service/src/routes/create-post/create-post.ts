@@ -8,7 +8,7 @@ import {
   MessageResponse
 } from "@tareqjoy/models";
 import { CreatePostReq } from "@tareqjoy/models";
-import { Post } from "@tareqjoy/clients";
+import { Post, PostType } from "@tareqjoy/clients";
 import { InvalidRequest, NewPostKafkaMsg } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
@@ -43,10 +43,10 @@ export const createCreateRouter = (
         createPostReq.body,
         createPostReq.postTime,
         createPostReq.attachmentIds,
-        "normal",
+        PostType.NORMAL,
         newPostKafkaProducer,
         kafka_new_post_fanout_topic
-      )
+      );
 
       res.status(200).json(new MessageResponse("Posted"));
     } catch (error) {

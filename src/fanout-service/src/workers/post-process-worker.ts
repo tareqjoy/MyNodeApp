@@ -1,10 +1,4 @@
-import {
-  AttachmentInfos,
-  InvalidRequest,
-  NewPostKafkaMsg,
-  PhotoUploadKafkaMsg,
-  ProfilePhotoUpdateReq,
-} from "@tareqjoy/models";
+import { AttachmentInfos, NewPostKafkaMsg } from "@tareqjoy/models";
 import axios from "axios";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
@@ -16,18 +10,24 @@ import path from "path";
 import fs from "fs/promises";
 import sharp from "sharp";
 import { Producer } from "kafkajs";
-import { Attachment } from "@tareqjoy/clients";
+import {
+  Attachment,
+  AttachmentStatus,
+  AttachmentType,
+  VersionType,
+} from "@tareqjoy/clients";
 
 const logger = getFileLogger(__filename);
 
 const getAttachmentUrl: string =
   process.env.USER_UPDATE_PROFILE_PHOTO_URL ||
   "http://127.0.0.1:5008/v1/file/attachment-info";
-
+const kafka_new_post_fanout_topic =
+  process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-fanout";
 
 const baseProfilePhotoVariantPath: string =
-    process.env.PROFILE_PHOTO_VARIANTS_BASE_PATH ||
-    "/data/mynodeapp/uploads/profile-photo/";
+  process.env.PROFILE_PHOTO_VARIANTS_BASE_PATH ||
+  "/data/mynodeapp/uploads/profile-photo/";
 
 export const postProcessWorker = async (
   messageStr: string,
@@ -41,95 +41,91 @@ export const postProcessWorker = async (
     const errors = await validate(newPostKafkaMsg);
 
     if (errors.length > 0) {
-      logger.warn(`Bad data found from Kafka: ${new InvalidRequest(errors)}`);
+      logger.warn(`Bad data found from Kafka: ${JSON.stringify(errors)}`);
       return true;
     }
 
     const { userId, attachmentIds, postTime } = newPostKafkaMsg;
 
-    const attachmentInfoAxiosRes = await axios.get(
-      getInternalFullPath(getAttachmentUrl),
-      {
-        params: {
-          ids: attachmentIds,
-        },
-      }
-    );
-
-    const attachmentInfosResponseObj = plainToInstance(
-      AttachmentInfos,
-      attachmentInfoAxiosRes.data
-    );
-
-    for (const attachmentInfo of attachmentInfosResponseObj.attachments) {
-      if (attachmentInfo.type !== "image") {
-
-        const originalPath = attachmentInfo.versions.original?.filePath;
-        if (!originalPath) {
-          logger.warn(
-            `Original file path not found for attachment: ${attachmentInfo.id}`
-          );
-          continue;
-        }
-        // Ensure original file exists
-        try {
-          await fs.access(originalPath);
-        } catch {
-          logger.warn(`Original photo not found at path: ${originalPath}`);
-          return true;
-        }
-
-        const originalImage = sharp(originalPath);
-        const photoName = path.basename(originalPath);
-
-        // Ensure variant directories exist
-        await Promise.all(
-          Object.keys(PROFILE_PHOTO_VARIANT_SIZES).map((variant) =>
-            fs.mkdir(getProfilePhotoPath(variant, userId), {
-              recursive: true,
-            })
-          )
-        );
-
-        // Generate resized variants
-        await Promise.all(
-          Object.entries(PROFILE_PHOTO_VARIANT_SIZES).map(
-            async ([variant, width]) => {
-              const outputPath = path.join(
-                getProfilePhotoPath(variant, userId),
-                photoName
-              );
-              await originalImage
-                .clone()
-                .resize({ width, withoutEnlargement: true })
-                .jpeg({ quality: 80 })
-                .toFile(outputPath);
-              logger.debug(`Saved ${variant} variant: ${outputPath}`);
-
-            }
-          )
-        );
-      }
-    }
-
-    /*
-    const profilePhotoUpdateReq = new ProfilePhotoUpdateReq(
-      photoName,
-      uploadedAt
-    );
-    const userUpdateProfilePhotoUrlInternal = getInternalFullPath(userUpdateProfilePhotoUrl).replace(":userId", userId!);
-    const userUpdateProfilePhotoAxiosRes = await axios.patch(
-      userUpdateProfilePhotoUrlInternal,
-      profilePhotoUpdateReq
-    );
-
-    if (userUpdateProfilePhotoAxiosRes.status !== 200) {
-      logger.error(
-        `Failed to update user profile photo: ${userUpdateProfilePhotoAxiosRes.statusText}`
+    if (attachmentIds.length > 0) {
+      logger.debug(
+        `Attachment found to be processed, count: ${attachmentIds.length}`
       );
-      return false;
+      const attachmentInfoAxiosRes = await axios.get(
+        getInternalFullPath(getAttachmentUrl),
+        {
+          params: {
+            ids: attachmentIds,
+          },
+        }
+      );
+
+      const attachmentInfosResponseObj = plainToInstance(
+        AttachmentInfos,
+        attachmentInfoAxiosRes.data
+      );
+
+      for (const attachmentInfo of attachmentInfosResponseObj.attachments) {
+        if (attachmentInfo.type === AttachmentType.IMAGE) {
+          const originalPath = attachmentInfo.versions.original?.filePath;
+          if (!originalPath) {
+            logger.warn(
+              `Original file path not found for attachment: ${attachmentInfo.id}`
+            );
+            continue;
+          }
+          // Ensure original file exists
+          try {
+            await fs.access(originalPath);
+          } catch {
+            logger.warn(
+              `Access error or Original photo not found at path: ${originalPath}`
+            );
+            return false;
+          }
+
+          const originalImage = sharp(originalPath);
+          const photoName = path.basename(originalPath);
+          logger.debug(`photo name is: ${photoName}`);
+          // Ensure variant directories exist
+          await Promise.all(
+            Object.keys(PROFILE_PHOTO_VARIANT_SIZES).map((variant) =>
+              fs.mkdir(getProfilePhotoPath(variant, userId), {
+                recursive: true,
+              })
+            )
+          );
+
+          // Generate resized variants
+          await Promise.all(
+            Object.entries(PROFILE_PHOTO_VARIANT_SIZES).map(
+              ([variant, width]) =>
+                processVariant(
+                  variant as VersionType,
+                  width,
+                  originalImage,
+                  userId,
+                  photoName,
+                  attachmentInfo.id
+                )
+            )
+          );
+        }
+      }
+    } else {
+      logger.debug(
+        `No attachment to process for post: ${newPostKafkaMsg.postId}`
+      );
     }
-*/
+    await kafkaProducer.send({
+      topic: kafka_new_post_fanout_topic,
+      messages: [
+        {
+          key: userId,
+          value: JSON.stringify(newPostKafkaMsg),
+        },
+      ],
+    });
 
     return true;
   } catch (error) {
@@ -144,7 +140,77 @@ export const postProcessWorker = async (
   return false;
 };
 
-
-export const getProfilePhotoPath = (variant: string, userId: string): string => {
+export const getProfilePhotoPath = (
+  variant: string,
+  userId: string
+): string => {
   return path.join(baseProfilePhotoVariantPath, variant, userId);
+};
+
+async function processVariant(
+  variant: VersionType,
+  width: number,
+  originalImage: sharp.Sharp,
+  userId: string,
+  photoName: string,
+  attachmentId: string,
+  maxRetries = 3
+) {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      const outputPath = path.join(
+        getProfilePhotoPath(variant, userId),
+        photoName
+      );
+
+      // Resize the image
+      const image = originalImage
+        .clone()
+        .resize({ width, withoutEnlargement: true })
+        .jpeg({ quality: 80 });
+
+      // Get actual dimensions
+      const metadata = await image
+        .toBuffer()
+        .then((buf) => sharp(buf).metadata());
+
+      // Save file
+      await image.toFile(outputPath);
+
+      logger.debug(`Saved ${variant} variant: ${outputPath}`);
+
+      const newVersion = {
+        filePath: outputPath,
+        status: AttachmentStatus.READY,
+        metadata: {
+          width: metadata.width ?? width,
+          height: metadata.height ?? 0,
+        },
+      };
+
+      // Update the Attachment document
+      await Attachment.findByIdAndUpdate(
+        attachmentId,
+        {
+          $set: {
+            [`versions.${variant}`]: newVersion,
+          },
+        },
+        { new: false }
+      );
+
+      // Success — exit loop
+      return;
+    } catch (err) {
+      attempt++;
+      console.warn(`Failed processing ${variant} (attempt ${attempt}):`, err);
+      if (attempt >= maxRetries) {
+        console.error(`Giving up on ${variant} after ${maxRetries} attempts.`);
+        throw err;
+      }
+      // optional: wait before retrying
+      await new Promise((res) => setTimeout(res, 500));
+    }
+  }
 }

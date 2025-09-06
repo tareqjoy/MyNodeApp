@@ -32,7 +32,7 @@ export const newPostFanout = async (
     const errors = await validate(newPostKafkaMsg);
 
     if (errors.length > 0) {
-      logger.warn(`Bad data found from Kafka: ${new InvalidRequest(errors)}`);
+      logger.warn(`Bad data found from Kafka: ${JSON.stringify(errors)}`);
       return true;
     }
     const followsMeReq = new FollowersReqInternal(newPostKafkaMsg.userId);
