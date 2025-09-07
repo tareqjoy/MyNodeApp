@@ -10,7 +10,7 @@ import "reflect-metadata";
 import bodyParser from "body-parser";
 import { createProfilePhotoRouter } from "./routes/profile-photo";
 import { connectMongo } from "@tareqjoy/clients";
-import { createInternalGetAttachmentRouter } from "./routes/get-attachment";
+import { createGetAttachmentRouter, createInternalGetAttachmentRouter } from "./routes/get-attachment";
 
 const logger = getFileLogger(__filename);
 
@@ -46,6 +46,12 @@ async function main() {
     getApiPath(api_path_root, "profile-photo"),
     authorize,
     createProfilePhotoRouter(mongoClient)
+  );
+
+  app.use(
+    getApiPath(api_path_root, "attachment"),
+    authorize,
+    createGetAttachmentRouter(mongoClient)
   );
 
   app.use(

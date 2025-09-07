@@ -21,7 +21,7 @@ import { Producer } from "kafkajs";
 import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
 import { plainToInstance } from "class-transformer";
 import mongoose, { Mongoose, Types } from "mongoose";
-import { Attachment } from "@tareqjoy/clients";
+import { Attachment, AttachmentStatus, VersionType, AttachmentType } from "@tareqjoy/clients";
 import { metadata } from "reflect-metadata/no-conflict";
 
 const logger = getFileLogger(__filename);
@@ -60,7 +60,7 @@ function validateObjectIds(ids: unknown): string[] {
 
 export const createInternalGetAttachmentRouter = (mongoClient: Mongoose) => {
   router.get("/", async (req, res, next) => {
-    logger.silly(`POST /get-attachment is called`);
+    logger.silly(`GET /get-attachment is called`);
     let validated: string[] = [];
     try {
       const idsParam = req.query.ids as string | undefined;
@@ -121,83 +121,93 @@ export const createInternalGetAttachmentRouter = (mongoClient: Mongoose) => {
     }
   });
 
-  router.get(
-    "/:userId/:variant/:fileName",
-    async (req: Request, res: Response) => {
-      const { userId, variant, fileName } = req.params;
+  return router;
+};
 
-      if (!userId || !variant || !fileName) {
-        res
-          .status(400)
-          .json(
-            new InvalidRequest(
-              "Missing parameters, accepted: <>/userId/variant/fileName"
-            )
-          );
+
+export const createGetAttachmentRouter = (mongoClient: Mongoose) => {
+  router.get("/:attachmentId", async (req, res, next) => {
+    logger.silly(`GET /attachment is called`);
+
+    const { attachmentId } = req.params;
+    let variant = req.query.variant as string | undefined;
+
+    if (!attachmentId) {
+      res.status(400).json(new InvalidRequest("attachmentId is missing"));
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(attachmentId)) {
+      res.status(400).json(new InvalidRequest("bad attachmentId"));
+      return;
+    }
+
+    try {
+      const attachmentDoc = await Attachment.findById(attachmentId);
+      
+      if (!attachmentDoc) {
+        res.status(404).json(new InvalidRequest(`Attachment not found`));
         return;
-      }
+      } 
 
-      if (!Object.keys(PROFILE_PHOTO_VARIANT_SIZES).includes(variant)) {
-        res.status(400).json(new InvalidRequest(`Invalid variant: ${variant}`));
-        return;
-      }
-
-      try {
-        const resultUserInternalReq = new UserInternalReq(userId, false);
-
-        const resultUserAxiosRes = await axios.post(
-          userServiceHostUrl,
-          resultUserInternalReq
-        );
-        const resultUserResObj = plainToInstance(
-          UserInternalRes,
-          resultUserAxiosRes.data
-        );
-
-        if (
-          resultUserResObj.toUsernames &&
-          userId in resultUserResObj.toUsernames &&
-          resultUserResObj.toUsernames[userId]
-        ) {
-          const photoPath = path.join(
-            baseProfilePhotoPath,
-            variant,
-            userId,
-            fileName
-          );
-
-          const photoBuffer = await fs.readFile(photoPath);
-          res.setHeader("Content-Type", "image/jpeg");
-          res.send(photoBuffer);
+      if (!variant) {
+        if (attachmentDoc.type === "image") {
+          variant = VersionType.SMALL;
         } else {
-          res.status(400).json(new InvalidRequest(`Invalid userId: ${userId}`));
+          res.status(400).json(new InvalidRequest("variant is required for type " + attachmentDoc.type));
           return;
         }
-      } catch (error: any) {
-        if (axios.isAxiosError(error)) {
-          logger.error(
-            `Error while /:userId/:variant/:fileName: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
-          );
-          if (
-            error.response?.status === 404 ||
-            error.response?.status === 400
-          ) {
-            res
-              .status(400)
-              .json(new InvalidRequest(`Invalid userId: ${userId}`));
-          } else {
-            res.status(500).json(new InternalServerError());
-          }
-        } else {
-          const code = error.code;
-          if (code === "ENOENT") {
-            // File or directory doesn't exist
-            res.status(404).json(new InvalidRequest(`Invalid fileName`));
-          }
-        }
       }
+
+      const version = attachmentDoc.versions.get(variant);
+      if (!version) {
+        res
+          .status(404)
+          .json(
+            new InvalidRequest(`File found but variant "${variant}" not found`)
+          );
+        return;
+      }
+
+      if (version.status !== AttachmentStatus.READY) {
+        res.status(423).json(new InvalidRequest("File is not ready yet"));
+        return;
+      }
+
+      const absolutePath = version.filePath;
+
+      const mimeTypeMap: Record<string, string> = {
+        [AttachmentType.IMAGE]: "image/jpeg", 
+        [AttachmentType.VIDEO]: "video/mp4",
+        [AttachmentType.AUDIO]: "audio/mpeg",
+        [AttachmentType.DOCUMENT]: "application/pdf",
+      };
+
+      const contentType =
+        mimeTypeMap[attachmentDoc.type] || "application/octet-stream";
+      
+      res.setHeader("Content-Type", contentType);
+
+      const stream = fs.createReadStream(absolutePath);
+      stream.pipe(res);
+
+      stream.on("error", (err) => {
+        logger.error("error reading file: ", err);
+        res.status(500).json(new InternalServerError());
+        return;
+      });
+
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        logger.error(
+          `Axios error in upload: url=${error.config?.url}, status=${error.response?.status}, message=${JSON.stringify(error.response?.data)}`
+        );
+      } else {
+        logger.error("Unhandled error in upload:", error);
+      }
+      res.status(500).json(new InternalServerError());
     }
-  );
+  });
 
   return router;
 };

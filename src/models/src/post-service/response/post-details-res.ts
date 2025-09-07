@@ -12,17 +12,11 @@ export class SingleLike {
 
 export class SingleAttachment {
   attachmentId: string;
-  type: string;
-  attachmentLink: string;
-  status: string;
 
   constructor();
-  constructor(attachmentId: string, type: string, attachmentLink: string, status: string);
-  constructor(attachmentId?: string, type?: string, attachmentLink?: string, status?: string) {
+  constructor(attachmentId: string);
+  constructor(attachmentId?: string) {
     this.attachmentId = attachmentId || "";
-    this.type = type || "";
-    this.attachmentLink = attachmentLink || "";
-    this.status = status || "";
   }
 }
 

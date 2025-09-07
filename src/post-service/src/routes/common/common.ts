@@ -119,15 +119,11 @@ function toSinglePost(
 function getAttachments(dbPost: PostObject): SingleAttachment[] {
   if (!dbPost.attachments || dbPost.attachments.length === 0) return [];
 
-  const attachments = dbPost.attachments as unknown as AttachmentObject[];
+  const attachments = dbPost.attachments;
   return attachments.map(
     (attachment) => {
-      const link = getAttachmentLink(attachment);
       return new SingleAttachment(
-        attachment._id.toString(),
-        attachment.type,
-        link.filePath,
-        link.status
+        attachment._id.toString()
       );
     }
   );

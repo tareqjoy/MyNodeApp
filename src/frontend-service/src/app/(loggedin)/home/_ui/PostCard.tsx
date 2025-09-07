@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { formatDistanceToNow, format } from "date-fns";
 import ReactionsDialog from "./WhoReactedDialog";
 import { REACTIONS } from "../../_ui/ReactionMap";
+import PostBodyFactory from "./PostBodyFactory";
 
 interface PostCardProps {
   loggedInUsername: string;
@@ -84,7 +85,7 @@ const PostCard: React.FC<PostCardProps> = ({
       >
         {formatDistanceToNow(new Date(post.time), { addSuffix: true })}
       </p>
-      <p className="mt-2 mb-2">{post.body}</p>
+      <PostBodyFactory post={post} />
 
       {/* Reactions Summary */}
       <div className="mt-1 flex items-center space-x-2">
@@ -136,7 +137,9 @@ const PostCard: React.FC<PostCardProps> = ({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            <div  onClick={() => handleReactionSelect(selectedReaction || "love")}>
+            <div
+              onClick={() => handleReactionSelect(selectedReaction || "love")}
+            >
               <motion.div
                 whileHover={{ scale: 1.2 }}
                 transition={{ type: "spring", stiffness: 300, damping: 15 }}

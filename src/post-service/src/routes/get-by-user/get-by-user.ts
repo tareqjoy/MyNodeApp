@@ -105,8 +105,7 @@ export const createGetByUserRouter = (mongoClient: Mongoose, redisClient: RedisC
         projection
       )
         .sort({ time: -1, _id: -1 })
-        .limit(getPostReq.limit)
-        .populate({ path: "attachments", select: "_id type versions" });
+        .limit(getPostReq.limit);
 
       logger.debug(`returned posts from mongodb: ${dbPosts.length}`);
 
