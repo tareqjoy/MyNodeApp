@@ -13,7 +13,6 @@ import { InvalidRequest } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import {
-  toResPosts,
   addPaginationToQuery,
   toResPostsOnly,
 } from "../common/common";

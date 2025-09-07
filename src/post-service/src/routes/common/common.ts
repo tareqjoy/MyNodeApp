@@ -14,8 +14,9 @@ import {
   PostByUserPaging,
   SingleLike,
   NewPostKafkaMsg,
+  SingleAttachment,
 } from "@tareqjoy/models";
-import { PostObject, PostLike } from "@tareqjoy/clients";
+import { PostObject, PostLike, AttachmentObject, AttachmentType, VersionType, AttachmentStatus } from "@tareqjoy/clients";
 import { plainToInstance } from "class-transformer";
 import { RedisClientType } from "redis";
 
@@ -110,8 +111,42 @@ function toSinglePost(
         userIdOrUsername: dbp.userId!.toString(),
         isUserName: false,
         body: dbp.body,
+        attachments: getAttachments(dbp),
       })
   );
+}
+
+function getAttachments(dbPost: PostObject): SingleAttachment[] {
+  if (!dbPost.attachments || dbPost.attachments.length === 0) return [];
+
+  const attachments = dbPost.attachments as unknown as AttachmentObject[];
+  return attachments.map(
+    (attachment) => {
+      const link = getAttachmentLink(attachment);
+      return new SingleAttachment(
+        attachment._id.toString(),
+        attachment.type,
+        link.filePath,
+        link.status
+      );
+    }
+  );
+}
+
+function getAttachmentLink(attachment: AttachmentObject): {
+  filePath: string;
+  status: string;
+} {
+  switch (attachment.type) {
+    case AttachmentType.IMAGE: {
+      const version = attachment.versions.get(VersionType.MEDIUM);
+      return {
+        filePath: version?.filePath || "",
+        status: version?.status || AttachmentStatus.FAILED, // fallback if missing
+      };
+    }
+  }
+  return { filePath: "", status: AttachmentStatus.FAILED };
 }
 
 async function addUserNameToPosts(userServiceHostUrl: string, resPosts: SinglePost[]): Promise<void> {

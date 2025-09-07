@@ -101,15 +101,12 @@ export const createGetByUserRouter = (mongoClient: Mongoose, redisClient: RedisC
         userId: { $in: userMongoIds },
       };
       const dbPosts = await Post.find(
-        addPaginationToQuery(
-          query,
-          lastPostTime,
-          lastPostId
-        ),
+        addPaginationToQuery(query, lastPostTime, lastPostId),
         projection
       )
         .sort({ time: -1, _id: -1 })
-        .limit(getPostReq.limit);
+        .limit(getPostReq.limit)
+        .populate({ path: "attachments", select: "_id type versions" });
 
       logger.debug(`returned posts from mongodb: ${dbPosts.length}`);
 

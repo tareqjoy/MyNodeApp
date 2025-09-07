@@ -2,15 +2,11 @@ import express from "express";
 import { ATTR_HEADER_USER_ID, getFileLogger } from "@tareqjoy/utils";
 import mongoose, { Mongoose } from "mongoose";
 import {
-  TooLargeRequest,
-  GetPostReq,
   InternalServerError,
 } from "@tareqjoy/models";
 import { Post } from "@tareqjoy/clients";
 import { InvalidRequest } from "@tareqjoy/models";
-import { plainToInstance } from "class-transformer";
-import { validate } from "class-validator";
-import { toResPosts, toResPostsOnly } from "../common/common";
+import { toResPostsOnly } from "../common/common";
 import axios from "axios";
 import { RedisClientType } from "redis";
 

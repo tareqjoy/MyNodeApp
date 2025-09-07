@@ -58,7 +58,7 @@ export const createGetRouter = (mongoClient: Mongoose, redisClient: RedisClientT
 
       const dbPosts = await Post.find({
         _id: { $in: Array.from(postObjectIds) },
-      });
+      }).populate({ path: "attachments", select: "_id type versions" });
 
       res
         .status(200)
