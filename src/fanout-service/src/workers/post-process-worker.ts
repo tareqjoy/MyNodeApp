@@ -3,19 +3,24 @@ import axios from "axios";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";
-import { getInternalFullPath } from "@tareqjoy/utils";
+import { getInternalFullPath, withRetry } from "@tareqjoy/utils";
 import { getFileLogger } from "@tareqjoy/utils";
 import { PROFILE_PHOTO_VARIANT_SIZES } from "../common/consts";
 import path from "path";
 import fs from "fs/promises";
 import sharp from "sharp";
 import { Producer } from "kafkajs";
+import mongoose, { Mongoose } from "mongoose";
 import {
   Attachment,
   AttachmentStatus,
   AttachmentType,
+  PostStatus,
+  PostType,
+  User,
   VersionType,
 } from "@tareqjoy/clients";
+import { updatePostStatus } from "../common/methods";
 
 const logger = getFileLogger(__filename);
 
@@ -31,92 +36,30 @@ const baseProfilePhotoVariantPath: string =
 
 export const postProcessWorker = async (
   messageStr: string,
+  mongoClient: Mongoose,
   kafkaProducer: Producer
 ): Promise<boolean> => {
+  const newPostKafkaMsg = plainToInstance(
+    NewPostKafkaMsg,
+    JSON.parse(messageStr)
+  );
+  const errors = await validate(newPostKafkaMsg);
+
+  if (errors.length > 0) {
+    logger.warn(`Bad data found from Kafka: ${JSON.stringify(errors)}`);
+    return true;
+  }
+
+  const { userId, attachmentIds, postTime } = newPostKafkaMsg;
   try {
-    const newPostKafkaMsg = plainToInstance(
-      NewPostKafkaMsg,
-      JSON.parse(messageStr)
-    );
-    const errors = await validate(newPostKafkaMsg);
-
-    if (errors.length > 0) {
-      logger.warn(`Bad data found from Kafka: ${JSON.stringify(errors)}`);
-      return true;
+    if (!(await processAttachments(attachmentIds, userId))) {
+      return false;
     }
 
-    const { userId, attachmentIds, postTime } = newPostKafkaMsg;
-
-    if (attachmentIds.length > 0) {
-      logger.debug(
-        `Attachment found to be processed, count: ${attachmentIds.length}`
-      );
-      const attachmentInfoAxiosRes = await axios.get(
-        getInternalFullPath(getAttachmentUrl),
-        {
-          params: {
-            ids: attachmentIds,
-          },
-        }
-      );
-
-      const attachmentInfosResponseObj = plainToInstance(
-        AttachmentInfos,
-        attachmentInfoAxiosRes.data
-      );
-
-      for (const attachmentInfo of attachmentInfosResponseObj.attachments) {
-        if (attachmentInfo.type === AttachmentType.IMAGE) {
-          const originalPath = attachmentInfo.versions.original?.filePath;
-          if (!originalPath) {
-            logger.warn(
-              `Original file path not found for attachment: ${attachmentInfo.id}`
-            );
-            continue;
-          }
-          // Ensure original file exists
-          try {
-            await fs.access(originalPath);
-          } catch {
-            logger.warn(
-              `Access error or Original photo not found at path: ${originalPath}`
-            );
-            return false;
-          }
-
-          const originalImage = sharp(originalPath);
-          const photoName = path.basename(originalPath);
-          logger.debug(`photo name is: ${photoName}`);
-          // Ensure variant directories exist
-          await Promise.all(
-            Object.keys(PROFILE_PHOTO_VARIANT_SIZES).map((variant) =>
-              fs.mkdir(getProfilePhotoPath(variant, userId), {
-                recursive: true,
-              })
-            )
-          );
-
-          // Generate resized variants
-          await Promise.all(
-            Object.entries(PROFILE_PHOTO_VARIANT_SIZES).map(
-              ([variant, width]) =>
-                processVariant(
-                  variant as VersionType,
-                  width,
-                  originalImage,
-                  userId,
-                  photoName,
-                  attachmentInfo.id
-                )
-            )
-          );
-        }
-      }
-    } else {
-      logger.debug(
-        `No attachment to process for post: ${newPostKafkaMsg.postId}`
-      );
+    if (!(await processPostType(newPostKafkaMsg))) {
+      return false;
     }
+
     await kafkaProducer.send({
       topic: kafka_new_post_fanout_topic,
       messages: [
@@ -127,6 +70,7 @@ export const postProcessWorker = async (
       ],
     });
 
+    await updatePostStatus(newPostKafkaMsg.postId, PostStatus.PROCESSED);
     return true;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -136,8 +80,117 @@ export const postProcessWorker = async (
     } else {
       logger.error("Error while new-post worker: ", error);
     }
+    await updatePostStatus(newPostKafkaMsg.postId, PostStatus.PROCESS_FAILED);
   }
+
   return false;
+};
+
+const processAttachments = async (
+  attachmentIds: string[],
+  userId: string
+): Promise<boolean> => {
+  if (attachmentIds.length <= 0) {
+    return true;
+  }
+
+  return withRetry(async () => {
+    logger.debug(
+      `Attachment found to be processed, count: ${attachmentIds.length}`
+    );
+
+    const attachmentInfoAxiosRes = await axios.get(
+      getInternalFullPath(getAttachmentUrl),
+      {
+        params: { ids: attachmentIds },
+      }
+    );
+
+    const attachmentInfosResponseObj = plainToInstance(
+      AttachmentInfos,
+      attachmentInfoAxiosRes.data
+    );
+
+    for (const attachmentInfo of attachmentInfosResponseObj.attachments) {
+      if (attachmentInfo.type === AttachmentType.IMAGE) {
+        const originalPath = attachmentInfo.versions.original?.filePath;
+        if (!originalPath) {
+          logger.warn(
+            `Original file path not found for attachment: ${attachmentInfo.id}`
+          );
+          continue;
+        }
+
+        try {
+          await fs.access(originalPath);
+        } catch {
+          logger.warn(
+            `Access error or Original photo not found at path: ${originalPath}`
+          );
+          // non-retryable → bail immediately
+          return false;
+        }
+
+        const originalImage = sharp(originalPath);
+        const photoName = path.basename(originalPath);
+        logger.debug(`photo name is: ${photoName}`);
+
+        await Promise.all(
+          Object.keys(PROFILE_PHOTO_VARIANT_SIZES).map((variant) =>
+            fs.mkdir(getProfilePhotoPath(variant, userId), { recursive: true })
+          )
+        );
+
+        await Promise.all(
+          Object.entries(PROFILE_PHOTO_VARIANT_SIZES).map(([variant, width]) =>
+            processVariant(
+              variant as VersionType,
+              width,
+              originalImage,
+              userId,
+              photoName,
+              attachmentInfo.id
+            )
+          )
+        );
+      }
+    }
+
+    return true;
+  });
+};
+
+const processPostType = async (msg: NewPostKafkaMsg): Promise<boolean> => {
+  switch (msg.postType) {
+    case PostType.PROFILE_PHOTO: {
+      try {
+        await withRetry(
+          () =>
+            User.findByIdAndUpdate(
+              msg.userId,
+              {
+                $set: {
+                  "profilePhoto.post": msg.postId,
+                  "profilePhoto.attachment": msg.attachmentIds[0] || null,
+                },
+              },
+              { new: true }
+            ),
+          3, // retries
+          300 // delay
+        );
+        return true;
+      } catch (err) {
+        logger.error(
+          `Failed to update profile photo for user ${msg.userId} after retries: ${err}`
+        );
+        return false;
+      }
+    }
+
+    default:
+      return true;
+  }
 };
 
 export const getProfilePhotoPath = (

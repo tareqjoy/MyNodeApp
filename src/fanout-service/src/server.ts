@@ -98,6 +98,7 @@ async function main() {
           } else if (topic === kafka_post_topic) {
             isProcessed = await postProcessWorker(
               message.value?.toString(),
+              mongoClient,
               kafkaProducer
             );
           } 

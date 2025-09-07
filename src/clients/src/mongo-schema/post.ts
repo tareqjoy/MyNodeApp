@@ -12,7 +12,20 @@ export const PostType = {
   EVENT: "event",
 } as const;
 
+
 export type PostType = (typeof PostType)[keyof typeof PostType];
+
+
+export const PostStatus = {
+  POSTED: "posted",
+  PROCESSED: "processed",
+  PROCESS_FAILED: "process_failed",
+  FANNED_OUT: "fanned_out",
+  FAN_OUT_FAILED: "fan_out_failed",
+  ARCHIVED: "archived",
+} as const;
+
+export type PostStatus = (typeof PostStatus)[keyof typeof PostStatus];
 
 /**
  * Post schema
@@ -26,6 +39,12 @@ const PostSchema = new Schema({
     type: String,
     enum: Object.values(PostType),
     required: true,
+  },
+  postStatus: {
+    type: String,
+    enum: Object.values(PostStatus),
+    required: true,
+    default: PostStatus.POSTED,
   },
   reactions: {
     type: [

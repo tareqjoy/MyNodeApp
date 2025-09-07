@@ -9,10 +9,17 @@ export const UserSchema = new Schema({
   birthDay: { type: Date, required: true },
   gender: { type: String, required: true },
   profilePhoto: {
-    type: Types.ObjectId,
-    ref: "Post", 
-    default: null,
-  },
+    post: {
+      type: Types.ObjectId,
+      ref: "Post",
+      default: null,
+    },
+    attachment: {
+      type: Types.ObjectId,
+      ref: "Attachment",
+      default: null,
+    },
+  }
 });
 
 export const User = model("User", UserSchema);

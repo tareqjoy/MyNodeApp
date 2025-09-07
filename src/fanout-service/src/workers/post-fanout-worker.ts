@@ -11,6 +11,8 @@ import { validate } from "class-validator";
 import { workerOperationCount } from "../metrics/metrics";
 import { getInternalFullPath } from "@tareqjoy/utils";
 import { getFileLogger } from "@tareqjoy/utils";
+import { updatePostStatus } from "../common/methods";
+import { PostStatus } from "@tareqjoy/clients";
 
 const logger = getFileLogger(__filename);
 
@@ -22,29 +24,29 @@ const maxPostSetSize: number =
 
 export const newPostFanout = async (
   redisClient: RedisClientType<any, any, any>,
-  messageStr: string,
+  messageStr: string
 ): Promise<boolean> => {
-  try {
-    const newPostKafkaMsg = plainToInstance(
-      NewPostKafkaMsg,
-      JSON.parse(messageStr),
-    );
-    const errors = await validate(newPostKafkaMsg);
+  const newPostKafkaMsg = plainToInstance(
+    NewPostKafkaMsg,
+    JSON.parse(messageStr)
+  );
+  const errors = await validate(newPostKafkaMsg);
 
-    if (errors.length > 0) {
-      logger.warn(`Bad data found from Kafka: ${JSON.stringify(errors)}`);
-      return true;
-    }
+  if (errors.length > 0) {
+    logger.warn(`Bad data found from Kafka: ${JSON.stringify(errors)}`);
+    return true;
+  }
+  try {
     const followsMeReq = new FollowersReqInternal(newPostKafkaMsg.userId);
 
     const whoFollowsAxiosRes = await axios.post(
       getInternalFullPath(whoFollowsMeUrl),
-      followsMeReq,
+      followsMeReq
     );
 
     const followersIdsObj = plainToInstance(
       FollowersRes,
-      whoFollowsAxiosRes.data,
+      whoFollowsAxiosRes.data
     );
 
     logger.debug(`Received from follower service: ${followersIdsObj.userIds}`);
@@ -59,8 +61,10 @@ export const newPostFanout = async (
         value: newPostKafkaMsg.postId,
       });
 
-      if(newAddCount === 0) {
-        logger.warn(`post failed to add, post: ${newPostKafkaMsg.postId}, userId: ${uid}`);
+      if (newAddCount === 0) {
+        logger.warn(
+          `post failed to add, post: ${newPostKafkaMsg.postId}, userId: ${uid}`
+        );
       }
 
       const setSize = await redisClient.zCard(redisKey);
@@ -69,13 +73,14 @@ export const newPostFanout = async (
         totalRemovedPostCount += toRemove;
         await redisClient.zRemRangeByRank(redisKey, 0, toRemove); // zRemRangeByRank: https://redis.io/docs/latest/commands/zremrangebyrank/
         logger.debug(
-          `${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`,
+          `${redisKey} had ${setSize} posts, removed ${toRemove} least recent posts`
         );
       }
 
       logger.debug(`Posted to redis of ${redisKey}`);
     }
 
+    await updatePostStatus(newPostKafkaMsg.postId, PostStatus.FANNED_OUT);
     workerOperationCount
       .labels(newPostFanout.name, "post_fanout_user_count")
       .inc(followersIdsObj.userIds!.length);
@@ -92,6 +97,7 @@ export const newPostFanout = async (
     } else {
       logger.error("Error while new-post worker: ", error);
     }
+    await updatePostStatus(newPostKafkaMsg.postId, PostStatus.FAN_OUT_FAILED);
   }
   return false;
 };
