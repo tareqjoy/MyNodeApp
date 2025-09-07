@@ -1,12 +1,12 @@
 export class ProfilePhoto {
-  fileName: string;
-  uploadedAt: string;
+  postId: string;
+  attachmentId: string;
 
   constructor();
-  constructor(fileName: string, uploadedAt: string);
-  constructor(fileName?: string, uploadedAt?: string) {
-    this.fileName = fileName || "";
-    this.uploadedAt = uploadedAt || "";
+  constructor(postId: string, attachmentId: string);
+  constructor(postId?: string, attachmentId?: string) {
+    this.postId = postId || "";
+    this.attachmentId = attachmentId || "";
   }
 }
 

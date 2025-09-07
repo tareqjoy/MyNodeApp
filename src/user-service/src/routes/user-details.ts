@@ -52,8 +52,8 @@ export const createUserDetailsRouter = (mongoClient: Mongoose) => {
                 doc.gender,
                 doc.profilePhoto
                   ? new ProfilePhoto(
-                      doc.profilePhoto?.toString() || "",
-                      doc.profilePhoto?.toString() || ""
+                      doc.profilePhoto?.post?.toString() || "",
+                      doc.profilePhoto?.attachment?.toString() || ""
                     )
                   : undefined
               )
