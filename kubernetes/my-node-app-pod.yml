@@ -11,7 +11,7 @@ kind: ConfigMap
 metadata:
   name: kafka-config
 data:
-  KAFKA_HOST_PORT: 192.168.0.10:9092
+  KAFKA_HOST_PORT: host.minikube.internal:9092
   KAFKA_NEW_POST_FANOUT_TOPIC: new-post
   KAFKA_I_FOLLOWED_FANOUT_TOPIC: i-followed
   KAFKA_I_UNFOLLOWED_FANOUT_TOPIC: i-unfollowed
@@ -37,7 +37,7 @@ kind: ConfigMap
 metadata:
   name: elastic-search-config
 data:
-  ELASTIC_SEARCH_HOST_PORT: http://192.168.0.10:9200
+  ELASTIC_SEARCH_HOST_PORT: http://host.minikube.internal:9200
   ELASTIC_SEARCH_USERNAME: elastic
   ELASTIC_SEARCH_PASSWORD: elastic
 ---
@@ -46,17 +46,17 @@ kind: ConfigMap
 metadata:
   name: service-url-config
 data:
-  USER_SERVICE_USERID_URL: http://192.168.49.2:80/v1/user/userid/
-  USER_SERVICE_SIGN_IN_URL: http://192.168.49.2:80/v1/user/signin/
-  WHO_FOLLOWS_ME_URL: http://192.168.49.2:80/v1/follower/who-follows-me/
-  I_FOLLOW_URL: http://192.168.49.2:80/v1/follower/i-follow/
-  GET_POST_BY_USER_URL: http://192.168.49.2:80/v1/post/get-by-user/
-  GET_POST_BY_POST_ID_URL: http://192.168.49.2:80/v1/post/get/
-  AUTH_REFRESH_URL: http://192.168.49.2:80/v1/auth/refresh/
-  AUTH_VERIFY_URL: http://192.168.49.2:80/v1/auth/verify/
-  AUTH_AUTHORIZE_URL: http://192.168.49.2:80/v1/auth/authorize/
-  AUTH_SIGN_IN_URL: http://192.168.49.2:80/v1/auth/signin/
-  AUTH_SIGN_OUT_URL: http://192.168.49.2:80/v1/auth/signout/
+  USER_SERVICE_USERID_URL: http://host.minikube.internal:80/v1/user/userid/
+  USER_SERVICE_SIGN_IN_URL: http://host.minikube.internal:80/v1/user/signin/
+  WHO_FOLLOWS_ME_URL: http://host.minikube.internal:80/v1/follower/who-follows-me/
+  I_FOLLOW_URL: http://host.minikube.internal:80/v1/follower/i-follow/
+  GET_POST_BY_USER_URL: http://host.minikube.internal:80/v1/post/get-by-user/
+  GET_POST_BY_POST_ID_URL: http://host.minikube.internal:80/v1/post/get/
+  AUTH_REFRESH_URL: http://host.minikube.internal:80/v1/auth/refresh/
+  AUTH_VERIFY_URL: http://host.minikube.internal:80/v1/auth/verify/
+  AUTH_AUTHORIZE_URL: http://host.minikube.internal:80/v1/auth/authorize/
+  AUTH_SIGN_IN_URL: http://host.minikube.internal:80/v1/auth/signin/
+  AUTH_SIGN_OUT_URL: http://host.minikube.internal:80/v1/auth/signout/
 ---
 apiVersion: v1
 kind: ConfigMap

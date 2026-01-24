@@ -16,10 +16,7 @@
 
 ### MongoDB
 
-<https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/>
-
-   1. Create replica set: <https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-for-testing/#std-label-server-replica-set-deploy-test>
-   2. get hostname: `hostname -I` and add the hostname in the replica set as well
+ 1. run from the root project dir: `sudo chmod +x setup/mongodb/mongosh.sh && setup/mongodb/mongosh.sh`
 
 ### Apache Zookeeper & Kafka
 
@@ -121,8 +118,8 @@ run the script here `<workspace>/scripts/installation/prometheus.sh`. For more d
 ## How To Run
    1. Run the following commands. If any error occurs, see the Prerequisites section to setup.
        ```sh
-       sudo chmod +x bin/start.sh
-       bin/start.sh
+       sudo chmod +x start.sh
+       ./start.sh
        ```
    2. Run using kubectl
       ```sh
@@ -139,8 +136,8 @@ run the script here `<workspace>/scripts/installation/prometheus.sh`. For more d
 ## Updating code
 1. Update new code from script:
     ```sh
-    sudo chmod +x bin/deploy.sh
-    bin/deploy.sh
+    sudo chmod +x deploy.sh
+    ./deploy.sh
     ```
     Or, update manually:
     ```sh

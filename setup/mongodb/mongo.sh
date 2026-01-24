@@ -1,6 +1,14 @@
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ADVERTISE_IP="${ADVERTISE_IP:-192.168.49.1}"
+
+ADVERTISE_IP="${ADVERTISE_IP:-$(
+  hostname -I | tr ' ' '\n' | grep -E '^192\.168\.' | head -n1
+)}"
+
+if [[ -z "${ADVERTISE_IP}" ]]; then
+  echo "ERROR: Could not detect ADVERTISE_IP (no 192.168.x.x found in hostname -I)"
+  exit 1
+fi
 
 sudo apt-get install gnupg curl
 curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
