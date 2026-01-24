@@ -9,9 +9,9 @@ import Loading from './loading';
 import error from 'next/error';
 import Image from 'next/image';
 
-const authSignInUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL || "http://localhost:80/v1/auth/signin/";
-const userIdUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://localhost:80/v1/user/userid/";
-const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "http://localhost:80/v1/auth/verify/";
+const authSignInUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_IN_URL || "/v1/auth/signin/";
+const userIdUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "/v1/user/userid/";
+const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "/v1/auth/verify/";
 
 export default function LoginPage() {
   const router = useRouter();

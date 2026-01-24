@@ -1,5 +1,6 @@
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ADVERTISE_IP="${ADVERTISE_IP:-192.168.49.1}"
 
 sudo apt-get install gnupg curl
 curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
@@ -37,28 +38,40 @@ sudo systemctl start mongod-rs0-0 && systemctl --no-pager status mongod-rs0-0
 sudo systemctl start mongod-rs0-1 && systemctl --no-pager status mongod-rs0-1
 sudo systemctl start mongod-rs0-2 && systemctl --no-pager status mongod-rs0-2
 
-# goto: 1. mongosh --port 27017 
-#       or 2. mongosh "mongodb://localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0"  
-# add replica set configuration like this:
-'''
- rsconf = {
-  _id: "rs0",
-  members: [
-    {
-     _id: 0,
-     host: "127.0.0.1:27017"
-    },
-    {
-     _id: 1,
-     host: "127.0.0.1:27018"
-    },
-    {
-     _id: 2,
-     host: "127.0.0.1:27019"
-    }
-   ]
-}
-'''
-# rs.initiate( rsconf )
+# Wait for mongod on 27017
+for i in {1..60}; do
+  if mongosh --quiet --port 27017 --eval 'db.runCommand({ping:1}).ok' >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
 
-# to verify: rs.status()
+
+# initiate if needed (ignore error if already initiated)
+mongosh --quiet --port 27017 --eval "
+rs.initiate({
+  _id: 'rs0',
+  members: [
+    { _id: 0, host: '${ADVERTISE_IP}:27017' },
+    { _id: 1, host: '${ADVERTISE_IP}:27018' },
+    { _id: 2, host: '${ADVERTISE_IP}:27019' }
+  ]
+})
+" || true
+
+# always force reconfig to desired hosts
+mongosh --quiet --port 27017 --eval "
+cfg = rs.conf();
+cfg.members[0].host = '${ADVERTISE_IP}:27017';
+cfg.members[1].host = '${ADVERTISE_IP}:27018';
+cfg.members[2].host = '${ADVERTISE_IP}:27019';
+rs.reconfig(cfg, {force:true});
+"
+
+echo
+echo "Replica set member hosts:"
+mongosh --quiet --port 27017 --eval "rs.conf().members.map(m => m.host)"
+echo
+echo "Pod connection string:"
+echo "mongodb://${ADVERTISE_IP}:27017,${ADVERTISE_IP}:27018,${ADVERTISE_IP}:27019/?replicaSet=rs0"
+

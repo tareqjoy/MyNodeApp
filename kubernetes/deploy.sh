@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 set -e
 
 # Define available services
-SERVICES=("timeline-service" "user-service" "follower-service" "fanout-service" "post-service" "search-service" "auth-service" "frontend-service")
+SERVICES=("timeline-service" "user-service" "follower-service" "fanout-service" "post-service" "search-service" "auth-service" "frontend-service" "file-service")
 
 # Parse arguments
 SERVICE_NAMES=""

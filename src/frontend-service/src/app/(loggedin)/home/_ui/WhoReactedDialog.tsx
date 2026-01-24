@@ -16,7 +16,7 @@ interface ReactionsDialogProps {
 
 const whoLikedUrl: string =
   process.env.NEXT_PUBLIC_WHO_LIKED_URL ||
-  "http://localhost:80/v1/post/like/who";
+  "/v1/post/like/who";
 
 const ReactionsDialog: React.FC<ReactionsDialogProps> = ({
   loggedInUsername,

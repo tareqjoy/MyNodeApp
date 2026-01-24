@@ -14,11 +14,11 @@ import PostCard from "../../../home/_ui/PostCard"; // Import the new PostCard co
 
 const userPostsUrl: string =
   process.env.NEXT_PUBLIC_USER_POSTS_URL ||
-  "http://localhost:80/v1/post/get-by-user";
+  "/v1/post/get-by-user";
 const likeUnlikeUrl: string =
-  process.env.NEXT_PUBLIC_LIKE_UNLIKE_URL || "http://localhost:80/v1/post/like";
+  process.env.NEXT_PUBLIC_LIKE_UNLIKE_URL || "/v1/post/like";
   const getPostsUrl: string =
-  process.env.NEXT_PUBLIC_GET_POSTS_URL || "http://localhost:80/v1/post/get";
+  process.env.NEXT_PUBLIC_GET_POSTS_URL || "/v1/post/get";
 
 export default function UserPosts({
   userIdOrName,

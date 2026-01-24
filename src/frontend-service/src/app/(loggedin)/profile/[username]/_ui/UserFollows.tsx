@@ -7,7 +7,7 @@ import Link from "next/link";
 
 const iFollowUrl =
   process.env.NEXT_PUBLIC_USER_FRIENDS_URL ||
-  "http://localhost:80/v1/follower/i-follow";
+  "/v1/follower/i-follow";
 
 export default function UserFollows() {
   const [ifollow, setIFollow] = useState<string[]>([]);

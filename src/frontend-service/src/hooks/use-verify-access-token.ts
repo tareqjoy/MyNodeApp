@@ -1,6 +1,6 @@
 import { axiosAuthClient } from '@/lib/auth';
 
-const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "http://localhost:80/v1/auth/verify/";
+const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "/v1/auth/verify/";
 
 export default async function useVerifyAccessToken(): Promise<boolean> {
   console.log("useVerifyAccessToken: is called");

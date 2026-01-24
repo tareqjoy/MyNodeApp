@@ -10,7 +10,7 @@ interface Props {
 
 const getAttachmentUrl =
   process.env.NEXT_PUBLIC_GET_ATTACHMENT_URL ||
-  "http://localhost:80/v1/file/attachment";
+  "/v1/file/attachment";
 
 const NormalPostBody: React.FC<Props> = ({ post }) => {
   const [imageUrls, setImageUrls] = useState<string[]>([]);

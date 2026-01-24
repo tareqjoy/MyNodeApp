@@ -5,7 +5,7 @@ import { CreatePostReq, MessageResponse } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { useEffect, useState } from "react";
 
-const postCreateUrl = process.env.NEXT_PUBLIC_POST_CREATE_URL || "http://localhost:80/v1/post/create";
+const postCreateUrl = process.env.NEXT_PUBLIC_POST_CREATE_URL || "/v1/post/create";
 
 const TextPost = () => {
   const [content, setContent] = useState("");

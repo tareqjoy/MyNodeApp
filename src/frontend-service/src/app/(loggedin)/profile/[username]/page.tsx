@@ -18,19 +18,19 @@ import { useSearchParams } from "next/navigation";
 
 const userDetailsUrl: string =
   process.env.NEXT_PUBLIC_USER_DETAILS_URL ||
-  "http://localhost:80/v1/user/detail";
+  "/v1/user/detail";
 const doIFollowUrl: string =
   process.env.NEXT_PUBLIC_DO_I_FOLLOW_URL ||
-  "http://localhost:80/v1/follower/do-i-follow/";
+  "/v1/follower/do-i-follow/";
 const followUrl: string =
   process.env.NEXT_PUBLIC_FOLLOW_URL ||
-  "http://localhost:80/v1/follower/follow";
+  "/v1/follower/follow";
 const unfollowUrl: string =
   process.env.NEXT_PUBLIC_UNFOLLOW_URL ||
-  "http://localhost:80/v1/follower/unfollow";
+  "/v1/follower/unfollow";
 
 const userIdUrl: string =
-  process.env.NEXT_PUBLIC_USER_ID_URL || "http://localhost:80/v1/user/userid";
+  process.env.NEXT_PUBLIC_USER_ID_URL || "/v1/user/userid";
 
 interface ProfilePageProps {
   username: string;

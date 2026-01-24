@@ -10,7 +10,7 @@ import HighlightText from "./HighlightText";
 
 const searchUrl: string =
   process.env.NEXT_PUBLIC_USER_DETAILS_URL ||
-  "http://localhost:80/v1/search/all";
+  "/v1/search/all";
 
 const Search = () => {
   const [query, setQuery] = useState("");

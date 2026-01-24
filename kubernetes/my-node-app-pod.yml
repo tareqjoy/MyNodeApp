@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: mongodb-config
 data:
-  MONGODB_URL: mongodb://admin:admin@192.168.0.10:27017,192.168.0.10:27018,192.168.0.10:27019/mydatabase?replicaSet=rs0
+  MONGODB_URL: mongodb://admin:admin@host.minikube.internal:27017,host.minikube.internal:27018,host.minikube.internal:27019/mydatabase?replicaSet=rs0
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -21,14 +21,14 @@ kind: ConfigMap
 metadata:
   name: redis-config
 data:
-  REDIS_HOST_PORT: redis://192.168.0.10:6379
+  REDIS_HOST_PORT: redis://host.minikube.internal:6379
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: neo4j-config
 data:
-  NEO4J_HOST_PORT: neo4j://192.168.0.10:7687
+  NEO4J_HOST_PORT: neo4j://host.minikube.internal:7687
   NEO4J_USERNAME: neo4j
   NEO4J_PASSWORD: "12345678"
 ---

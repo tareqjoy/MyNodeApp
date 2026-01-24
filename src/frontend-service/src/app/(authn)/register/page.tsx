@@ -8,9 +8,9 @@ import debounce from 'debounce';
 import { plainToInstance } from 'class-transformer';
 import { CheckUsernameResponse, SignUpReq } from '@tareqjoy/models';
 
-const userCheckUsernameUrl: string = process.env.NEXT_PUBLIC_USER_CHECK_USERNAME_URL || "http://localhost:80/v1/user/check-username/";
-const authSignUpUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_UP_URL || "http://localhost:80/v1/user/signup/";
-const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "http://localhost:80/v1/auth/verify/";
+const userCheckUsernameUrl: string = process.env.NEXT_PUBLIC_USER_CHECK_USERNAME_URL || "/v1/user/check-username/";
+const authSignUpUrl: string = process.env.NEXT_PUBLIC_AUTH_SIGN_UP_URL || "/v1/user/signup/";
+const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "/v1/auth/verify/";
 
 export default function SignUpForm() {
   const router = useRouter();

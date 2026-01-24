@@ -7,7 +7,7 @@ import { plainToInstance } from 'class-transformer';
 import ProfilePost from './_ui/ProfilePost';
 import TimelinePosts from './_ui/TimelinePosts';
 
-const userDetailsUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "http://localhost:80/v1/user/detail";
+const userDetailsUrl: string = process.env.NEXT_PUBLIC_USER_DETAILS_URL || "/v1/user/detail";
 
 
 export default function ProfilePage() {

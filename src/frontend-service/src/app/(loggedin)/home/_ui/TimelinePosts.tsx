@@ -15,11 +15,11 @@ import PostCard from "./PostCard"; // Import the new PostCard component
 
 const timelineUrl: string =
   process.env.NEXT_PUBLIC_TIMELINE_HOME_URL ||
-  "http://localhost:80/v1/timeline/home";
+  "/v1/timeline/home";
 const getPostsUrl: string =
-  process.env.NEXT_PUBLIC_GET_POSTS_URL || "http://localhost:80/v1/post/get";
+  process.env.NEXT_PUBLIC_GET_POSTS_URL || "/v1/post/get";
 const likeUnlikeUrl: string =
-  process.env.NEXT_PUBLIC_LIKE_UNLIKE_URL || "http://localhost:80/v1/post/like";
+  process.env.NEXT_PUBLIC_LIKE_UNLIKE_URL || "/v1/post/like";
 
 export default function TimelinePosts({ username }: { username: string }) {
   const [posts, setPosts] = useState<SinglePost[]>([]);

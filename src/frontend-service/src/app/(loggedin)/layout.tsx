@@ -15,7 +15,7 @@ import Search from "./_ui/Search";
 
 const authSignOutUrl =
   process.env.NEXT_PUBLIC_AUTH_SIGN_OUT_URL ||
-  "http://localhost:80/v1/auth/signout/";
+  "/v1/auth/signout/";
 const deviceId = "some-unique-device-id";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
