@@ -37,7 +37,7 @@ const loadFromPostService: string =
 const router = express.Router();
 
 export const createHomeRouter = (
-  redisClient: RedisClientType<any, any, any>
+  redisClient: RedisClientType<any, any, any, any>
 ) => {
   router.post("/", async (req, res, next) => {
     if (!req.headers || !req.headers[ATTR_HEADER_USER_ID]) {

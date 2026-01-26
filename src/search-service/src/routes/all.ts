@@ -1,7 +1,14 @@
-import { Client } from "@elastic/elasticsearch";
+import { Client, estypes } from "@elastic/elasticsearch";
 import express from "express";
 import { getFileLogger } from "@tareqjoy/utils";
-import { SearchReq, InvalidRequest, SearchRes, SearchResUser, SearchResPost } from "@tareqjoy/models";
+import {
+  SearchReq,
+  InvalidRequest,
+  SearchRes,
+  SearchResUser,
+  SearchResPost,
+  InternalServerError,
+} from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 
@@ -25,11 +32,12 @@ export const createAllRouter = (client: Client) => {
       res.status(400).json(new InvalidRequest(errors));
       return;
     }
+    
 
     try {
       let userResults: SearchResUser[] | undefined;
       let postResults: SearchResPost[] | undefined;
-  
+
       if (searchReq.allToken) {
         userResults = await searchElasticInUsers(client, searchReq.allToken);
         postResults = await searchElasticInPosts(client, searchReq.allToken);
@@ -39,53 +47,72 @@ export const createAllRouter = (client: Client) => {
         postResults = await searchElasticInPosts(client, searchReq.postToken);
       }
 
-      res
-        .status(200)
-        .json(
-          new SearchRes({
-            userResults: userResults,
-            postResults: postResults,
-          }),
-        );
+      res.status(200).json(
+        new SearchRes({
+          userResults: userResults,
+          postResults: postResults,
+        }),
+      );
     } catch (error) {
       logger.error("Error while /all: ", error);
-      res.status(500).json({ error: error });
+      res.status(500).json(new InternalServerError());
     }
   });
   return router;
 };
 
-async function searchElasticInUsers(client: Client, query: string): Promise<SearchResUser[]> {
+async function searchElasticInUsers(
+  client: Client,
+  query: string,
+): Promise<SearchResUser[]> {
   try {
     const searchResponse = await client.search(getUserSearchQuery(query));
 
     const searchRes: SearchResUser[] = [];
 
     for (const item of searchResponse.hits.hits) {
-      const sourceAndHighlightMerged: Record<string, any> = mergeSourceAndHighlight(item);
-      searchRes.push(new SearchResUser(sourceAndHighlightMerged["mongo_id"], sourceAndHighlightMerged["username"], sourceAndHighlightMerged["name"] ));
+      const sourceAndHighlightMerged: Record<string, any> =
+        mergeSourceAndHighlight(item);
+      searchRes.push(
+        new SearchResUser(
+          sourceAndHighlightMerged["mongo_id"],
+          sourceAndHighlightMerged["username"],
+          sourceAndHighlightMerged["name"],
+        ),
+      );
     }
 
     return searchRes;
   } catch (error) {
-    return [];
+    logger.error("Error while searchElasticInUsers: ", error);
+    throw error;
   }
 }
 
-async function searchElasticInPosts(client: Client, query: string): Promise<SearchResPost[]> {
+async function searchElasticInPosts(
+  client: Client,
+  query: string,
+): Promise<SearchResPost[]> {
   try {
     const searchResponse = await client.search(getPostSearchQuery(query));
-
     const searchRes: SearchResPost[] = [];
 
     for (const item of searchResponse.hits.hits) {
-      const sourceAndHighlightMerged: Record<string, any> = mergeSourceAndHighlight(item);
-      searchRes.push(new SearchResPost(sourceAndHighlightMerged["mongo_id"], sourceAndHighlightMerged["body"], sourceAndHighlightMerged["time"] ));
+      const sourceAndHighlightMerged: Record<string, any> =
+        mergeSourceAndHighlight(item);
+      searchRes.push(
+        new SearchResPost(
+          sourceAndHighlightMerged["mongo_id"],
+          sourceAndHighlightMerged["body"],
+          sourceAndHighlightMerged["time"],
+        ),
+      );
     }
 
     return searchRes;
   } catch (error) {
-    return [];
+    logger.error("Error while searchElasticInPosts: ", error);
+    throw error;
   }
 }
 
@@ -97,7 +124,7 @@ const mergeSourceAndHighlight = (result: any): Record<string, any> => {
       const highlightValue = value as string[];
 
       if (highlightValue.length > 1) {
-        merged[key] = highlightValue.join('...'); 
+        merged[key] = highlightValue.join("...");
       } else {
         merged[key] = highlightValue[0];
       }
@@ -109,57 +136,53 @@ const mergeSourceAndHighlight = (result: any): Record<string, any> => {
 
 const getUserSearchQuery = (query: string) => ({
   index: es_index_users,
-  body: {
-    query: {
-      bool: {
-        should: [
-          { match: { name: { query, fuzziness: "AUTO" } } },
-          { match_phrase: { username: query } }
-        ],
-        minimum_should_match: 1
-      }
+  size: 10,
+  query: {
+    bool: {
+      should: [
+        { match: { name: { query, fuzziness: "AUTO" } } },
+        { match_phrase: { username: query } },
+      ],
+      minimum_should_match: 1,
     },
-    highlight: {
-      fields: {
-        name: { 
-          fragment_size: 15,
-          number_of_fragments: 5,
-        },
-        username: {} // Enable highlighting for username
+  },
+  highlight: {
+    fields: {
+      name: {
+        fragment_size: 15,
+        number_of_fragments: 5,
       },
-      pre_tags: ["<mark>"],
-      post_tags: ["</mark>"]
+      username: {},
     },
-    size: 10
-  }
+    pre_tags: ["<mark>"],
+    post_tags: ["</mark>"],
+  },
 });
 
 /**
  * Get Post Search Query
  * Partial match for `body`
  */
-const getPostSearchQuery = (query: string) => ({
+const getPostSearchQuery = (q: string) => ({
   index: es_index_posts,
-  body: {
-    query: {
-      multi_match: {
-        query,
-        type: "best_fields",
-        fields: ["body"],
-        operator: "or",
-        fuzziness: "AUTO"
-      }
+  size: 10,
+  query: {
+    multi_match: {
+      query: q,
+      type: "best_fields" as estypes.QueryDslTextQueryType,
+      fields: ["body"],
+      operator: "or" as estypes.QueryDslOperator,
+      fuzziness: "AUTO" as estypes.Fuzziness,
     },
-    highlight: {
-      fields: {
-        "*": { 
-          fragment_size: 15,
-          number_of_fragments: 5,
-        }
+  },
+  highlight: {
+    fields: {
+      "*": {
+        fragment_size: 15,
+        number_of_fragments: 5,
       },
-      pre_tags: ["<mark>"],
-      post_tags: ["</mark>"]
     },
-    size: 10
-  }
+    pre_tags: ["<mark>"],
+    post_tags: ["</mark>"],
+  },
 });

@@ -36,7 +36,7 @@ const router = express.Router();
 
 export const createLikeRouter = (
   mongoClient: Mongoose,
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
   newPostKafkaProducer: Producer
 ) => {
   router.post("/", async (req, res, next) => {

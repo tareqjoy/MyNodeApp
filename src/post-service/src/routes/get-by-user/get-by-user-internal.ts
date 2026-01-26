@@ -25,7 +25,7 @@ const userServiceHostUrl: string =
   process.env.USER_SERVICE_USERID_URL ||
   "http://127.0.0.1:5002/v1/user/userid/";
 
-export const createInternalGetByUserRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any>,) => {
+export const createInternalGetByUserRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any, any>,) => {
   const router = express.Router();
   router.post("/", async (req, res, next) => {
     logger.silly(`POST /get-by-user called`);

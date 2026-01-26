@@ -15,24 +15,24 @@
     "author": "Tareq Joy",
     "license": "ISC",
     "dependencies": {
-        "@tareqjoy/clients": "^1.0.50",
+        "@tareqjoy/clients": "^1.0.57",
         "@tareqjoy/models": "1.0.136",
         "@tareqjoy/utils": "^1.0.70",
-        "argon2": "^0.41.1",
+        "argon2": "^0.44.0",
         "class-transformer": "^0.5.1",
-        "class-validator": "^0.14.1",
-        "express": "^4.21.2",
-        "redis": "^4.7.0",
+        "class-validator": "^0.14.3",
+        "express": "^5.2.1",
+        "redis": "^5.10.0",
         "reflect-metadata": "^0.2.2",
         "source-map-support": "^0.5.21"
     },
     "devDependencies": {
-        "@types/express": "^5.0.0",
-        "@types/node": "^22.13.10",
-        "nodemon": "^3.1.9",
-        "typescript": "^5.8.2",
+        "@types/express": "^5.0.6",
+        "@types/node": "^25.0.10",
+        "nodemon": "^3.1.11",
+        "typescript": "^5.9.3",
         "ts-node": "10.9.2",
-        "prettier": "^3.5.3",
-        "rimraf": "^6.0.1"
+        "prettier": "^3.8.1",
+        "rimraf": "^6.1.2"
     }
 }

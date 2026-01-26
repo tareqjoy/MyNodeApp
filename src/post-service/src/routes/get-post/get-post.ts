@@ -25,7 +25,7 @@ const maxGetPostLimit: number = parseInt(
 
 const router = express.Router();
 
-export const createGetRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any>,) => {
+export const createGetRouter = (mongoClient: Mongoose, redisClient: RedisClientType<any, any, any, any>,) => {
   router.post("/", async (req, res, next) => {
     logger.silly(`POST /get called`);
     const loggedInUserId: string = req.headers[ATTR_HEADER_USER_ID] as string;

@@ -21,7 +21,7 @@ const router = express.Router();
 
 export const createUserIdRouter = (
   mongoClient: Mongoose,
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
     logger.silly(`POST UserInternal called`);

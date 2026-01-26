@@ -17,7 +17,7 @@ const logger = getFileLogger(__filename);
 const router = express.Router();
 
 export const createSignUpRouter = (mongoClient: Mongoose) => {
-  router.get("/:", (req, res, next) => {
+  router.get("/", (req, res, next) => {
     res.status(200).json({
       message: "Handling GET request to /signup",
     });

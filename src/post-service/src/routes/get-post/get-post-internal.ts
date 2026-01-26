@@ -23,7 +23,7 @@ const router = express.Router();
 
 export const createInternalGetRouter = (
   mongoClient: Mongoose,
-  redisClient: RedisClientType<any, any, any>
+  redisClient: RedisClientType<any, any, any, any>
 ) => {
   router.get("/:postId", async (req, res, next) => {
     logger.silly(`POST /get called`);
