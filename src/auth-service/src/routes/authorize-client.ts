@@ -28,7 +28,7 @@ const authorize_code_exp_sec = Number(
 const ATTR_HEADER_AUTHORIZATION = "authorization";
 
 export const createAuthorizeClientRouter = (
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
     logger.silly(`POST /authorize called`);

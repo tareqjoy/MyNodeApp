@@ -20,7 +20,7 @@ const ATTR_HEADER_DEVICE_ID = "device-id";
 const ATTR_HEADER_AUTHORIZATION = "authorization";
 
 export const createRefreshRouter = (
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
     logger.silly(`POST /refresh called`);

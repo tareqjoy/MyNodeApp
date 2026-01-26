@@ -24,11 +24,6 @@ const nextConfig = {
   // This setting is useful when deploying Next.js as a standalone server
   output: "standalone",
 
-  // Optional: Ignore ESLint errors during build (usually in production)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Optional: Custom Headers or other settings
   async headers() {
     return [
@@ -57,7 +52,13 @@ const nextConfig = {
 
   // Handling of images if you use Next.js Image component
   images: {
-    domains: ["localhost"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "localhost",
+        pathname: "/**",
+      },
+    ],
   },
 };
 

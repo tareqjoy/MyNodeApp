@@ -27,7 +27,7 @@ const userSignInUrl: string =
   "http://127.0.0.1:5002/v1/user/signin/";
 
 export const createSignInRouter = (
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
 ) => {
   router.post("/", async (req, res, next) => {
     logger.silly(`POST /signin called`);

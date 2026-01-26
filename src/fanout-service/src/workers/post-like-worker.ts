@@ -1,5 +1,4 @@
 import {
-  InvalidRequest,
   LikeReq,
   PostLikeKafkaMsg,
   UnlikeReq,
@@ -201,16 +200,11 @@ async function incRedisPostLike(
       postId: postId,
     });
 
-    const loadedIntoRedis = await redisClient.hIncrBy(
+    await redisClient.hIncrBy(
       postRedisKey,
       reactType,
       1
     );
-    if (loadedIntoRedis === 0) {
-      logger.warn(
-        `Redis: failed to update reaction into redis, redisKey: ${postRedisKey}, reaction: ${reactType}:1`
-      );
-    }
   } catch (error) {
     // Handle the error (log it or rethrow)
     logger.error("Error updating post reactions add:", error);
@@ -228,16 +222,12 @@ async function decRedisPostLike(
       postId: postId,
     });
 
-    const loadedIntoRedis = await redisClient.hIncrBy(
+    await redisClient.hIncrBy(
       postRedisKey,
       reactType,
       -1
     );
-    if (loadedIntoRedis === 0) {
-      logger.warn(
-        `Redis: failed to decrement reaction into redis, redisKey: ${postRedisKey}, reaction: ${reactType}`
-      );
-    }
+
   } catch (error) {
     // Handle the error (log it or rethrow)
     logger.error("Error updating post reactions add:", error);
