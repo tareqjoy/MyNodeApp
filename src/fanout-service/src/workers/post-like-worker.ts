@@ -20,7 +20,7 @@ import mongoose, { Mongoose } from "mongoose";
 const logger = getFileLogger(__filename);
 
 export const postLikeWorker = async (
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
   mongoClient: Mongoose,
   messageStr: string
 ): Promise<boolean> => {

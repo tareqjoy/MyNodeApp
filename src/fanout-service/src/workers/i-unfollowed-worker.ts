@@ -19,7 +19,7 @@ const getPostByUserUrl: string =
   "http://127.0.0.1:5005/v1/post/get-by-user/";
 
 export const iUnfollowedFanout = async (
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
   messageStr: string,
 ): Promise<boolean> => {
   try {

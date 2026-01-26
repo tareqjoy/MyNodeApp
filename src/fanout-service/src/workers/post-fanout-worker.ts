@@ -23,7 +23,7 @@ const maxPostSetSize: number =
   Number(process.env.KAFKA_MAX_POST_SET_SIZE) || 100;
 
 export const newPostFanout = async (
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
   messageStr: string
 ): Promise<boolean> => {
   const newPostKafkaMsg = plainToInstance(

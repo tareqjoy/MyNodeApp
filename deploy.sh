@@ -72,7 +72,7 @@ done
 # Run Kubernetes deployment only if the flag is provided
 if [ "$RUN_KUBERNETES" = true ]; then
     echo "Running Kubernetes deployment..."
-    kubectl apply -f "${SCRIPT_DIR}/my-node-app-pod.yml" --force
+    kubectl apply -f "${SCRIPT_DIR}/kubernetes/my-node-app-pod.yml" --force
     kubectl rollout restart deployment -n default
 fi
 

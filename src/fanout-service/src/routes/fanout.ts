@@ -5,7 +5,7 @@ import { RedisClientType } from "redis";
 const router = express.Router();
 
 export const createFanoutRouter = (
-  redisClient: RedisClientType<any, any, any>,
+  redisClient: RedisClientType<any, any, any, any>,
 ) => {
   router.get("/", async (req, res, next) => {
     const message = await redisClient.ping();

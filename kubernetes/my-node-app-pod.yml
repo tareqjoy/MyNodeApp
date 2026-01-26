@@ -12,9 +12,11 @@ metadata:
   name: kafka-config
 data:
   KAFKA_HOST_PORT: host.minikube.internal:9092
-  KAFKA_NEW_POST_FANOUT_TOPIC: new-post
+  KAFKA_NEW_POST_FANOUT_TOPIC: post-fanout
+  KAFKA_NEW_POST_TOPIC: new-post
   KAFKA_I_FOLLOWED_FANOUT_TOPIC: i-followed
   KAFKA_I_UNFOLLOWED_FANOUT_TOPIC: i-unfollowed
+  KAFKA_NEW_POST_LIKE_TOPIC: post-like
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -260,6 +262,10 @@ spec:
                 name: kafka-config
             - configMapRef:
                 name: service-url-config
+            - configMapRef:
+                name: redis-config
+            - configMapRef:
+                name: mongodb-config
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -290,6 +296,8 @@ spec:
                 name: kafka-config
             - configMapRef:
                 name: service-url-config
+            - configMapRef:
+                name: redis-config
 ---
 apiVersion: apps/v1
 kind: Deployment

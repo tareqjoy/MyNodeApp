@@ -19,13 +19,13 @@ const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
 const kafka_new_post_fanout_topic =
   process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-fanout";
 const kafka_post_topic =
-    process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "new-post";
+    process.env.KAFKA_NEW_POST_TOPIC || "new-post";
 const kafka_i_followed_fanout_topic =
   process.env.KAFKA_I_FOLLOWED_FANOUT_TOPIC || "i-followed";
 const kafka_i_unfollowed_fanout_topic =
   process.env.KAFKA_I_UNFOLLOWED_FANOUT_TOPIC || "i-unfollowed";
 const kafka_post_like_fanout_topic =
-  process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-like";
+  process.env.KAFKA_NEW_POST_LIKE_TOPIC || "post-like";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
 

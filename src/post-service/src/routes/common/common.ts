@@ -108,7 +108,7 @@ function toSinglePost(
   return dbPosts.map(
     (dbp) =>
       new SinglePost(dbp._id.toString(), dbp.time, dbp.postType, {
-        userIdOrUsername: dbp.userId!.toString(),
+        userIdOrUsername: dbp.userId?.toString(),
         isUserName: false,
         body: dbp.body,
         attachments: getAttachments(dbp),

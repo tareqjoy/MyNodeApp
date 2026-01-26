@@ -1,6 +1,6 @@
 {
   "name": "@tareqjoy/clients",
-  "version": "1.0.50",
+  "version": "1.0.57",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,18 +16,18 @@
   "license": "ISC",
   "dependencies": {
     "kafkajs": "^2.2.4",
-    "redis": "^4.7.0",
-    "mongoose": "^8.12.1",
-    "neo4j-driver": "^5.28.1",
-    "@elastic/elasticsearch": "^8.17.1",
-    "@tareqjoy/utils": "^1.0.53"
+    "redis": "^5.10.0",
+    "mongoose": "^9.1.5",
+    "neo4j-driver": "^6.0.1",
+    "@elastic/elasticsearch": "^9.2.0",
+    "@tareqjoy/utils": "^1.0.70"
   },
   "devDependencies": {
-    "@types/node": "^22.13.10",
-    "nodemon": "^3.1.9",
-    "typescript": "^5.8.2",
+    "@types/node": "^25.0.10",
+    "nodemon": "^3.1.11",
+    "typescript": "^5.9.3",
     "ts-node": "^10.9.2",
-    "prettier": "^3.5.3",
-    "rimraf": "^6.0.1"
+    "prettier": "^3.8.1",
+    "rimraf": "^6.1.2"
   }
 }
