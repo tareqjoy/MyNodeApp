@@ -99,28 +99,27 @@ pipeline {
       }
     }
 
-    stage('Deploy to Kubernetes (changed services)') {
+    stage('Deploy to Kubernetes') {
       when { expression { return env.CHANGED_SERVICES?.trim() } }
       steps {
-        withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
+        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
           script {
             def svcList = env.CHANGED_SERVICES.split(',').findAll { it?.trim() }
 
             sh """
               set -euxo pipefail
               export KUBECONFIG=${KUBECONFIG_FILE}
-              kubectl get ns ${env.K8S_NAMESPACE} >/dev/null 2>&1 || kubectl create ns ${env.K8S_NAMESPACE}
+              kubectl get ns ${K8S_NAMESPACE} >/dev/null 2>&1 || kubectl create ns ${K8S_NAMESPACE}
+              kubectl -n ${K8S_NAMESPACE} apply -f kubernetes/my-node-app-pod.yml
             """
 
-            // Assumes you have a Deployment named exactly the same as the service folder,
-            // and container name exactly the same as the service folder.
             svcList.each { svc ->
-              def image = "${env.DOCKERHUB_NAMESPACE}/${svc}:${env.GIT_SHA}"
+              def image = "${DOCKERHUB_NAMESPACE}/${svc}:${GIT_SHA}"
               sh """
                 set -euxo pipefail
                 export KUBECONFIG=${KUBECONFIG_FILE}
-                kubectl -n ${env.K8S_NAMESPACE} set image deploy/${svc} ${svc}=${image} --record=true
-                kubectl -n ${env.K8S_NAMESPACE} rollout status deploy/${svc} --timeout=180s
+                kubectl -n ${K8S_NAMESPACE} set image deploy/${svc} ${svc}=${image} --record=true
+                kubectl -n ${K8S_NAMESPACE} rollout status deploy/${svc} --timeout=180s
               """
             }
           }
