@@ -4,12 +4,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 sudo useradd --no-create-home --shell /bin/false jaeger
 
 # download
-wget -O /tmp/jaeger-2.3.0-linux-amd64.tar.gz https://github.com/jaegertracing/jaeger/releases/download/v1.66.0/jaeger-2.3.0-linux-amd64.tar.gz
+wget -O /tmp/jaeger-2.14.1-linux-amd64.tar.gz https://github.com/jaegertracing/jaeger/releases/download/v2.14.1/jaeger-2.14.1-linux-amd64.tar.gz
 
 # extract
-tar xvf /tmp/jaeger-2.3.0-linux-amd64.tar.gz -C /tmp/
-sudo mv /tmp/jaeger-2.3.0-linux-amd64 /tmp/jaeger
-
+tar xvf /tmp/jaeger-2.14.1-linux-amd64.tar.gz -C /tmp/
+sudo mv /tmp/jaeger-2.14.1-linux-amd64 /tmp/jaeger
 # move to right destination
 sudo mv /tmp/jaeger/jaeger /usr/local/bin/
 sudo mkdir -p /etc/jaeger

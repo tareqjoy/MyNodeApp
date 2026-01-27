@@ -4,15 +4,14 @@
 
 ### Docker Engine
 
-<https://docs.docker.com/engine/install/ubuntu/>
+   1. <https://docs.docker.com/engine/install/ubuntu/>
 
 ### Kubernetes
 
-<https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/>
-
-### Minikube
-
-<https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download>
+   1. Kubernetes: <https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/>
+   2. Minikube: <https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download>
+   3. Helm: <https://helm.sh/docs/intro/install/#from-apt-debianubuntu>
+   4. Helm charts (OTEL & Fluent-bit), run from the root project dir:  `sudo chmod +x kubernetes/helm/helm-dep-install.sh && kubernetes/helm/helm-dep-install.sh`
 
 ### MongoDB
 
@@ -20,151 +19,104 @@
 
 ### Apache Zookeeper & Kafka
 
-https://anishmahapatra.medium.com/how-to-set-up-kafka-on-ubuntu-6f68f6f37b3e
-   1. use this directory to install: **/usr/local/kafka/**
-   2. get hostname: `hostname -I`
-   3. edit Kafka server file: `sudo vim /usr/local/kafka/config/server.properties`
-   4. set this: 
-      ```nginx
-      listeners=PLAINTEXT://0.0.0.0:9092
-      advertised.listeners=PLAINTEXT://<hostname>:9092 #Ex: 127.0.0.1:9092
-      ```
+ 1. run from the root project dir: `sudo chmod +x setup/kafka/kafka.sh && setup/kafka/kafka.sh`
 
-### Elasticsearch with apt-get 
+### Elasticsearch, Kibana, Logstash
 
-https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html
-   1. wll be installed here: **/usr/share/elasticsearch/**
-   2. Reset password: `sudo bin/elasticsearch-reset-password -u elastic -i`
-      1. Set password: **elastic**
-      2. Add to env var: 
-         ```sh
-         echo 'export ELASTIC_PASSWORD="elastic"' >> ~/.zshrc #or for bash ~/.bashrc
-         source ~/.zshrc #or for bash ~/.bashrc
-         ```
-      3. Edit the config file: `sudo vim /etc/elasticsearch/elasticsearch.yml`
-         ```nginx
-         xpack.security.http.ssl:
-            enabled: false #make it false
-         
-         xpack.security.transport.ssl:
-            enabled: false #make it false
-         ```
-   3. Test if it is running
-      1. Add permission: `sudo chmod 777 -R /etc/elasticsearch`
-      2. Run this command: `curl -u elastic:$ELASTIC_PASSWORD http://localhost:9200 `
+ 1. run from the root project dir: `sudo chmod +x setup/elastic-kibana-logstash/elastic.sh && setup/elastic-kibana-logstash/elastic.sh`
+ 2. Kibana web: http://localhost:5601/
 
-### Kibana with apt-get
+### CDC (Mongo -> Kafka -> Elastic)
 
-https://www.elastic.co/guide/en/kibana/current/deb.html
-   1. wll be installed here: **/usr/share/kibana/**
-   2. Edit the config file: `sudo vim /etc/kibana/kibana.yml`
-      ```nginx
-      elasticsearch.hosts: ['http://127.0.0.1:9200'] #change from https to http
-      xpack.fleet.outputs: [{id: fleet-default-output, name: default, is_default: true, is_default_monitoring: true, type: elasticsearch, hosts: ['http://127.0.0.1:9200'], ca_trusted_fingerprint: 381127340b477d41dc1e67ef11b64e380b2d183d9ce63c2cb5c266fff86c2c59}] #change from https to http
-      ```
-   3. open in browser: http://localhost:5601/
-   4. run this to get token & provide in the browser:
-      ```sh
-      sudo /usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token --scope kibana
-      ```
-   5. run this to get verification code & provide in the browser:
-      ```sh
-      sudo /usr/share/kibana/bin/kibana-verification-code
-      ```
+See more details here dir: `documentations/cdc.md`
 
-### Redis with apt-get
+ 1. run from the root project dir: `sudo chmod +x setup/cdc/cdc.sh && setup/cdc/cdc.sh`
 
-https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/
+### Redis
 
-   1. edit redis config file: `sudo vim /etc/redis/redis.conf`
-   2. set this:
-
-         ```nginx
-         bind 0.0.0.0 -::1 
-         protected-mode no
-         ```
+ 1. run from the root project dir: `sudo chmod +x setup/redis/redis.sh && setup/redis/redis.sh`
 
 ### neo4j
 
-https://neo4j.com/docs/operations-manual/current/installation/linux/debian/#debian-installation
-
-   1.  get hostname: `hostname -I`
-   2.  edit neo4j config file: `sudo vim /etc/neo4j/neo4j.conf`
-   3.  Set this:
-         ```nginx
-         server.bolt.listen_address=<hostname>:7687 #Ex: 127.0.0.1:7687
-         server.bolt.advertised_address=<hostname>:7687 #Ex: 127.0.0.1:7687
-         ```
-   4.  Default username: **neo4j**, default password: **neo4j**
-   5.  Set password: `sudo neo4j-admin dbms set-initial-password 12345678` or `cypher-shell`
+ 1. run from the root project dir: `sudo chmod +x setup/neo4j/neo4j.sh && setup/neo4j/neo4j.sh`
 
 ### Flink with file download
 
-https://nightlies.apache.org/flink/flink-docs-release-1.14/docs/try-flink/local_installation/
-    1. use this directory to install: **/usr/local/flink/**
-    2. See in UI: http://localhost:8081/
+   1. run from the root project dir: `sudo chmod +x setup/flink/flink.sh && setup/flink/flink.sh`
+   2. UI: http://localhost:8081/
 
 ### Grafana with apt-get
 
 https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
-    1.  Grafana will start at: http://localhost:3000. username: **admin** & password: **admin**
-    2.  See additional details to continue
+
+   1. Grafana will start at: http://localhost:3000. username: **admin** & password: **admin**
+   2. See additional details to continue
+   3. Install kafka monitoring in Grafana:
+      ```sh
+      grafana-cli plugins install hamedkarbasi93-kafka-datasource
+      ```
 
 ### Prometheus
 
-run the script here `<workspace>/scripts/installation/prometheus.sh`. For more details: https://reintech.io/blog/installing-configuring-prometheus-ubuntu-22
-    1.  Prometheus will run on http://localhost:9090/
+   1. run from the root project dir: `sudo chmod +x setup/prometheus/prometheus.sh && setup/prometheus/prometheus.sh`
+   2. UI: http://localhost:9090/
 
-## How To Run
-   1. Run the following commands. If any error occurs, see the Prerequisites section to setup.
-       ```sh
-       sudo chmod +x start.sh
-       ./start.sh
-       ```
-   2. Run using kubectl
-      ```sh
-      # Kubernetes
-      minikube start
-      minikube dashboard
-      
-      # Running our applications
-      cd ~/workspace/MyNodeApp
-      kubectl apply -f my-node-app-pod.yml
-      ```
-      Or, run each services directly through `npm start` from the workspace 
+### Jaeger
+
+   1. run from the root project dir: `sudo chmod +x setup/jaeger/jaeger.sh && setup/jaeger/jaeger.sh`
+   2. UI: http://localhost:16686/
+
+### nginx
+
+   1. run from the root project dir: `sudo chmod +x setup/nginx/nginx.sh && setup/nginx/nginx.sh`
+
+### Node.js
+
+   1. <https://nodejs.org/en/download/current>
+
+### Postman
+
+   1. <https://learning.postman.com/docs/getting-started/installation/installation-and-updates/>
+   >
+
+## Setup and Run in Kubernetes!
+
+   1. Start the dependencies/prerequisites, run from the root project dir: `sudo chmod +x ./start.sh && ./start.sh`
+      1. Follow the logs to see if any dependency failed to start. Try with systemctl status to see if anything failed, for example: `systemctl status jaeger`. 
+      2. If failed then use journalctl to see the logs: for example: `journalctl -xeu jaeger`.
+   2. Start kubernetes local cluster: `minikube start`
+   3. Deploy the services, if not already: `kubectl apply -f kubernetes/my-node-app-pod.yml`
+   4. Open the minikube UI in the browser: `minikube dashboard`
+   5. Get the minikube IP: `minikube ip`. Probably it is: `192.168.49.2`
+   6. Goto the IP in the browser. For example: <http://192.168.49.1/>
+
+## Setup and Run Locally!
+
+   1. If you haven't already, start the dependencies/prerequisites, run from the root project dir: `sudo chmod +x ./start.sh && ./start.sh`
+      1. Follow the logs to see if any dependency failed to start. Try with systemctl status to see if anything failed, for example: `systemctl status jaeger`. 
+      2. If failed then use journalctl to see the logs: for example: `journalctl -xeu jaeger`.
+   2. Open the **MyNodeApp** repo in VS Code. It will start all of the services running directly with their dedicated port. Or manually run each service: `npm run dev`
+   3. Visit in the browser: <http://localhost/>
 
 ## Updating code
-1. Update new code from script:
+
+1. Change code in the repo. Then run to see if the code is compiling: `npm run dev`
+2. Upload to Dockerhub:
     ```sh
     sudo chmod +x deploy.sh
-    ./deploy.sh
+    ./deploy.sh --service-name all --deploy-kubernetes # Deploying everything to Docker, then deploy to Kubernetes
+    ./deploy.sh --service-name fanout-service # Deploying only fanout-service to Docker
     ```
-    Or, update manually:
-    ```sh
-   # Upload new code to docker (example for timeline-service) 
-    cd ~/workspace/MyNodeApp/src/timeline-service
-    docker build -t tareqjoy/timeline-service:latest .
-    docker push tareqjoy/timeline-service:latest 
-   
-   # Pull from docker
-   cd ~/workspace/MyNodeApp/
-   kubectl apply -f my-node-app-pod.yml --force  
-   kubectl rollout restart -f my-node-app-pod.yml 
-    ``` 
-2. Update library:
+
+3. Upload library code to NPM:
    ```sh
+   npm login #if not logged in
    npm run build && npm version patch && npm publish --access public
-
-   npm install --global lerna
-   lerna bootstrap
    ```
-## How To Test
-API Testing:
-Postman: https://learning.postman.com/docs/getting-started/installation/installation-and-updates/
 
-   Import from this URL: https://api.postman.com/collections/9269695-0ca04905-9722-4019-839c-9d21be838f54?access_key=PMAT-01J3ARR3MWS8MYZ9T2BCGCSBR5
 
 ## Debugging
+
 - SSH to a Pod:
    ```sh
   kubectl exec -it timeline-service-745ffbc996-r2mfp -n default -- /bin/sh 
@@ -185,8 +137,10 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
    ```
 
 ## Additional setup
-### MongoDB Index & Replica Set
-1. Index creation on Post. It will create index on both { userId } & { userId, time }. The shard creation doesn't work.
+
+### MongoDB Index
+
+1. Index creation on Post. It will create index on both { userId } & { userId, time }.
    ```sh
    cd src/post-service
    npm run setup:db:createIndex
@@ -197,115 +151,3 @@ Postman: https://learning.postman.com/docs/getting-started/installation/installa
    cd src/post-service
    npm run setup:db:createShard
    ```
-
-3. Create replica set: https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-for-testing/#std-label-server-replica-set-deploy-test
-   1. Use this command to create service file. Do it for all 3 replica sets.
-      ```sh
-      sudo nano /etc/systemd/system/mongod-rs0-1.service
-      ```
-   2. Use this template to create as service. Do it for all 3 replica sets.
-      ```ini
-      [Unit]
-      Description=MongoDB Replica Set - Instance 0
-      After=network.target
-
-      [Service]
-      User=mongodb
-      ExecStart=/usr/bin/mongod --replSet rs0 --port 27017 --bind_ip localhost,127.0.0.1 --dbpath /srv/mongodb/rs0-0 --oplogSize 128 --logpath /var/log/mongodb/rs0-0.log --logappend
-      ExecStop=/bin/kill -TERM $MAINPID
-      Restart=always
-
-      [Install]
-      WantedBy=multi-user.target
-      ```
-   3. Run this command:
-      ```sh
-      sudo systemctl daemon-reload
-      sudo chown -R mongodb:mongodb /srv/mongodb
-      ```
-   4. Run these to start the services:
-      ```sh
-      sudo systemctl start mongod-rs0-0
-      sudo systemctl start mongod-rs0-1
-      sudo systemctl start mongod-rs0-2
-      ```
-### CDC (Mongo to Elasticsearch):
-1. Setup CDC
-   1. Download these jars (Self-hosted option):
-      1. ElasticSearch Sink Connector: https://www.confluent.io/hub/confluentinc/kafka-connect-elasticsearch
-      2. MongoDB Connector: https://www.confluent.io/hub/mongodb/kafka-connect-mongodb
-      3. Kafka Connect Avro Converter: https://www.confluent.io/hub/confluentinc/kafka-connect-avro-converter
-   2. Extract the zips and move the jars from the **lib** directory to the plugin's root directory of the unzipped folder.
-   3. Move them in the kafka plugin directory
-      ```sh
-      sudo mv mongodb-kafka-connect-mongodb /usr/local/share/java 
-      sudo mv confluentinc-kafka-connect-elasticsearch /usr/local/share/java
-      sudo mv confluentinc-kafka-connect-avro-converter /usr/local/share/java
-      ```
-      It will be like this structure: **/usr/local/share/java/mongodb-kafka-connect-mongodb/\<all jars\>**
-   4. Give permission to public:
-      ```
-      sudo chmod 777 /usr/local/share/java/
-      ```
-2. Create CDC system service
-   1. Use this command to create a service file.
-      ```sh
-      sudo nano /etc/systemd/system/mongo-kafka-source.service
-      ```
-   2. Use this template to create as service. Update the conf files location as necessary.
-      ```ini
-      [Unit]
-      Description=Mongodb to Kafka connect
-      After=network.target
-
-      [Service]
-      ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-source.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-users-connector.properties
-      ExecStop=/bin/kill -TERM $MAINPID
-      Restart=always
-
-      [Install]
-      WantedBy=multi-user.target
-      ```
-   3. Use this command to create a service file.
-      ```sh
-      sudo nano /etc/systemd/system/elasticsearch-kafka-sink.service
-      ```
-   4. Use this template to create as service. Update the conf files location as necessary.
-      ```ini
-      [Unit]
-      Description=Kafka to Elasticsearch connect
-      After=network.target
-
-      [Service]
-      ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-sink.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-users-connector.properties
-      ExecStop=/bin/kill -TERM $MAINPID
-      Restart=always
-
-      [Install]
-      WantedBy=multi-user.target
-      ```
-   5. Run these commands:
-      ```sh
-      sudo systemctl daemon-reload
-      sudo chmod -R 777 /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/
-      sudo mkdir /usr/local/kafka/offsets/
-      sudo chmod -R 777 /usr/local/kafka/offsets
-      ```
-### Local Nginx:
-   1. Install Nginx: https://ubuntu.com/tutorials/install-and-configure-nginx#1-overview
-   2. Copy the config file:
-      ```sh
-      sudo cp /home/tareqjoy/workspace/MyNodeApp/assets/nginx_cors.conf /etc/nginx/snippets/nginx_cors.conf
-      sudo cp /home/tareqjoy/workspace/MyNodeApp/assets/nginx.conf /etc/nginx/sites-enabled/default
-      ```
-   3. restart nginx process:
-      ```sh
-      sudo systemctl restart nginx
-      ```
-### Grafana
-   1. Install kafka monitoring
-      ```sh
-      grafana-cli plugins install hamedkarbasi93-kafka-datasource
-      ```
-
- -javaagent:/opt/jmx_exporter/jmx_prometheus_javaagent.jar=7071:/opt/jmx_exporter/kafka-metrics.yml

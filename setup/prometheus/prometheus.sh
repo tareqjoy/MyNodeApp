@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# https://reintech.io/blog/installing-configuring-prometheus-ubuntu-22
+# Prometheus will run on http://localhost:9090/
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # create user
 sudo useradd --no-create-home --shell /bin/false prometheus

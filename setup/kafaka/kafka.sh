@@ -1,4 +1,6 @@
 #!/bin/bash
+# https://anishmahapatra.medium.com/how-to-set-up-kafka-on-ubuntu-6f68f6f37b3e
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # create user
 sudo useradd --no-create-home --shell /bin/false kafka

@@ -1,10 +1,17 @@
 #!/bin/bash
+
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html
+# https://www.elastic.co/guide/en/kibana/current/deb.html
+# https://www.elastic.co/guide/en/logstash/current/deb.html
+# elastic connection test: curl  http://elastic:elastic@127.0.0.1:9200
+# kibana web: http://localhost:5601/
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # setup apt for elastic services
 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
 sudo apt-get install apt-transport-https
-echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
+echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/9.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-9.x.list
 
 # ---------------------------------------------- install elsaticsearch ----------------------------------------------
 sudo apt-get update && sudo apt-get install elasticsearch

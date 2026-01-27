@@ -36,3 +36,72 @@ We are using MongoDB -> Kafka -> ElasticSearch with CDC.
         }
     }
     ```
+
+## Create CDC 
+
+**There is already a script to automate the following steps: `setup/cdc/cdc.sh`**
+
+### 1. System service
+
+   1. Use this command to create a service file.
+      ```sh
+      sudo nano /etc/systemd/system/mongo-kafka-source.service
+      ```
+   2. Use this template to create as service. Update the conf files location as necessary.
+      ```ini
+      [Unit]
+      Description=Mongodb to Kafka connect
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-source.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/mongodb-source-users-connector.properties
+      ExecStop=/bin/kill -TERM $MAINPID
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+      ```
+   3. Use this command to create a service file.
+      ```sh
+      sudo nano /etc/systemd/system/elasticsearch-kafka-sink.service
+      ```
+   4. Use this template to create as service. Update the conf files location as necessary.
+      ```ini
+      [Unit]
+      Description=Kafka to Elasticsearch connect
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/kafka/bin/connect-standalone.sh /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/connect-standalone-sink.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-posts-connector.properties /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/elasticsearch-sink-users-connector.properties
+      ExecStop=/bin/kill -TERM $MAINPID
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+      ```
+   5. Run these commands:
+      ```sh
+      sudo systemctl daemon-reload
+      sudo chmod -R 777 /home/tareqjoy/workspace/MyNodeApp/src/search-service/src/conf/
+      sudo mkdir /usr/local/kafka/offsets/
+      sudo chmod -R 777 /usr/local/kafka/offsets
+      ```
+
+
+### 2. CDC (Mongo to Elasticsearch):
+   1. Download these jars (Self-hosted option):
+      1. ElasticSearch Sink Connector: https://www.confluent.io/hub/confluentinc/kafka-connect-elasticsearch
+      2. MongoDB Connector: https://www.confluent.io/hub/mongodb/kafka-connect-mongodb
+      3. Kafka Connect Avro Converter: https://www.confluent.io/hub/confluentinc/kafka-connect-avro-converter
+   2. Extract the zips and move the jars from the **lib** directory to the plugin's root directory of the unzipped folder.
+   3. Move them in the kafka plugin directory
+      ```sh
+      sudo mv mongodb-kafka-connect-mongodb /usr/local/share/java 
+      sudo mv confluentinc-kafka-connect-elasticsearch /usr/local/share/java
+      sudo mv confluentinc-kafka-connect-avro-converter /usr/local/share/java
+      ```
+      It will be like this structure: **/usr/local/share/java/mongodb-kafka-connect-mongodb/\<all jars\>**
+   4. Give permission to public:
+      ```
+      sudo chmod 777 /usr/local/share/java/
+      ```

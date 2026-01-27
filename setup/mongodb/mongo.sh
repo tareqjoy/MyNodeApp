@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# https://www.mongodb.com/docs/manual/tutorial/deploy-replica-set-for-testing/#std-label-server-replica-set-deploy-test
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ADVERTISE_IP="${ADVERTISE_IP:-$(
