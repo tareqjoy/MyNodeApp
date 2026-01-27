@@ -88,7 +88,7 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
       1. Goto <https://app.docker.com/accounts/tareqjoy/settings/personal-access-tokens/>
       2. Create a new access token with Read & Write access, copy the access token for later use
       3. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
-         1. Kind: Username with password, Username: Dockerhub username, Password: access token, ID: dockerhub-creds, Description: Docker Hub credentials
+         1. Kind: `Username with password`, Username: `<Dockerhub username>`, Password: `<access token>`, ID: `dockerhub-creds`, Description: `Docker Hub credentials`
          2. Save
    5. Setup Github credentials:
       1. Goto <https://github.com/settings/personal-access-tokens>, Generate new token with Create Fine-grained token
@@ -96,12 +96,21 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
       3. Add Contents, Metadata, Pull Requests and Workflow permissions
       4. Create a new access token, copy the access token for later use
       5. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
-         1. Kind: Secret text, Secret: access token, ID: github-token, Description: GitHub PAT
+         1. Kind: `Secret text`, Secret: `<access token>`, ID: `github-token`, Description: `GitHub PAT`
          2. Save
+      6. Goto configure: <http://localhost:8080/manage/configure>
+         1. Under GitHub, `Add Github Servers`
+         2. Name: `Github`, API URL: `https://api.github.com`, Credentials: `Github PAT`, Enable `Manage hooks option`
    6. Setup Kubernetes/minikube credentials:
       1. Run: `kubectl config view --flatten --minify > /tmp/jenkins-kubeconfig`
       2. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
-         1. Kind: Secret file, File: Select /tmp/jenkins-kubeconfig, ID: kubeconfig, Description: K8s kubeconfig
+         1. Kind: `Secret file`, File: Select `/tmp/jenkins-kubeconfig`, ID: `kubeconfig`, Description: `K8s kubeconfig`
+         2. Save
+   7. Setup Pipeline in UI
+      1. Goto: <http://localhost:8080/>
+      2. Add a New Item with name `mynodeapp` and type `Multibranch Pipeline`
+      3. In the Configuration, `Add source` > `Github`
+         1. Credentials: `Github PAT`, Repository HTTPS URL: `https://github.com/tareqjoy/MyNodeApp.git`
          2. Save
 
 ## Setup and Run in Kubernetes!

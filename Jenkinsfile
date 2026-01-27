@@ -11,7 +11,7 @@ pipeline {
     DOCKERHUB_NAMESPACE = "tareqjoy"
     DOCKER_CREDS_ID     = "dockerhub-creds"
     KUBECONFIG_CRED_ID  = "kubeconfig"
-    K8S_NAMESPACE       = "dev"
+    K8S_NAMESPACE       = "default"
     SERVICES_DIR        = "src"
   }
 
