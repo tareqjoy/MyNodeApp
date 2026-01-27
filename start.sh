@@ -21,6 +21,7 @@ sudo systemctl start kibana.service && systemctl --no-pager status kibana.servic
 sudo systemctl start mongo-kafka-source.service && systemctl --no-pager status mongo-kafka-source.service
 sudo systemctl start elasticsearch-kafka-sink.service && systemctl --no-pager status elasticsearch-kafka-sink.service
 sudo systemctl start grafana-server && sudo systemctl --no-page status grafana-server 
+sudo systemctl start jenkins && sudo systemctl --no-page status jenkins
 minikube start
 
 echo "Done ..."

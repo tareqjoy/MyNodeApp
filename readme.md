@@ -79,6 +79,12 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
    1. <https://learning.postman.com/docs/getting-started/installation/installation-and-updates/>
    >
 
+### Jenkins
+
+   1. run from the root project dir: `sudo chmod +x setup/jenkins/jenkins.sh && setup/jenkins/jenkins.sh`
+   2. UI: http://localhost:8080/
+   3. Get the admin password here: `sudo less /var/lib/jenkins/secrets/initialAdminPassword`
+
 ## Setup and Run in Kubernetes!
 
    1. Start the dependencies/prerequisites, run from the root project dir: `sudo chmod +x ./start.sh && ./start.sh`
