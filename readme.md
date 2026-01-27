@@ -84,6 +84,25 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
    1. run from the root project dir: `sudo chmod +x setup/jenkins/jenkins.sh && setup/jenkins/jenkins.sh`
    2. UI: http://localhost:8080/
    3. Get the admin password here: `sudo less /var/lib/jenkins/secrets/initialAdminPassword`
+   4. Setup Dockerhub credentials:
+      1. Goto <https://app.docker.com/accounts/tareqjoy/settings/personal-access-tokens/>
+      2. Create a new access token with Read & Write access, copy the access token for later use
+      3. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
+         1. Kind: Username with password, Username: Dockerhub username, Password: access token, ID: dockerhub-creds, Description: Docker Hub credentials
+         2. Save
+   5. Setup Github credentials:
+      1. Goto <https://github.com/settings/personal-access-tokens>, Generate new token with Create Fine-grained token
+      2. Select MyNodeApp in Repository access
+      3. Add Contents, Metadata, Pull Requests and Workflow permissions
+      4. Create a new access token, copy the access token for later use
+      5. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
+         1. Kind: Secret text, Secret: access token, ID: github-token, Description: GitHub PAT
+         2. Save
+   6. Setup Kubernetes/minikube credentials:
+      1. Run: `kubectl config view --flatten --minify > /tmp/jenkins-kubeconfig`
+      2. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
+         1. Kind: Secret file, File: Select /tmp/jenkins-kubeconfig, ID: kubeconfig, Description: K8s kubeconfig
+         2. Save
 
 ## Setup and Run in Kubernetes!
 
