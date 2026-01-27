@@ -93,14 +93,14 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
    5. Setup Github credentials:
       1. Goto <https://github.com/settings/personal-access-tokens>, Generate new token with Create Fine-grained token
       2. Select MyNodeApp in Repository access
-      3. Add Contents, Metadata, Pull Requests and Workflow permissions
+      3. Add `Contents, Metadata, Pull Requests and Workflow` permissions
       4. Create a new access token, copy the access token for later use
       5. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
-         1. Kind: `Secret text`, Secret: `<access token>`, ID: `github-token`, Description: `GitHub PAT`
+         1. Kind: `Username with password`, Username: `<Github username>`, Password: `<access token>`, ID: `github-creds`, Description: `GitHub PAT for SCM`
          2. Save
       6. Goto configure: <http://localhost:8080/manage/configure>
          1. Under GitHub, `Add Github Servers`
-         2. Name: `Github`, API URL: `https://api.github.com`, Credentials: `Github PAT`, Enable `Manage hooks option`
+         2. Name: `Github`, API URL: `https://api.github.com`, Credentials: `github-creds`, Enable `Manage hooks option`
    6. Setup Kubernetes/minikube credentials:
       1. Run: `kubectl config view --flatten --minify > /tmp/jenkins-kubeconfig`
       2. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
