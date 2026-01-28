@@ -8,7 +8,7 @@ pipeline {
   options {
     timestamps()
     disableConcurrentBuilds()
-    skipDefaultCheckout(false)
+    skipDefaultCheckout(true)
   }
 
   environment {
@@ -18,6 +18,7 @@ pipeline {
     K8S_NAMESPACE       = "default"
     SERVICES_DIR        = "src"
     NODE_ENV            = 'production'
+    ALLOWED_SERVICES    = "timeline-service,user-service,follower-service,fanout-service,post-service,search-service,auth-service,frontend-service,file-service"
   }
 
   stages {
@@ -32,61 +33,91 @@ pipeline {
     stage('Detect changed services') {
       steps {
         script {
-          // 1) Base commit = previous successful build's commit (best)
-          String baseSha = null
+          String base = null
 
-          def prev = currentBuild.rawBuild.getPreviousSuccessfulBuild()
-          if (prev != null) {
-            def buildData = prev.getAction(hudson.plugins.git.util.BuildData)
-            if (buildData?.lastBuiltRevision?.sha1 != null) {
-              baseSha = buildData.lastBuiltRevision.sha1.name()
-            }
-          }
-
-          // 2) Fallbacks: HEAD~1 if exists, else "all services"
-          if (!baseSha) {
-            def hasHead1 = (sh(returnStatus: true, script: "git rev-parse HEAD~1 >/dev/null 2>&1") == 0)
-            baseSha = hasHead1 ? "HEAD~1" : null
-          }
-
-          // 3) Collect changed files
-          String changed
-          if (baseSha) {
-            echo "Diff base: ${baseSha} -> HEAD"
-            changed = sh(returnStdout: true, script: "git diff --name-only ${baseSha} HEAD").trim()
+          if (env.CHANGE_ID) {
+            sh "git fetch --no-tags --prune origin +refs/heads/${env.CHANGE_TARGET}:refs/remotes/origin/${env.CHANGE_TARGET}"
+            base = sh(returnStdout: true, script: "git merge-base HEAD origin/${env.CHANGE_TARGET}").trim()
+            echo "PR build detected (CHANGE_ID=${env.CHANGE_ID}), base=${base}"
           } else {
-            echo "No previous successful build and no HEAD~1; treating all services as changed."
+            def hasHead1 = (sh(returnStatus: true, script: "git rev-parse HEAD~1 >/dev/null 2>&1") == 0)
+            base = hasHead1 ? "HEAD~1" : null
+            echo "Non-PR build, base=${base ?: 'ALL'}"
+          }
+
+          String changed
+          if (base) {
+            changed = sh(returnStdout: true, script: "git diff --name-only ${base} HEAD").trim()
+          } else {
             changed = sh(returnStdout: true, script: "find ${env.SERVICES_DIR} -maxdepth 2 -name package.json -print | sed 's|/package.json||'").trim()
           }
 
-          // 4) Map changed files -> services
+          def allowed = (env.ALLOWED_SERVICES ?: "")
+            .split(',')
+            .collect { it.trim() }
+            .findAll { it }
+            .toSet()
+
           def services = [] as Set
           if (changed) {
             changed.split('\n').each { p ->
               def m = (p =~ /^${env.SERVICES_DIR}\/([^\/]+)\//)
-              if (m) { services << m[0][1] }
+              if (m) {
+                def svc = m[0][1]
+                if (allowed.contains(svc)) {
+                  services << svc
+                }
+              }
             }
           }
 
           env.CHANGED_SERVICES = services.join(',')
-          echo "Changed services: ${env.CHANGED_SERVICES}"
+          echo "Changed services (allowed only): ${env.CHANGED_SERVICES}"
         }
       }
     }
 
+    stage('Apply Kubernetes manifests (master only)') {
+      when { branch 'master' }
+      steps {
+        withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
+          sh """
+            set -euxo pipefail
+            export KUBECONFIG=${KUBECONFIG_FILE}
+            kubectl get ns ${env.K8S_NAMESPACE} >/dev/null 2>&1 || kubectl create ns ${env.K8S_NAMESPACE}
+            kubectl -n ${env.K8S_NAMESPACE} apply -f kubernetes/my-node-app-pod.yml
+          """
+        }
+      }
+    }
 
-    stage('CI + Build + Push (changed services)') {
-      when { expression { return env.CHANGED_SERVICES?.trim() } }
+    stage('Per-service pipeline') {
       steps {
         script {
-          def svcList = env.CHANGED_SERVICES.split(',').findAll { it?.trim() }
+          def allowed = (env.ALLOWED_SERVICES ?: '')
+            .split(',')
+            .collect { it.trim() }
+            .findAll { it }
+
+          def changed = (env.CHANGED_SERVICES ?: '')
+            .split(',')
+            .collect { it.trim() }
+            .findAll { it }
+            .toSet()
+
           def fanout = [:]
 
-          svcList.each { svc ->
+          allowed.each { svc ->
             fanout[svc] = {
-              def svcPath = "${env.SERVICES_DIR}/${svc}"
+              if (!changed.contains(svc)) {
+                stage("${svc} (skipped)") {
+                  echo "No changes for ${svc}, skipping"
+                }
+                return
+              }
+
               stage("CI: ${svc}") {
-                dir(svcPath) {
+                dir("${env.SERVICES_DIR}/${svc}") {
                   sh """
                     set -euxo pipefail
                     node -v
@@ -98,14 +129,26 @@ pipeline {
                 }
               }
 
-              stage("Docker build/push: ${svc}") {
-                docker.withRegistry('https://index.docker.io/v1/', env.DOCKER_CREDS_ID) {
-                  def image = "${env.DOCKERHUB_NAMESPACE}/${svc}:${env.GIT_SHA}"
-                  sh """
-                    set -euxo pipefail
-                    docker build -t ${image} ${svcPath}
-                    docker push ${image}
-                  """
+              if (env.BRANCH_NAME == 'master' && !env.CHANGE_ID) {
+                stage("Docker: ${svc}") {
+                  docker.withRegistry('https://index.docker.io/v1/', env.DOCKER_CREDS_ID) {
+                    def image = "${env.DOCKERHUB_NAMESPACE}/${svc}:${env.GIT_SHA}"
+                    sh """
+                      docker build -t ${image} ${env.SERVICES_DIR}/${svc}
+                      docker push ${image}
+                    """
+                  }
+                }
+
+                stage("Deploy: ${svc}") {
+                  withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
+                    def image = "${env.DOCKERHUB_NAMESPACE}/${svc}:${env.GIT_SHA}"
+                    sh """
+                      export KUBECONFIG=${KUBECONFIG_FILE}
+                      kubectl -n ${env.K8S_NAMESPACE} set image deploy/${svc} ${svc}=${image}
+                      kubectl -n ${env.K8S_NAMESPACE} rollout status deploy/${svc} --timeout=180s
+                    """
+                  }
                 }
               }
             }
@@ -116,33 +159,7 @@ pipeline {
       }
     }
 
-    stage('Deploy to Kubernetes') {
-      when { expression { return env.CHANGED_SERVICES?.trim() } }
-      steps {
-        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-          script {
-            def svcList = env.CHANGED_SERVICES.split(',').findAll { it?.trim() }
 
-            sh """
-              set -euxo pipefail
-              export KUBECONFIG=${KUBECONFIG_FILE}
-              kubectl get ns ${K8S_NAMESPACE} >/dev/null 2>&1 || kubectl create ns ${K8S_NAMESPACE}
-              kubectl -n ${K8S_NAMESPACE} apply -f kubernetes/my-node-app-pod.yml
-            """
-
-            svcList.each { svc ->
-              def image = "${DOCKERHUB_NAMESPACE}/${svc}:${GIT_SHA}"
-              sh """
-                set -euxo pipefail
-                export KUBECONFIG=${KUBECONFIG_FILE}
-                kubectl -n ${K8S_NAMESPACE} set image deploy/${svc} ${svc}=${image} --record=true
-                kubectl -n ${K8S_NAMESPACE} rollout status deploy/${svc} --timeout=180s
-              """
-            }
-          }
-        }
-      }
-    }
   }
 
   post {
