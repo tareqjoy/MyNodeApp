@@ -32,36 +32,48 @@ pipeline {
     stage('Detect changed services') {
       steps {
         script {
-          // For a single-branch master setup:
-          // Compare with previous commit. On the first build, fall back to all services.
-          def base = sh(returnStatus: true, script: "git rev-parse HEAD~1 >/dev/null 2>&1") == 0 ? "HEAD~1" : ""
-          def diffCmd = base ? "git diff --name-only ${base} HEAD" : "find ${env.SERVICES_DIR} -maxdepth 2 -name package.json -print | sed 's|/package.json||'"
-          def changed = sh(returnStdout: true, script: diffCmd).trim()
+          // 1) Base commit = previous successful build's commit (best)
+          String baseSha = null
 
-          def services = [] as Set
-
-          if (base) {
-            changed.split('\n').each { p ->
-              // Match: src/<service>/...
-              def m = (p =~ /^${env.SERVICES_DIR}\/([^\/]+)\//)
-              if (m) { services << m[0][1] }
-            }
-          } else {
-            // first build: treat every service dir as changed
-            changed.split('\n').each { p ->
-              def m = (p =~ /^${env.SERVICES_DIR}\/([^\/]+)$/)
-              if (m) { services << m[0][1] }
+          def prev = currentBuild.rawBuild.getPreviousSuccessfulBuild()
+          if (prev != null) {
+            def buildData = prev.getAction(hudson.plugins.git.util.BuildData)
+            if (buildData?.lastBuiltRevision?.sha1 != null) {
+              baseSha = buildData.lastBuiltRevision.sha1.name()
             }
           }
 
-          // If shared root files change and you want to rebuild all, add logic here.
-          // Example: if package-lock at root changes -> rebuild all.
+          // 2) Fallbacks: HEAD~1 if exists, else "all services"
+          if (!baseSha) {
+            def hasHead1 = (sh(returnStatus: true, script: "git rev-parse HEAD~1 >/dev/null 2>&1") == 0)
+            baseSha = hasHead1 ? "HEAD~1" : null
+          }
+
+          // 3) Collect changed files
+          String changed
+          if (baseSha) {
+            echo "Diff base: ${baseSha} -> HEAD"
+            changed = sh(returnStdout: true, script: "git diff --name-only ${baseSha} HEAD").trim()
+          } else {
+            echo "No previous successful build and no HEAD~1; treating all services as changed."
+            changed = sh(returnStdout: true, script: "find ${env.SERVICES_DIR} -maxdepth 2 -name package.json -print | sed 's|/package.json||'").trim()
+          }
+
+          // 4) Map changed files -> services
+          def services = [] as Set
+          if (changed) {
+            changed.split('\n').each { p ->
+              def m = (p =~ /^${env.SERVICES_DIR}\/([^\/]+)\//)
+              if (m) { services << m[0][1] }
+            }
+          }
 
           env.CHANGED_SERVICES = services.join(',')
           echo "Changed services: ${env.CHANGED_SERVICES}"
         }
       }
     }
+
 
     stage('CI + Build + Push (changed services)') {
       when { expression { return env.CHANGED_SERVICES?.trim() } }

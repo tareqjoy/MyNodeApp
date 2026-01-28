@@ -99,7 +99,7 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
    5. Setup Github:
       1. Goto <https://github.com/settings/personal-access-tokens>, Generate new token with Create Fine-grained token
       2. Select MyNodeApp in Repository access
-      3. Add `Contents, Metadata, Pull Requests and Workflow` permissions
+      3. Add `Contents, Metadata, Pull Requests, Commit Statuses (Read and Write) and Workflow` permissions
       4. Create a new access token, copy the access token for later use
       5. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
          1. Kind: `Username with password`, Username: `<Github username>`, Password: `<access token>`, ID: `github-creds`, Description: `GitHub PAT for SCM`
@@ -112,7 +112,14 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
       2. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
          1. Kind: `Secret file`, File: Select `/tmp/jenkins-kubeconfig`, ID: `kubeconfig`, Description: `K8s kubeconfig`
          2. Save
-   7. Setup Pipeline in UI
+   7. Setup Plugins:
+      1. Setup NodeJs (<https://plugins.jenkins.io/nodejs/>)
+         1. Goto: <http://localhost:8080/manage/pluginManager/available>, search and install `NodeJs`
+         2. After installation, Goto: <http://localhost:8080/manage/configureTools/>, add `NodeJS installations`
+         3. Set Name: `node24`, Install automatically with 24 Version `NodeJS 24.x.x`
+         4. Save
+      2. Setup Git Plugin (<https://plugins.jenkins.io/git/>) if not installed before
+   8. Setup Pipeline in UI
       1. Goto: <http://localhost:8080/>
       2. Add a New Item with name `mynodeapp` and type `Multibranch Pipeline`
       3. In the Configuration, `Add source` > `Github`
