@@ -84,13 +84,19 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
    1. run from the root project dir: `sudo chmod +x setup/jenkins/jenkins.sh && setup/jenkins/jenkins.sh`
    2. UI: http://localhost:8080/
    3. Get the admin password here: `sudo less /var/lib/jenkins/secrets/initialAdminPassword`
-   4. Setup Dockerhub credentials:
+   4. Setup Dockerhub:
       1. Goto <https://app.docker.com/accounts/tareqjoy/settings/personal-access-tokens/>
       2. Create a new access token with Read & Write access, copy the access token for later use
       3. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
          1. Kind: `Username with password`, Username: `<Dockerhub username>`, Password: `<access token>`, ID: `dockerhub-creds`, Description: `Docker Hub credentials`
          2. Save
-   5. Setup Github credentials:
+      4. Run these commands:
+         ```sh
+         sudo usermod -aG docker jenkins                                                                        
+         sudo systemctl restart jenkins
+         ```
+
+   5. Setup Github:
       1. Goto <https://github.com/settings/personal-access-tokens>, Generate new token with Create Fine-grained token
       2. Select MyNodeApp in Repository access
       3. Add `Contents, Metadata, Pull Requests and Workflow` permissions
@@ -101,7 +107,7 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
       6. Goto configure: <http://localhost:8080/manage/configure>
          1. Under GitHub, `Add Github Servers`
          2. Name: `Github`, API URL: `https://api.github.com`, Credentials: `github-creds`, Enable `Manage hooks option`
-   6. Setup Kubernetes/minikube credentials:
+   6. Setup Kubernetes/minikube:
       1. Run: `kubectl config view --flatten --minify > /tmp/jenkins-kubeconfig`
       2. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
          1. Kind: `Secret file`, File: Select `/tmp/jenkins-kubeconfig`, ID: `kubeconfig`, Description: `K8s kubeconfig`

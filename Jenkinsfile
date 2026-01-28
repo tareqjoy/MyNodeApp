@@ -17,6 +17,7 @@ pipeline {
     KUBECONFIG_CRED_ID  = "kubeconfig"
     K8S_NAMESPACE       = "default"
     SERVICES_DIR        = "src"
+    NODE_ENV            = 'production'
   }
 
   stages {
