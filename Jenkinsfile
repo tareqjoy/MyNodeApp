@@ -17,7 +17,7 @@ pipeline {
     KUBECONFIG_CRED_ID  = "kubeconfig"
     K8S_NAMESPACE       = "default"
     SERVICES_DIR        = "src"
-    NODE_ENV            = 'production'
+    NODE_ENV            = 'development'
     ALLOWED_SERVICES    = "timeline-service,user-service,follower-service,fanout-service,post-service,search-service,auth-service,frontend-service,file-service"
   }
 
