@@ -7,7 +7,7 @@
         "setup:db:createIndex": "tsc -p . && node dist/db/DbSetup.js --create-index",
         "setup:db:createShard": "tsc -p . && node dist/db/DbSetup.js --create-shard",
         "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "echo \"No tests\"",
         "set-env": "node set-env.js",
         "start": "export $(node set-env.js) && node dist/server.js",
         "dev": "export $(node set-env.js) && ts-node src/server.ts",

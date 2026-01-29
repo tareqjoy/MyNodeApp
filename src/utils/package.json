@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"No tests\"",
     "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
     "build": "tsc"
