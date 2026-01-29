@@ -67,6 +67,11 @@ scrape_configs:
     metrics_path: /v1/auth/metrics
     static_configs:
       - targets: [ 'localhost:80', '192.168.49.2:80' ]
+  - job_name: 'v1/file'
+    scrape_interval: 10s
+    metrics_path: /v1/file/metrics
+    static_configs:
+      - targets: [ 'localhost:80', '192.168.49.2:80' ]
 
 
 
