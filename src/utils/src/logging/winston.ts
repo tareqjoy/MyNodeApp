@@ -1,110 +1,97 @@
-import winston, { format } from "winston";
+// logging.ts
+import winston from "winston";
 import expressWinston from "express-winston";
-import { Handler } from "express";
+import type { Handler, Request, Response } from "express";
 
-let logger: winston.Logger;
-let expressLogger: Handler;
+let base: winston.Logger | undefined;
+let appLogger: winston.Logger | undefined;
+let accessLogger: Handler | undefined;
 
 const defaultMeta = {
-  service_name: process.env.SERVICE_NAME || "unknown",
-  service_version: process.env.SERVICE_VERSION || "unknown",
+  service_name: process.env.SERVICE_NAME ?? "unknown",
+  service_version: process.env.SERVICE_VERSION ?? "unknown",
+  env: process.env.NODE_ENV ?? "development",
 };
-
-export function getFileLogger(filename: string): winston.Logger {
-  if (!logger) {
-    if (process.env.NODE_ENV === "production") {
-      logger = winston.createLogger({
-        level: process.env.WINSTON_LOG_PROD_LEVEL || process.env.WINSTON_LOG_LEVEL || "info",
-        format: format.combine(
-          format.timestamp({
-            format: "YYYY-MM-DD HH:mm:ss",
-          }),
-          format.errors({ stack: true }),
-          format.splat(),
-          format.json(),
-        ),
-        defaultMeta: defaultMeta
-      });
-    } else {
-      logger = winston.createLogger({
-        level: process.env.WINSTON_LOG_LEVEL || "debug",
-        format: format.combine(
-          format.timestamp({
-            format: "YYYY-MM-DD HH:mm:ss",
-          }),
-          format.errors({ stack: true }),
-          format.splat(),
-          format.json(),
-          format.printf(({ timestamp, message, level, stack, ...rest }) => {
-            // Extract relevant information
-            let logOutput = JSON.stringify(
-              { timestamp, message, level, ...rest },
-              null,
-              2 // Pretty print JSON with indentation
-            );
-          
-            // If there is a stack trace, format it nicely
-            if (typeof stack === 'string') {
-              logOutput += `\nStack Trace:\n${stack.replace(/\n/g, '\n    ')}`; // Indent the stack trace for readability
-            }
-          
-            // Add custom separator for better readability between logs
-            logOutput += "\n====================================\n";
-            
-            return logOutput;
-          }),
-          format.colorize({ all: true }), 
-        ),
-        defaultMeta: defaultMeta,
-        transports: [
-          new winston.transports.Console()
-        ]
-      });
-    }
-  }
-
-  return logger.child({ scope: getRelativeFilePath(filename) })!;
-}
-
-export function getExpressLogger(): Handler {
-  if (!expressLogger) {
-    const expressLogTransporter = process.env.NODE_ENV === "production"? []: [new winston.transports.Console()];
-    expressLogger = expressWinston.logger({
-      transports: expressLogTransporter,
-      format: winston.format.combine(
-        format.label({ label: "service" }),
-        format.timestamp({
-          format: "YYYY-MM-DD HH:mm:ss",
-        }),
-        format.errors({ stack: true }),
-        format.splat(),
-        format.json(),
-      ),
-      baseMeta: defaultMeta,
-      meta: true,
-      msg: "HTTP {{req.method}} {{req.url}}",
-      expressFormat: true,
-      colorize: false,
-      ignoreRoute: function (req, res) {
-        return false;
-      },
-    });
-    
-  }
-  return expressLogger;
-}
-
 
 function getRelativeFilePath(filePath: string): string {
   const keywords = ["node_modules", "dist", "src"];
-
-  // Find the last occurrence of prioritized keywords
   for (const keyword of keywords) {
     const index = filePath.lastIndexOf(`/${keyword}/`);
-    if (index != -1) {
-      return filePath.substring(index+1);
-    }
+    if (index !== -1) return filePath.substring(index + 1);
   }
-
   return filePath;
+}
+
+function getBase(): winston.Logger {
+  if (base) return base;
+
+  base = winston.createLogger({
+    level: process.env.LOG_LEVEL ?? "info",
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.errors({ stack: true }),
+      winston.format.splat(),
+      winston.format.json(),
+    ),
+    defaultMeta,
+    transports: [new winston.transports.Console()],
+  });
+
+  return base;
+}
+
+function getRequestId(req: Request): string | undefined {
+  const v = req.headers["x-request-id"];
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) return v[0];
+  return undefined;
+}
+
+export function getFileLogger(scope?: string): winston.Logger {
+  if (!appLogger) appLogger = getBase().child({ "log.type": "app" });
+  return scope ? appLogger.child({ scope: getRelativeFilePath(scope) }) : appLogger;
+}
+
+export function getAccessLogger(): Handler {
+  if (accessLogger) return accessLogger;
+
+  const logger = getBase().child({ "log.type": "access" });
+
+  accessLogger = expressWinston.logger({
+    winstonInstance: logger,
+    // Keep JSON; no printf/colorize
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.json(),
+    ),
+
+    // Make one event per request
+    msg: "HTTP {{req.method}} {{req.url}}",
+
+    // Include useful request/response fields
+    dynamicMeta: (req: Request, res: Response) => ({
+      request_id: getRequestId(req),
+      http: {
+        method: req.method,
+        route: (req as any).route?.path,
+        target: req.originalUrl ?? req.url,
+        status_code: res.statusCode,
+      },
+      net: {
+        peer_ip: req.ip,
+      },
+      user_agent: req.headers["user-agent"],
+    }),
+
+    // Optional: reduce noise
+    ignoreRoute: (req: Request) => {
+      const url = req.originalUrl || req.url;
+      return (
+        typeof url === "string" &&
+        (/\/health$/.test(url) || /\/metrics$/.test(url))
+      );
+    },
+  });
+
+  return accessLogger;
 }
