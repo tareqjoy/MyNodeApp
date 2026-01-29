@@ -84,7 +84,8 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
    1. run from the root project dir: `sudo chmod +x setup/jenkins/jenkins.sh && setup/jenkins/jenkins.sh`
    2. UI: http://localhost:8080/
    3. Get the admin password here: `sudo less /var/lib/jenkins/secrets/initialAdminPassword`
-   4. Setup Dockerhub:
+   4. Install recommended plugins
+   5. Setup Dockerhub:
       1. Goto <https://app.docker.com/accounts/tareqjoy/settings/personal-access-tokens/>
       2. Create a new access token with Read & Write access, copy the access token for later use
       3. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
@@ -96,7 +97,7 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
          sudo systemctl restart jenkins
          ```
 
-   5. Setup Github:
+   6. Setup Github:
       1. Goto <https://github.com/settings/personal-access-tokens>, Generate new token with Create Fine-grained token
       2. Select MyNodeApp in Repository access
       3. Add `Contents, Metadata, Pull Requests, Commit Statuses (Read and Write) and Workflow` permissions
@@ -107,19 +108,20 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
       6. Goto configure: <http://localhost:8080/manage/configure>
          1. Under GitHub, `Add Github Servers`
          2. Name: `Github`, API URL: `https://api.github.com`, Credentials: `github-creds`, Enable `Manage hooks option`
-   6. Setup Kubernetes/minikube:
+   7. Setup Kubernetes/minikube:
       1. Run: `kubectl config view --flatten --minify > /tmp/jenkins-kubeconfig`
       2. Goto jenkins cred: <http://localhost:8080/manage/credentials/store/system/domain/_/>
          1. Kind: `Secret file`, File: Select `/tmp/jenkins-kubeconfig`, ID: `kubeconfig`, Description: `K8s kubeconfig`
          2. Save
-   7. Setup Plugins:
-      1. Setup NodeJs (<https://plugins.jenkins.io/nodejs/>)
+   8. Setup Plugins:
+      1. Setup `NodeJs` (<https://plugins.jenkins.io/nodejs/>)
          1. Goto: <http://localhost:8080/manage/pluginManager/available>, search and install `NodeJs`
          2. After installation, Goto: <http://localhost:8080/manage/configureTools/>, add `NodeJS installations`
          3. Set Name: `node24`, Install automatically with 24 Version `NodeJS 24.x.x`
          4. Save
-      2. Setup Git Plugin (<https://plugins.jenkins.io/git/>) if not installed before
-   8. Setup Pipeline in UI
+      2. Setup `Git` Plugin (<https://plugins.jenkins.io/git/>) (Should have installed before).
+      3. Setup `Docker Pipeline` Plugin (<https://plugins.jenkins.io/docker-workflow/>).
+   9.  Setup Pipeline in UI
       1. Goto: <http://localhost:8080/>
       2. Add a New Item with name `mynodeapp` and type `Multibranch Pipeline`
       3. In the Configuration, `Add source` > `Github`
