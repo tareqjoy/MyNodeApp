@@ -17,7 +17,6 @@ pipeline {
     KUBECONFIG_CRED_ID  = "kubeconfig"
     K8S_NAMESPACE       = "default"
     SERVICES_DIR        = "src"
-    NODE_ENV            = 'development'
     ALLOWED_SERVICES    = "timeline-service,user-service,follower-service,fanout-service,post-service,search-service,auth-service,frontend-service,file-service"
   }
 
@@ -81,12 +80,14 @@ pipeline {
       when { branch 'master' }
       steps {
         withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
-          sh """
-            set -euxo pipefail
-            export KUBECONFIG=${KUBECONFIG_FILE}
-            kubectl get ns ${env.K8S_NAMESPACE} >/dev/null 2>&1 || kubectl create ns ${env.K8S_NAMESPACE}
-            kubectl -n ${env.K8S_NAMESPACE} apply -f kubernetes/my-node-app-pod.yml
-          """
+          withEnv(["NS=${env.K8S_NAMESPACE}"]) {
+            sh '''
+              set -euo pipefail
+              export KUBECONFIG="$KUBECONFIG_FILE"
+              kubectl get ns "$NS" >/dev/null 2>&1 || kubectl create ns "$NS"
+              kubectl -n "$NS" apply -f kubernetes/my-node-app-pod.yml
+            '''
+          }
         }
       }
     }
@@ -118,14 +119,25 @@ pipeline {
 
               stage("CI: ${svc}") {
                 dir("${env.SERVICES_DIR}/${svc}") {
-                  sh """
-                    set -euxo pipefail
-                    node -v
-                    npm -v
-                    npm ci
-                    npm test --if-present
-                    npm run build --if-present
-                  """
+                  if (svc == 'frontend-service') {
+                    sh '''
+                      set -euxo pipefail
+                      node -v
+                      npm -v
+                      npm ci
+                      npm test --if-present
+                      NODE_ENV=production npm run build --if-present
+                    '''
+                  } else {
+                    sh '''
+                      set -euxo pipefail
+                      node -v
+                      npm -v
+                      npm ci
+                      npm test --if-present
+                      npm run build --if-present
+                    '''
+                  }
                 }
               }
 
