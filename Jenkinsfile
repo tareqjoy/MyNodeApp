@@ -143,11 +143,15 @@ pipeline {
                 stage("Deploy: ${svc}") {
                   withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
                     def image = "${env.DOCKERHUB_NAMESPACE}/${svc}:${env.GIT_SHA}"
-                    sh """
-                      export KUBECONFIG=${KUBECONFIG_FILE}
-                      kubectl -n ${env.K8S_NAMESPACE} set image deploy/${svc} ${svc}=${image}
-                      kubectl -n ${env.K8S_NAMESPACE} rollout status deploy/${svc} --timeout=180s
-                    """
+                    def containerName = "${svc}-container"
+                    withEnv(["SVC=${svc}", "IMAGE=${image}", "CONTAINER=${containerName}", "NS=${env.K8S_NAMESPACE}"]) {
+                      sh '''
+                        set -euo pipefail
+                        export KUBECONFIG="$KUBECONFIG_FILE"
+                        kubectl -n "$NS" set image "deploy/$SVC" "$CONTAINER=$IMAGE"
+                        kubectl -n "$NS" rollout status "deploy/$SVC" --timeout=180s
+                      '''
+                    }
                   }
                 }
               }
