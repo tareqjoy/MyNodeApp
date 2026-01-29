@@ -1,0 +1,6 @@
+resources:
+  - ../../base
+
+images:
+  - name: tareqjoy/fanout-service
+    newTag: dev

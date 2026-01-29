@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb-config
+data:
+  MONGODB_URL: mongodb://admin:admin@host.minikube.internal:27017,host.minikube.internal:27018,host.minikube.internal:27019/mydatabase?replicaSet=rs0

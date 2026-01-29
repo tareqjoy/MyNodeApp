@@ -1,0 +1,8 @@
+resources:
+  - ingress.yaml
+  - configmaps/mongodb-config.yaml
+  - configmaps/kafka-config.yaml
+  - configmaps/redis-config.yaml
+  - configmaps/neo4j-config.yaml
+  - configmaps/elastic-search-config.yaml
+  - configmaps/service-url-config.yaml
