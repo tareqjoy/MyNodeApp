@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeline-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: timeline-service
+  template:
+    metadata:
+      labels:
+        app: timeline-service
+    spec:
+      containers:
+        - name: timeline-service-container
+          image: tareqjoy/timeline-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: timeline-service-config
+            - configMapRef:
+                name: mongodb-config
+            - configMapRef:
+                name: redis-config
+            - configMapRef:
+                name: service-url-config

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: post-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: post-service
+  template:
+    metadata:
+      labels:
+        app: post-service
+    spec:
+      containers:
+        - name: post-service-container
+          image: tareqjoy/post-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: post-service-config
+            - configMapRef:
+                name: mongodb-config
+            - configMapRef:
+                name: kafka-config
+            - configMapRef:
+                name: service-url-config
+            - configMapRef:
+                name: redis-config

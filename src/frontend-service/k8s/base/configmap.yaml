@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-service-config
+data:
+  SERVICE_NAME: frontend-service
+  SERVICE_VERSION: 1.0.0
+  PLACEHOLDER: PLACEHOLDER
