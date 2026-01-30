@@ -21,6 +21,13 @@ require_cmd() {
 
 require_cmd git
 
+if git rev-parse --is-shallow-repository >/dev/null 2>&1; then
+  if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+    echo "Shallow clone detected; fetching more history"
+    git fetch --no-tags --prune --unshallow origin || git fetch --no-tags --prune --depth=200 origin
+  fi
+fi
+
 base=""
 if [ -n "$GIT_PREVIOUS_SUCCESSFUL_COMMIT" ] && [ "$GIT_PREVIOUS_SUCCESSFUL_COMMIT" != "null" ]; then
   base="$GIT_PREVIOUS_SUCCESSFUL_COMMIT"
@@ -47,7 +54,19 @@ if [ -n "$base" ]; then
   changed=$(git diff --name-only "$base"...HEAD | tr -d '\r' || true)
   echo "Diff range (merge-base): $base...HEAD"
 else
-  changed=$(find "$SERVICES_DIR" -maxdepth 2 -name package.json -print | sed 's|/package.json||')
+  changed=$(find "$SERVICES_DIR" -maxdepth 2 -name package.json -print | sed 's|/package.json|/|')
+fi
+
+if [ -z "$changed" ]; then
+  changed=$(git show --name-only --pretty="" HEAD | tr -d '\r' || true)
+  if [ -n "$changed" ]; then
+    echo "Fallback to HEAD file list"
+  fi
+fi
+
+if [ -z "$changed" ]; then
+  echo "No changed files detected; defaulting to all allowed services"
+  changed=$(echo "$ALLOWED_SERVICES" | tr ',' '\n' | sed "s|^|$SERVICES_DIR/|")
 fi
 
 if [ -n "$changed" ]; then
