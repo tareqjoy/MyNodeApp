@@ -21,8 +21,6 @@ pipeline {
     K8S_NAMESPACE       = "default"
     SERVICES_DIR        = "src"
     ALLOWED_SERVICES    = "timeline-service,user-service,follower-service,fanout-service,post-service,search-service,auth-service,frontend-service,file-service"
-    KUBECTL_VERSION     = ""
-    KUSTOMIZE_VERSION   = ""
   }
 
   stages {
@@ -104,9 +102,7 @@ pipeline {
                     withEnv([
                       "K8S_NAMESPACE=${env.K8S_NAMESPACE}",
                       "DOCKERHUB_NAMESPACE=${env.DOCKERHUB_NAMESPACE}",
-                      "GIT_SHA=${env.GIT_SHA}",
-                      "KUBECTL_VERSION=${env.KUBECTL_VERSION}",
-                      "KUSTOMIZE_VERSION=${env.KUSTOMIZE_VERSION}"
+                      "GIT_SHA=${env.GIT_SHA}"
                     ]) {
                       retry(2) {
                         ci.deployService(svc)
