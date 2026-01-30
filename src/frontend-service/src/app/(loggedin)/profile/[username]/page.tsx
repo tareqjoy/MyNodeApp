@@ -21,7 +21,7 @@ const userDetailsUrl: string =
   "/v1/user/detail";
 const doIFollowUrl: string =
   process.env.NEXT_PUBLIC_DO_I_FOLLOW_URL ||
-  "/v1/follower/do-i-follow/";
+  "/v1/follower/do-i-follow";
 const followUrl: string =
   process.env.NEXT_PUBLIC_FOLLOW_URL ||
   "/v1/follower/follow";

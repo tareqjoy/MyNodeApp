@@ -5,7 +5,7 @@
     "main": "dist/server.js",
     "scripts": {
         "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "echo \"No tests\"",
         "set-env": "node set-env.js",
         "start": "export $(node set-env.js) && node dist/server.js",
         "dev": "export $(node set-env.js) && ts-node src/server.ts",
@@ -17,7 +17,7 @@
     "dependencies": {
         "@tareqjoy/clients": "^1.0.57",
         "@tareqjoy/models": "^1.0.136",
-        "@tareqjoy/utils": "^1.0.70",
+        "@tareqjoy/utils": "^1.0.81",
         "apache-arrow": "^21.1.0",
         "axios": "^1.13.3",
         "class-transformer": "^0.5.1",

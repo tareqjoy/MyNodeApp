@@ -2,7 +2,7 @@
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node";
 import { BatchLogRecordProcessor } from "@opentelemetry/sdk-logs";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
@@ -31,13 +31,17 @@ const logCollectorOptions = {
 const envBasedTraceExporter = new OTLPTraceExporter(traceCollectorOptions);
 const envBasedLogExporter = new OTLPLogExporter(logCollectorOptions);
 
-const sdk = new NodeSDK({
-  resource: new Resource({
+let sdk: NodeSDK | undefined;
+
+console.log(`OTEL Telemetry initializing for service: ${process.env.SERVICE_NAME}:${process.env.SERVICE_VERSION}. 
+Trace Exporter URL: ${traceCollectorOptions.url}, Log Exporter URL: ${logCollectorOptions.url}`);
+sdk = new NodeSDK({
+  resource: resourceFromAttributes({
     [ATTR_SERVICE_NAME]: process.env.SERVICE_NAME || "unknown",
     [ATTR_SERVICE_VERSION]: process.env.SERVICE_VERSION || "unknown",
   }),
-  traceExporter: envBasedTraceExporter,
   spanProcessors: [new BatchSpanProcessor(envBasedTraceExporter)],
+  metricReaders: [],
   // metricReader: new PeriodicExportingMetricReader({
   //   exporter: new ConsoleMetricExporter(),
   // }),
@@ -64,6 +68,13 @@ const sdk = new NodeSDK({
 });
 
 sdk.start();
+console.log(`OTEL Telemetry initialized...`);
+
+export async function shutdownTelemetry() {
+  if (!sdk) return;
+  await sdk.shutdown();
+  sdk = undefined;
+}
 
 export function getTracer(scopeName: string) {
   return trace.getTracer(scopeName);
