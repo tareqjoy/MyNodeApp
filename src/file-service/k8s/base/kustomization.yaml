@@ -1,5 +1,6 @@
 resources:
   - configmap.yaml
   - deployment.yaml
+  - pv-pvc.yaml
   - service.yaml
   - hpa.yaml
