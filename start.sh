@@ -24,4 +24,14 @@ sudo systemctl start grafana-server && sudo systemctl --no-page status grafana-s
 sudo systemctl start jenkins && sudo systemctl --no-page status jenkins
 minikube start
 
+MOUNT_SRC="/data/mynodeapp/uploads"
+MOUNT_DST="/data/mynodeapp/uploads"
+MOUNT_LOG="/tmp/minikube-mount.log"
+MOUNT_PID="/tmp/minikube-mount.pid"
+
+if ! pgrep -f "minikube mount ${MOUNT_SRC}:${MOUNT_DST}" >/dev/null; then
+  nohup minikube mount "${MOUNT_SRC}:${MOUNT_DST}" >"${MOUNT_LOG}" 2>&1 &
+  echo $! > "${MOUNT_PID}"
+fi
+
 echo "Done ..."
