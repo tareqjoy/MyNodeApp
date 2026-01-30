@@ -61,6 +61,13 @@ spec:
                 name: auth-service
                 port:
                   number: 3007
+          - path: /v1/file/
+            pathType: Prefix
+            backend:
+              service:
+                name: file-service
+                port:
+                  number: 3008
           - path: /
             pathType: Prefix
             backend:
@@ -68,3 +75,4 @@ spec:
                 name: frontend-service
                 port:
                   number: 3000
+
