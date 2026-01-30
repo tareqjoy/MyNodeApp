@@ -37,7 +37,7 @@ const TextPost = () => {
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md space-y-4">
       <textarea
         className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        placeholder="What's on your mind ...."
+        placeholder="What's on your mind 6_6"
         rows={3}
         value={content}
         onChange={(e) => setContent(e.target.value)}
