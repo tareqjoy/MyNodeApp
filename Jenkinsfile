@@ -49,7 +49,7 @@ pipeline {
       steps {
         script {
           withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
-            withEnv(["K8S_NAMESPACE=${env.K8S_NAMESPACE}", "KUBECONFIG_FILE=${KUBECONFIG_FILE}"]) {
+            withEnv(["K8S_NAMESPACE=${env.K8S_NAMESPACE}"]) {
               retry(2) {
                 ci.deployPlatform()
               }
@@ -103,7 +103,6 @@ pipeline {
                   withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
                     withEnv([
                       "K8S_NAMESPACE=${env.K8S_NAMESPACE}",
-                      "KUBECONFIG_FILE=${KUBECONFIG_FILE}",
                       "DOCKERHUB_NAMESPACE=${env.DOCKERHUB_NAMESPACE}",
                       "GIT_SHA=${env.GIT_SHA}",
                       "KUBECTL_VERSION=${env.KUBECTL_VERSION}",
