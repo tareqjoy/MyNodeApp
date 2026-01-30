@@ -12,6 +12,13 @@
    2. Minikube: <https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download>
    3. Helm: <https://helm.sh/docs/intro/install/#from-apt-debianubuntu>
    4. Helm charts (OTEL & Fluent-bit), run from the root project dir:  `sudo chmod +x kubernetes/helm/helm-dep-install.sh && kubernetes/helm/helm-dep-install.sh`
+   5. Kustomize: <https://kubectl.docs.kubernetes.io/installation/kustomize/binaries/>
+      1. run 
+         ```sh
+         curl -s https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
+         sudo mv kustomize /usr/local/bin/
+         sudo chmod 755 /usr/local/bin/kustomize
+         ```
 
 ### MongoDB
 
@@ -24,13 +31,13 @@
 ### Elasticsearch, Kibana, Logstash
 
  1. run from the root project dir: `sudo chmod +x setup/elastic-kibana-logstash/elastic.sh && setup/elastic-kibana-logstash/elastic.sh`
- 2. Kibana web: http://localhost:5601/
+ 2. Kibana web: <http://localhost:5601/>
 
 ### CDC (Mongo -> Kafka -> Elastic)
 
 See more details here dir: `documentations/cdc.md`
 
- 1. run from the root project dir: `sudo chmod +x setup/cdc/cdc.sh && setup/cdc/cdc.sh`
+ 1. run from the root project dir: `sudo chmod +x setup/cdc/cdc.sh && setup/cdc/cdc.sh`w
 
 ### Redis
 
@@ -43,13 +50,13 @@ See more details here dir: `documentations/cdc.md`
 ### Flink with file download
 
    1. run from the root project dir: `sudo chmod +x setup/flink/flink.sh && setup/flink/flink.sh`
-   2. UI: http://localhost:8081/
+   2. UI: <http://localhost:8081/>
 
 ### Grafana with apt-get
 
 https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
 
-   1. Grafana will start at: http://localhost:3000. username: **admin** & password: **admin**
+   1. Grafana will start at: <http://localhost:3000>. username: **admin** & password: **admin**
    2. See additional details to continue
    3. Install kafka monitoring in Grafana:
       ```sh
@@ -59,12 +66,12 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
 ### Prometheus
 
    1. run from the root project dir: `sudo chmod +x setup/prometheus/prometheus.sh && setup/prometheus/prometheus.sh`
-   2. UI: http://localhost:9090/
+   2. UI: <http://localhost:9090/>
 
 ### Jaeger
 
    1. run from the root project dir: `sudo chmod +x setup/jaeger/jaeger.sh && setup/jaeger/jaeger.sh`
-   2. UI: http://localhost:16686/
+   2. UI: <http://localhost:16686/>
 
 ### nginx
 
@@ -82,7 +89,7 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
 ### Jenkins
 
    1. run from the root project dir: `sudo chmod +x setup/jenkins/jenkins.sh && setup/jenkins/jenkins.sh`
-   2. UI: http://localhost:8080/
+   2. UI: <http://localhost:8080/>
    3. Get the admin password here: `sudo less /var/lib/jenkins/secrets/initialAdminPassword`
    4. Install recommended plugins
    5. Setup Dockerhub:
