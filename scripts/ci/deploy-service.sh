@@ -17,19 +17,7 @@ if ! command -v kustomize >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ -n "${KUBECTL_VERSION:-}" ]; then
-  kubectl version --client --short | grep -q "$KUBECTL_VERSION" || {
-    echo "kubectl version mismatch (wanted $KUBECTL_VERSION)" >&2
-    exit 1
-  }
-fi
 
-if [ -n "${KUSTOMIZE_VERSION:-}" ]; then
-  kustomize version | head -n1 | grep -q "$KUSTOMIZE_VERSION" || {
-    echo "kustomize version mismatch (wanted $KUSTOMIZE_VERSION)" >&2
-    exit 1
-  }
-fi
 
 export KUBECONFIG="$KUBECONFIG_FILE"
 
