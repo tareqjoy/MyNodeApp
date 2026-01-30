@@ -21,3 +21,5 @@ spec:
           envFrom:
             - configMapRef:
                 name: file-service-config
+            - configMapRef:
+                name: mongodb-config
