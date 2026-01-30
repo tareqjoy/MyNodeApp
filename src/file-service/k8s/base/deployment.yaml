@@ -18,8 +18,15 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/mynodeapp/uploads
           envFrom:
             - configMapRef:
                 name: file-service-config
             - configMapRef:
                 name: mongodb-config
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: file-service-uploads-pvc
