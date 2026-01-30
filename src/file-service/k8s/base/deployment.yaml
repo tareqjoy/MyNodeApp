@@ -26,6 +26,8 @@ spec:
                 name: file-service-config
             - configMapRef:
                 name: mongodb-config
+            - configMapRef:
+                name: service-url-config
       volumes:
         - name: uploads
           persistentVolumeClaim:
