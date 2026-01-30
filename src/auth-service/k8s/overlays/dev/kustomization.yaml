@@ -3,4 +3,4 @@ resources:
 
 images:
   - name: tareqjoy/auth-service
-    newTag: dev
+    newTag: latest

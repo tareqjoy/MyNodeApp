@@ -3,4 +3,4 @@ resources:
 
 images:
   - name: tareqjoy/fanout-service
-    newTag: dev
+    newTag: latest

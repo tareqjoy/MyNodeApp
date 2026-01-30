@@ -3,4 +3,4 @@ resources:
 
 images:
   - name: tareqjoy/frontend-service
-    newTag: dev
+    newTag: latest

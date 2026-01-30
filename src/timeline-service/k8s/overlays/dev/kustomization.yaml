@@ -3,4 +3,4 @@ resources:
 
 images:
   - name: tareqjoy/timeline-service
-    newTag: dev
+    newTag: latest

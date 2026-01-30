@@ -3,4 +3,4 @@ resources:
 
 images:
   - name: tareqjoy/file-service
-    newTag: dev
+    newTag: latest

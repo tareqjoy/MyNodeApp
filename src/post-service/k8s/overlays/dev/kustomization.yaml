@@ -3,4 +3,4 @@ resources:
 
 images:
   - name: tareqjoy/post-service
-    newTag: dev
+    newTag: latest
