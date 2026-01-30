@@ -134,7 +134,8 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
       1. Follow the logs to see if any dependency failed to start. Try with systemctl status to see if anything failed, for example: `systemctl status jaeger`. 
       2. If failed then use journalctl to see the logs: for example: `journalctl -xeu jaeger`.
    2. Start kubernetes local cluster: `minikube start`
-   3. Deploy the services, if not already: `kubectl apply -f kubernetes/my-node-app-pod.yml`
+   3. Deploy the services, if not already: `kubectl apply -k envs/dev`
+      1. CI/CD deploys shared platform resources via `envs/prod-platform`, then applies only changed service overlays.
    4. Open the minikube UI in the browser: `minikube dashboard`
    5. Get the minikube IP: `minikube ip`. Probably it is: `192.168.49.2`
    6. Goto the IP in the browser. For example: <http://192.168.49.1/>
