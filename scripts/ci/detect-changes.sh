@@ -6,6 +6,8 @@ SERVICES_DIR=${SERVICES_DIR:-src}
 ALLOWED_SERVICES=${ALLOWED_SERVICES:-}
 CHANGE_ID=${CHANGE_ID:-}
 CHANGE_TARGET=${CHANGE_TARGET:-}
+GIT_PREVIOUS_SUCCESSFUL_COMMIT=${GIT_PREVIOUS_SUCCESSFUL_COMMIT:-}
+GIT_PREVIOUS_COMMIT=${GIT_PREVIOUS_COMMIT:-}
 
 cd "$ROOT_DIR"
 
@@ -20,7 +22,13 @@ require_cmd() {
 require_cmd git
 
 base=""
-if [ -n "$CHANGE_ID" ] && [ -n "$CHANGE_TARGET" ]; then
+if [ -n "$GIT_PREVIOUS_SUCCESSFUL_COMMIT" ] && [ "$GIT_PREVIOUS_SUCCESSFUL_COMMIT" != "null" ]; then
+  base="$GIT_PREVIOUS_SUCCESSFUL_COMMIT"
+  echo "Using GIT_PREVIOUS_SUCCESSFUL_COMMIT as base: $base"
+elif [ -n "$GIT_PREVIOUS_COMMIT" ] && [ "$GIT_PREVIOUS_COMMIT" != "null" ]; then
+  base="$GIT_PREVIOUS_COMMIT"
+  echo "Using GIT_PREVIOUS_COMMIT as base: $base"
+elif [ -n "$CHANGE_ID" ] && [ -n "$CHANGE_TARGET" ]; then
   git fetch --no-tags --prune origin "+refs/heads/${CHANGE_TARGET}:refs/remotes/origin/${CHANGE_TARGET}"
   base=$(git merge-base HEAD "origin/${CHANGE_TARGET}")
   echo "PR build detected (CHANGE_ID=${CHANGE_ID}), base=${base}"
@@ -36,9 +44,17 @@ fi
 
 changed=""
 if [ -n "$base" ]; then
-  changed=$(git diff --name-only "$base" HEAD | tr -d '\r' || true)
+  changed=$(git diff --name-only "$base"...HEAD | tr -d '\r' || true)
+  echo "Diff range (merge-base): $base...HEAD"
 else
   changed=$(find "$SERVICES_DIR" -maxdepth 2 -name package.json -print | sed 's|/package.json||')
+fi
+
+if [ -n "$changed" ]; then
+  echo "Changed files:"
+  echo "$changed" | sed 's/^/  - /'
+else
+  echo "No changed files detected"
 fi
 
 allowed_list=$(echo "$ALLOWED_SERVICES" | tr ',' ' ')
