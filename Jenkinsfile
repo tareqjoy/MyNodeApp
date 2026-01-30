@@ -11,7 +11,6 @@ pipeline {
     timestamps()
     disableConcurrentBuilds()
     skipDefaultCheckout(true)
-    ansiColor('xterm')
     timeout(time: 45, unit: 'MINUTES')
   }
 
@@ -48,10 +47,12 @@ pipeline {
     stage('Deploy platform (master only)') {
       when { branch 'master' }
       steps {
-        withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
-          withEnv(["K8S_NAMESPACE=${env.K8S_NAMESPACE}", "KUBECONFIG_FILE=${KUBECONFIG_FILE}"]) {
-            retry(2) {
-              ci.deployPlatform()
+        script {
+          withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
+            withEnv(["K8S_NAMESPACE=${env.K8S_NAMESPACE}", "KUBECONFIG_FILE=${KUBECONFIG_FILE}"]) {
+              retry(2) {
+                ci.deployPlatform()
+              }
             }
           }
         }
