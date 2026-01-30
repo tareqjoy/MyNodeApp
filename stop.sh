@@ -21,6 +21,13 @@ sudo systemctl stop grafana-server && sudo systemctl --no-page status grafana-se
 sudo systemctl stop jenkins && sudo systemctl --no-page status jenkins
 # sudo systemctl stop nginx && sudo systemctl --no-page status nginx
 
+MOUNT_PID="/tmp/minikube-mount.pid"
+
+if [ -f "${MOUNT_PID}" ]; then
+  kill "$(cat "${MOUNT_PID}")" >/dev/null 2>&1 || true
+  rm -f "${MOUNT_PID}"
+fi
+
 minikube stop
 
 echo "Done ..."
