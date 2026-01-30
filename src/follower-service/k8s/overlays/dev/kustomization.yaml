@@ -1,0 +1,6 @@
+resources:
+  - ../../base
+
+images:
+  - name: tareqjoy/follower-service
+    newTag: latest

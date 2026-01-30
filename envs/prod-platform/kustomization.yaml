@@ -1,0 +1,2 @@
+resources:
+  - ../../platform/k8s/overlays/prod

@@ -76,7 +76,7 @@ pipeline {
       }
     }
 
-    stage('Apply Kubernetes manifests (master only)') {
+    stage('Apply platform + changed services (master only)') {
       when { branch 'master' }
       steps {
         withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
@@ -85,7 +85,19 @@ pipeline {
               set -euo pipefail
               export KUBECONFIG="$KUBECONFIG_FILE"
               kubectl get ns "$NS" >/dev/null 2>&1 || kubectl create ns "$NS"
-              kubectl -n "$NS" apply -f kubernetes/my-node-app-pod.yml
+
+              # shared resources
+              kubectl -n "$NS" apply -k envs/prod-platform
+
+              # only changed services
+              if [ -n "${CHANGED_SERVICES:-}" ]; then
+                IFS=',' read -ra SVCS <<< "$CHANGED_SERVICES"
+                for svc in "${SVCS[@]}"; do
+                  kubectl -n "$NS" apply -k "src/${svc}/k8s/overlays/prod"
+                done
+              else
+                echo "No changed services to apply"
+              fi
             '''
           }
         }
@@ -155,12 +167,13 @@ pipeline {
                 stage("Deploy: ${svc}") {
                   withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
                     def image = "${env.DOCKERHUB_NAMESPACE}/${svc}:${env.GIT_SHA}"
-                    def containerName = "${svc}-container"
-                    withEnv(["SVC=${svc}", "IMAGE=${image}", "CONTAINER=${containerName}", "NS=${env.K8S_NAMESPACE}"]) {
+                    withEnv(["SVC=${svc}", "IMAGE=${image}", "NS=${env.K8S_NAMESPACE}"]) {
                       sh '''
                         set -euo pipefail
                         export KUBECONFIG="$KUBECONFIG_FILE"
-                        kubectl -n "$NS" set image "deploy/$SVC" "$CONTAINER=$IMAGE"
+                        cd "src/$SVC/k8s/overlays/prod"
+                        kustomize edit set image "$DOCKERHUB_NAMESPACE/$SVC=$IMAGE"
+                        kubectl -n "$NS" apply -k .
                         kubectl -n "$NS" rollout status "deploy/$SVC" --timeout=180s
                       '''
                     }

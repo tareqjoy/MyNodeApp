@@ -1,0 +1,70 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /v1/timeline/
+            pathType: Prefix
+            backend:
+              service:
+                name: timeline-service
+                port:
+                  number: 3001
+          - path: /v1/user/
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 3002
+          - path: /v1/follower/
+            pathType: Prefix
+            backend:
+              service:
+                name: follower-service
+                port:
+                  number: 3003
+          - path: /v1/fanout/
+            pathType: Prefix
+            backend:
+              service:
+                name: fanout-service
+                port:
+                  number: 3004
+          - path: /v1/post/
+            pathType: Prefix
+            backend:
+              service:
+                name: post-service
+                port:
+                  number: 3005
+          - path: /v1/search/
+            pathType: Prefix
+            backend:
+              service:
+                name: search-service
+                port:
+                  number: 3006
+          - path: /v1/auth/
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 3007
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 3000

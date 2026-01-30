@@ -1,0 +1,11 @@
+resources:
+  - ../../platform/k8s/base
+  - ../../src/auth-service/k8s/overlays/dev
+  - ../../src/user-service/k8s/overlays/dev
+  - ../../src/post-service/k8s/overlays/dev
+  - ../../src/follower-service/k8s/overlays/dev
+  - ../../src/fanout-service/k8s/overlays/dev
+  - ../../src/timeline-service/k8s/overlays/dev
+  - ../../src/search-service/k8s/overlays/dev
+  - ../../src/frontend-service/k8s/overlays/dev
+  - ../../src/file-service/k8s/overlays/dev
