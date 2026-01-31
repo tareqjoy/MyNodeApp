@@ -42,6 +42,15 @@ pipeline {
       }
     }
 
+    stage('Detect changed helm charts') {
+      steps {
+        script {
+          env.CHANGED_HELM_CHARTS = ci.detectChangedHelmCharts()
+          echo "Changed helm charts: ${env.CHANGED_HELM_CHARTS}"
+        }
+      }
+    }
+
     stage('Deploy platform (master only)') {
       when { branch 'master' }
       steps {
@@ -52,6 +61,25 @@ pipeline {
                 ci.deployPlatform()
               }
             }
+          }
+        }
+      }
+    }
+
+    stage('Deploy helm charts (master only)') {
+      when { branch 'master' }
+      steps {
+        script {
+          if (env.CHANGED_HELM_CHARTS?.trim()) {
+            withCredentials([file(credentialsId: env.KUBECONFIG_CRED_ID, variable: 'KUBECONFIG_FILE')]) {
+              withEnv(["K8S_NAMESPACE=${env.K8S_NAMESPACE}"]) {
+                retry(2) {
+                  ci.deployHelmCharts(env.CHANGED_HELM_CHARTS)
+                }
+              }
+            }
+          } else {
+            echo "No helm chart changes detected; skipping"
           }
         }
       }
