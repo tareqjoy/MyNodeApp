@@ -4,6 +4,12 @@ def detectChangedServices() {
   }
 }
 
+def detectChangedHelmCharts() {
+  return dir(env.WORKSPACE) {
+    sh(returnStdout: true, script: 'bash scripts/ci/detect-helm-changes.sh').trim()
+  }
+}
+
 def buildService(String svc) {
   dir(env.WORKSPACE) {
     sh "bash scripts/ci/build-service.sh ${svc}"
@@ -19,6 +25,12 @@ def dockerBuildPush(String svc) {
 def deployPlatform() {
   dir(env.WORKSPACE) {
     sh 'bash scripts/ci/deploy-platform.sh'
+  }
+}
+
+def deployHelmCharts(String charts) {
+  dir(env.WORKSPACE) {
+    sh "bash scripts/ci/deploy-helm-charts.sh ${charts}"
   }
 }
 
