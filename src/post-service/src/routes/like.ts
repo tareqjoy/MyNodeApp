@@ -115,10 +115,10 @@ export const createLikeRouter = (
         return;
       } else if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
+          `Error while /like: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
-        logger.error("Error while /create: ", error);
+        logger.error("Error while /like: ", error);
       }
       res.status(500).json(new InternalServerError());
     }
@@ -148,16 +148,16 @@ export const createLikeRouter = (
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
+          `Error while /like/count: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
-        logger.error("Error while /create: ", error);
+        logger.error("Error while /like/count: ", error);
       }
       res.status(500).json(new InternalServerError());
     }
   });
 
-  router.get("/who", async (req, res, next) => {
+  router.get("/like/who", async (req, res, next) => {
     logger.silly(`GET /like/who called`);
 
     const returnLimit = 50;
@@ -177,7 +177,7 @@ export const createLikeRouter = (
       if (nextToken) {
         try {
           const rawPagingJson = JSON.parse(
-            Buffer.from(nextToken, "base64").toString("utf-8")
+            Buffer.from(nextToken, "base64").toString("utf-8"),
           );
           pagingRaw = plainToInstance(WhoLikedPagingRaw, rawPagingJson);
         } catch (error) {
@@ -200,26 +200,26 @@ export const createLikeRouter = (
           query,
           pagingRaw?.lastPostTime,
           pagingRaw?.lastPostId,
-          'createdAt'
+          "createdAt",
         ),
-        { userId: 1, createdAt: 1, likeType: 1 }
+        { userId: 1, createdAt: 1, likeType: 1 },
       )
         .sort({ createdAt: -1, userId: -1 })
         .limit(returnLimit);
 
       const userIds: string[] = dbResult.map((postLike) =>
-        postLike.userId.toString()
+        postLike.userId.toString(),
       );
 
       const userInternalReq = new UserInternalReq(userIds, false);
       const usernameAxiosResponse = await axios.post(
         userServiceHostUrl,
-        userInternalReq
+        userInternalReq,
       );
 
       const userInternalResponse = plainToInstance(
         UserInternalRes,
-        usernameAxiosResponse.data
+        usernameAxiosResponse.data,
       );
       const useridToName = userInternalResponse.toUsernames!;
 
@@ -229,27 +229,28 @@ export const createLikeRouter = (
           (postLike) =>
             new UserLike(postLike.likeType, {
               username: useridToName[postLike.userId.toString()],
-            })
+            }),
         );
 
-      if(dbResult.length < returnLimit || dbResult.length==0) {
+      if (dbResult.length < returnLimit || dbResult.length == 0) {
         res.status(200).json(new WhoLikedRes(userLikes));
       } else {
-        const lastRow = dbResult[dbResult.length-1];
-        let pagingRawForReturn: WhoLikedPagingRaw = new WhoLikedPagingRaw(lastRow.createdAt, lastRow.userId.toString());
+        const lastRow = dbResult[dbResult.length - 1];
+        let pagingRawForReturn: WhoLikedPagingRaw = new WhoLikedPagingRaw(
+          lastRow.createdAt,
+          lastRow.userId.toString(),
+        );
         const pagingJsonString = JSON.stringify(pagingRawForReturn);
         const nextPageToken = Buffer.from(pagingJsonString).toString("base64");
         res.status(200).json(new WhoLikedRes(userLikes, nextPageToken));
       }
-      
-      
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
+          `Error while /like/who: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
-        logger.error("Error while /create: ", error);
+        logger.error("Error while /like/who: ", error);
       }
       res.status(500).json(new InternalServerError());
     }
@@ -269,10 +270,10 @@ export const createLikeRouter = (
     } catch (error) {
       if (axios.isAxiosError(error)) {
         logger.error(
-          `Error while /create: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`
+          `Error while /i-liked: url: ${error.config?.url}, status: ${error.response?.status}, message: ${JSON.stringify(error.response?.data)}`,
         );
       } else {
-        logger.error("Error while /create: ", error);
+        logger.error("Error while /i-liked: ", error);
       }
       res.status(500).json(new InternalServerError());
     }
