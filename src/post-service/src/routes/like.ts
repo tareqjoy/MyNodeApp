@@ -27,7 +27,7 @@ import { addPaginationToQuery, getPostLikeCount } from "./common/common";
 const logger = getFileLogger(__filename);
 
 const kafka_post_like_fanout_topic =
-  process.env.KAFKA_NEW_POST_FANOUT_TOPIC || "post-like";
+  process.env.KAFKA_NEW_POST_LIKE_TOPIC || "post-like";
 const userServiceHostUrl: string =
   process.env.USER_SERVICE_USERID_URL ||
   "http://127.0.0.1:5002/v1/user/userid/";
