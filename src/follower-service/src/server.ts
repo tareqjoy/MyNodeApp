@@ -3,7 +3,8 @@ import {
   authorize,
   commonServiceMetricsMiddleware,
   getFileLogger,
-  getInternalApiPath
+  getInternalApiPath,
+  getAccessLogger
 } from "@tareqjoy/utils";
 import express from "express";
 import "reflect-metadata";
@@ -36,6 +37,7 @@ class HttpError extends Error {
 
 async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
+  app.use(getAccessLogger());
 
   const neo4jDriver = await connectNeo4jDriver();
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);

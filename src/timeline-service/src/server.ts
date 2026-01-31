@@ -4,6 +4,7 @@ import {
   authorize,
   commonServiceMetricsMiddleware,
   getFileLogger,
+  getAccessLogger,
 } from "@tareqjoy/utils";
 import express from "express";
 import "reflect-metadata";
@@ -31,7 +32,7 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
- // app.use(getExpressLogger());
+  app.use(getAccessLogger());
 
   const redisClient = await connectRedis();
 

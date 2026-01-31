@@ -1,6 +1,7 @@
 import {
   authorize,
   commonServiceMetricsMiddleware,
+  getAccessLogger,
   getApiPath,
   getFileLogger
 } from "@tareqjoy/utils";
@@ -31,6 +32,7 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
+  app.use(getAccessLogger());
 
   const elasticSearchClient = await connectElasticSearch();
 

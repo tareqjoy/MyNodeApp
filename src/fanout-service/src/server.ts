@@ -1,5 +1,6 @@
 import {
   commonServiceMetricsMiddleware,
+  getAccessLogger,
   getFileLogger,
 } from "@tareqjoy/utils";
 import express from "express";
@@ -47,6 +48,7 @@ class HttpError extends Error {
 
 async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
+  app.use(getAccessLogger());
   const kafkaProducer = await connectKafkaProducer(kafka_client_id);
   
   const newPostConsumer = await connectKafkaConsumer(

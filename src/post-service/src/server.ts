@@ -1,6 +1,7 @@
 import {
   authorize,
   commonServiceMetricsMiddleware,
+  getAccessLogger,
   getApiPath,
   getFileLogger,
   getInternalApiPath,
@@ -38,6 +39,7 @@ class HttpError extends Error {
 async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
+  app.use(getAccessLogger());
 
   const kafkaProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
