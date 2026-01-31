@@ -68,6 +68,17 @@ export function getAccessLogger(): Handler {
     // Make one event per request
     msg: "HTTP {{req.method}} {{req.url}}",
 
+    // Avoid logging req/res payloads and sensitive headers by default.
+    requestWhitelist: [],
+    responseWhitelist: [],
+    headerBlacklist: [
+      "authorization",
+      "cookie",
+      "set-cookie",
+      "x-api-key",
+      "proxy-authorization",
+    ],
+
     // Include useful request/response fields
     dynamicMeta: (req: Request, res: Response) => ({
       request_id: getRequestId(req),

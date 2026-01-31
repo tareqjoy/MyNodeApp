@@ -4,6 +4,7 @@ import {
   commonServiceMetricsMiddleware,
   getFileLogger,
   getInternalApiPath,
+  getAccessLogger,
 } from "@tareqjoy/utils";
 import express from "express";
 import "reflect-metadata";
@@ -33,7 +34,7 @@ async function main() {
   const mongoClient = await connectMongo();
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
-  // app.use(getExpressLogger());
+  app.use(getAccessLogger());
 
   //Only for internal use, should be protected from public access
   app.use(
