@@ -22,7 +22,7 @@
     "reflect-metadata": "^0.2.2",
     "@tareqjoy/clients": "^1.0.57",
     "@tareqjoy/models": "^1.0.136",
-    "@tareqjoy/utils": "^1.0.81",
+    "@tareqjoy/utils": "^1.0.83",
     "prom-client": "^15.1.3",
     "sharp": "^0.34.5"
   },
