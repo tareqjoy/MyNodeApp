@@ -22,6 +22,7 @@ import {
   getInternalFullPath,
   getFileLogger,
 } from "@tareqjoy/utils";
+import { postLoadCount } from "../metrics/metrics";
 
 const logger = getFileLogger(__filename);
 
@@ -90,6 +91,7 @@ export const createHomeRouter = (
         }
 
         logger.debug(`loaded from redis: ${postsFromRedis.length}`);
+        postLoadCount.inc({ source: "redis" }, postsFromRedis.length);
       }
 
       if (loadFromPostService === "load" && postsToReturn.length < timelineHomeReq.limit) {
@@ -110,6 +112,7 @@ export const createHomeRouter = (
         logger.debug(
           `loaded from post service/mongodb: ${postsFromPostService.length}`
         );
+        postLoadCount.inc({ source: "db" }, postsFromPostService.length);
       }
 
       let pageTokenObj: TimelineHomePaging | undefined;
