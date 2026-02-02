@@ -416,13 +416,6 @@ config:
         K8S-Logging.Parser On
         K8S-Logging.Exclude On
     [FILTER]
-        Name record_modifier
-        Match kube.*
-        Record service_name $kubernetes['labels']['app.kubernetes.io/name']
-        Record namespace $kubernetes['namespace_name']
-        Record pod $kubernetes['pod_name']
-        Record container $kubernetes['container_name']
-    [FILTER]
         Name    grep
         Match   *
         Exclude $kubernetes['container_name'] fluent-bit
@@ -441,7 +434,7 @@ config:
         match kube.*
         host 192.168.0.10
         port 3100
-        labels service=$service_name,namespace=$namespace,pod=$pod,container=$container
+        labels service=$kubernetes['labels']['app.kubernetes.io/name'],namespace=$kubernetes['namespace_name'],pod=$kubernetes['pod_name'],container=$kubernetes['container_name']
     [OUTPUT]
         name loki
         match host.*
