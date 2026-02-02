@@ -99,7 +99,7 @@ export function getAccessLogger(): Handler {
       const url = req.originalUrl || req.url;
       return (
         typeof url === "string" &&
-        (/\/health$/.test(url) || /\/metrics$/.test(url))
+        (/\/health$/.test(url) || /\/metrics$/.test(url) || /\/ready$/.test(url))
       );
     },
   });
