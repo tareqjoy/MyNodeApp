@@ -20,7 +20,9 @@ export default function TrendingPage() {
 
   return (
     <PageContainer>
-      {/* Trending content goes here */}
+      <div className=" rounded-lg shadow">
+        
+      </div>
     </PageContainer>
   );
 }
