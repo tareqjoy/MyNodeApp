@@ -133,7 +133,8 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
       2. Add a New Item with name `mynodeapp` and type `Multibranch Pipeline`
       3. In the Configuration, `Add source` > `Github`
          1. Credentials: `Github PAT`, Repository HTTPS URL: `https://github.com/tareqjoy/MyNodeApp.git`
-         2. Save
+         2. Press `Add` under Github Branch Sources. Select `Filter by name (with regular expression)` and then in the `Regular expression` field put: `^master$`
+         3. Save
 
 ## Setup and Run in Kubernetes!
 
