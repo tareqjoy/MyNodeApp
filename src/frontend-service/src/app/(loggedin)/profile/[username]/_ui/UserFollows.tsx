@@ -4,6 +4,7 @@ import { axiosAuthClient } from "@/lib/auth";
 import { FollowersReq, FollowersRes } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import Link from "next/link";
+import StateMessage from "../../../_ui/StateMessage";
 
 const iFollowUrl =
   process.env.NEXT_PUBLIC_USER_FRIENDS_URL ||
@@ -34,13 +35,18 @@ export default function UserFollows() {
     fetchIFollows();
   }, []);
 
-  if (loading) return <p className="text-gray-500 animate-pulse">Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (loading) {
+    return <StateMessage variant="loading" message="Loading..." center={false} />;
+  }
+
+  if (error) {
+    return <StateMessage variant="error" message={error} center={false} />;
+  }
 
   return (
     <div className="w-full max-w-5xl mt-6">
       {ifollow.length === 0 ? (
-        <p className="text-gray-500">None!</p>
+        <StateMessage variant="empty" message="None!" center={false} />
       ) : (
         <ul className="space-y-4">
           {ifollow.map((friend) => (

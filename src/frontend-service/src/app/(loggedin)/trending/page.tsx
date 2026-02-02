@@ -1,12 +1,9 @@
 "use client";
-import { getUserName } from "@/lib/auth";
 import useUserDetails from "@/hooks/use-user-details";
-import ProfilePost from "./_ui/ProfilePost";
-import TimelinePosts from "./_ui/TimelinePosts";
 import PageContainer from "../_ui/PageContainer";
 import StateMessage from "../_ui/StateMessage";
 
-export default function HomePage() {
+export default function TrendingPage() {
   const { user, loading, error } = useUserDetails();
 
   if (loading) {
@@ -23,13 +20,7 @@ export default function HomePage() {
 
   return (
     <PageContainer>
-      {/* Profile Info */}
-
-      <div className=" rounded-lg shadow">
-        <ProfilePost />
-      </div>
-
-      <TimelinePosts username={getUserName()!} />
+      {/* Trending content goes here */}
     </PageContainer>
   );
 }

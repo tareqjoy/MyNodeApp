@@ -15,6 +15,8 @@ import UserFollows from "./_ui/UserFollows";
 import ProfilePost from "./_ui/ProfilePost";
 import { use } from "react";
 import { useSearchParams } from "next/navigation";
+import PageContainer from "../../_ui/PageContainer";
+import StateMessage from "../../_ui/StateMessage";
 
 const userDetailsUrl: string =
   process.env.NEXT_PUBLIC_USER_DETAILS_URL ||
@@ -126,10 +128,16 @@ export default function ProfilePage({
     fetchUser();
   }, [usernameOrId, isProvidedUsername]);
 
-  if (error) return <p className="text-red-500 text-center mt-4">{error}</p>;
+  if (loading) {
+    return <StateMessage variant="loading" message="Loading..." />;
+  }
+
+  if (error) {
+    return <StateMessage variant="error" message={error} />;
+  }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <PageContainer>
       {/* Profile Info */}
       <Suspense fallback={<div>Loading Profile...</div>}>
         <UserProfile
@@ -197,6 +205,6 @@ export default function ProfilePage({
           />
         </Suspense>
       )}
-    </div>
+    </PageContainer>
   );
 }
