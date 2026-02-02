@@ -434,7 +434,7 @@ config:
         match kube.*
         host 192.168.0.10
         port 3100
-        labels service=$kubernetes['labels']['app.kubernetes.io/name'],namespace=$kubernetes['namespace_name'],pod=$kubernetes['pod_name'],container=$kubernetes['container_name']
+        labels service=$kubernetes['labels']['app'],namespace=$kubernetes['namespace_name'],pod=$kubernetes['pod_name'],container=$kubernetes['container_name']
     [OUTPUT]
         name loki
         match host.*
