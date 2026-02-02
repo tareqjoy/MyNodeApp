@@ -12,6 +12,8 @@ import bodyParser from "body-parser";
 import { createProfilePhotoRouter } from "./routes/profile-photo";
 import { connectMongo } from "@tareqjoy/clients";
 import { createGetAttachmentRouter, createInternalGetAttachmentRouter } from "./routes/get-attachment";
+import { Server } from "http";
+import { ServerProbStatus } from "@tareqjoy/models";
 
 const logger = getFileLogger(__filename);
 
@@ -20,6 +22,7 @@ const api_path_root = process.env.API_PATH_ROOT || "/v1/file";
 
 
 export const app = express();
+let isReady = false;
 
 class HttpError extends Error {
   statusCode: number;
@@ -35,6 +38,17 @@ async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
   app.use(getAccessLogger());
+
+  app.get("/health", (_req, res) => {
+    res.status(200).json(ServerProbStatus.OK);
+  });
+
+  app.get("/ready", (_req, res) => {
+    if (!isReady) {
+      res.status(503).json(ServerProbStatus.NOT_READY);
+    }
+    res.status(200).json(ServerProbStatus.READY);
+  });
 
   //Only for internal use, should be protected from public access
   app.use(
@@ -79,6 +93,8 @@ async function main() {
       });
     }
   );
+
+  isReady = true;
 
   // Start the server and listen to the port
   app.listen(appport, () => {

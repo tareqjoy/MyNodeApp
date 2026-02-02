@@ -16,7 +16,7 @@
     "license": "ISC",
     "dependencies": {
         "@tareqjoy/clients": "^1.0.57",
-        "@tareqjoy/models": "1.0.136",
+        "@tareqjoy/models": "1.0.137",
         "@tareqjoy/utils": "^1.0.84",
         "argon2": "^0.44.0",
         "class-transformer": "^0.5.1",

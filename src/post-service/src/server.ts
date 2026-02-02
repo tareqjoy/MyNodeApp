@@ -17,6 +17,7 @@ import { createLikeRouter } from "./routes/like";
 import { createProfilePhotoRouter } from "./routes/create-post/create-post-profile-photo";
 import { createInternalGetByUserRouter } from "./routes/get-by-user/get-by-user-internal";
 import { createInternalGetRouter } from "./routes/get-post/get-post-internal";
+import { ServerProbStatus } from "@tareqjoy/models";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "post";
 
@@ -26,6 +27,7 @@ const appport = process.env.PORT || 5005;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/post";
 
 export const app = express();
+let isReady = false;
 
 class HttpError extends Error {
   statusCode: number;
@@ -40,6 +42,17 @@ async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
   app.use(getAccessLogger());
+
+  app.get("/health", (_req, res) => {
+    res.status(200).json(ServerProbStatus.OK);
+  });
+
+  app.get("/ready", (_req, res) => {
+    if (!isReady) {
+      res.status(503).json(ServerProbStatus.NOT_READY);
+    }
+    res.status(200).json(ServerProbStatus.READY);
+  });
 
   const kafkaProducer = await connectKafkaProducer(kafka_client_id);
   const mongoClient = await connectMongo();
@@ -106,6 +119,8 @@ async function main() {
       });
     },
   );
+
+  isReady = true;
 
   // Start the server and listen to the port
   app.listen(appport, () => {
