@@ -17,11 +17,11 @@ spec:
           image: tareqjoy/follower-service:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 3000
+            - containerPort: 5003
           livenessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 5003
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 2
@@ -29,7 +29,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 3000
+              port: 5003
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 2
