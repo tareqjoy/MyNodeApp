@@ -17,11 +17,11 @@ spec:
           image: tareqjoy/fanout-service:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 3000
+            - containerPort: 5004
           livenessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 5004
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 2
@@ -29,7 +29,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: 3000
+              port: 5004
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 2

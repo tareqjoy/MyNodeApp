@@ -17,7 +17,7 @@ spec:
           image: tareqjoy/frontend-service:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 3000
+            - containerPort: 5000
           envFrom:
             - configMapRef:
                 name: frontend-service-config
