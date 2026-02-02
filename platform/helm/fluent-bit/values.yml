@@ -438,10 +438,16 @@ config:
   outputs: |
     [OUTPUT]
         name loki
-        match *
+        match kube.*
         host 192.168.0.10
         port 3100
-        labels service=${service_name},namespace=${namespace},pod=${pod},container=${container}
+        labels service=$service_name,namespace=$namespace,pod=$pod,container=$container
+    [OUTPUT]
+        name loki
+        match host.*
+        host 192.168.0.10
+        port 3100
+        labels host=$_HOSTNAME,unit=$_SYSTEMD_UNIT
 
 
 #name loki
