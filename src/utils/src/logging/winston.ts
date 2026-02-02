@@ -34,7 +34,10 @@ function getBase(): winston.Logger {
       winston.format.json(),
     ),
     defaultMeta,
-    transports: [new winston.transports.Console()],
+    transports:
+      process.env.NODE_ENV === "development"
+        ? [new winston.transports.Console()]
+        : [],
   });
 
   return base;

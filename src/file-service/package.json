@@ -17,7 +17,7 @@
   "dependencies": {
     "@tareqjoy/clients": "^1.0.57",
     "@tareqjoy/models": "^1.0.137",
-    "@tareqjoy/utils": "^1.0.85",
+    "@tareqjoy/utils": "^1.0.86",
     "apache-arrow": "^21.1.0",
     "axios": "^1.13.3",
     "class-transformer": "^0.5.1",
