@@ -15,6 +15,7 @@ import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 import { postLikeWorker } from "./workers/post-like-worker";
 import { postProcessWorker } from "./workers/post-process-worker";
+import { ServerProbStatus } from "@tareqjoy/models";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
 const kafka_new_post_fanout_topic =
@@ -36,6 +37,7 @@ const appport = process.env.PORT || 5004;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/fanout";
 
 const app = express();
+let isReady = false;
 
 class HttpError extends Error {
   statusCode: number;
@@ -49,6 +51,18 @@ class HttpError extends Error {
 async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
   app.use(getAccessLogger());
+
+  app.get("/health", (_req, res) => {
+    res.status(200).json(ServerProbStatus.OK);
+  });
+
+  app.get("/ready", (_req, res) => {
+    if (!isReady) {
+      res.status(503).json(ServerProbStatus.NOT_READY);
+    }
+    res.status(200).json(ServerProbStatus.READY);
+  });
+
   const kafkaProducer = await connectKafkaProducer(kafka_client_id);
   
   const newPostConsumer = await connectKafkaConsumer(
@@ -165,6 +179,8 @@ async function main() {
       });
     },
   );
+
+  isReady = true;
 
   // Start the server and listen to the port
   app.listen(appport, () => {

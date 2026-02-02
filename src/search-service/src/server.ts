@@ -9,6 +9,7 @@ import express from "express";
 import "reflect-metadata";
 import { createAllRouter } from "./routes/all";
 import { connectElasticSearch } from "@tareqjoy/clients";
+import { ServerProbStatus } from "@tareqjoy/models";
 
 const logger = getFileLogger(__filename);
 
@@ -16,6 +17,7 @@ const api_path_root = process.env.API_PATH_ROOT || "/v1/search";
 
 // Create an instance of the express application
 const app = express();
+let isReady = false;
 const bodyParser = require("body-parser");
 // Specify a port number for the server
 const port = process.env.PORT || 5006;
@@ -34,6 +36,17 @@ async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
   app.use(getAccessLogger());
 
+  app.get("/health", (_req, res) => {
+    res.status(200).json(ServerProbStatus.OK);
+  });
+
+  app.get("/ready", (_req, res) => {
+    if (!isReady) {
+      return res.status(503).json(ServerProbStatus.NOT_READY);
+    }
+    return res.status(200).json(ServerProbStatus.READY);
+  });
+
   const elasticSearchClient = await connectElasticSearch();
 
   app.use(
@@ -41,6 +54,8 @@ async function main() {
     authorize,
     createAllRouter(elasticSearchClient),
   );
+
+  isReady = true;
 
   // Start the server and listen to the port
   app.listen(port, () => {

@@ -14,6 +14,7 @@ import { createUnfollowRouter } from "./routes/unfollow";
 import { createIFollowRouter } from "./routes/i-follow";
 import { createWhoFollowsMeRouter } from "./routes/who-follows-me";
 import { createDoIFollowRouter } from "./routes/do-i-follow";
+import { ServerProbStatus } from "@tareqjoy/models";
 
 const logger =  getFileLogger(__filename);
 
@@ -22,6 +23,7 @@ const kafka_client_id = process.env.KAFKA_CLIENT_ID || "follower";
 
 // Create an instance of the express application
 const app = express();
+let isReady = false;
 const bodyParser = require("body-parser");
 // Specify a port number for the server
 const port = process.env.PORT || 5003;
@@ -38,6 +40,17 @@ class HttpError extends Error {
 async function main() {
   app.use(commonServiceMetricsMiddleware(api_path_root));
   app.use(getAccessLogger());
+
+  app.get("/health", (_req, res) => {
+    res.status(200).json(ServerProbStatus.OK);
+  });
+
+  app.get("/ready", (_req, res) => {
+    if (!isReady) {
+      res.status(503).json(ServerProbStatus.NOT_READY);
+    }
+    res.status(200).json(ServerProbStatus.READY);
+  });
 
   const neo4jDriver = await connectNeo4jDriver();
   const kafkaNewPostProducer = await connectKafkaProducer(kafka_client_id);
@@ -79,6 +92,8 @@ async function main() {
     authorize,
     createDoIFollowRouter(neo4jDriver)
   );
+
+  isReady = true;
 
   // Start the server and listen to the port
   app.listen(port, () => {

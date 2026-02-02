@@ -11,6 +11,7 @@ import "reflect-metadata";
 import bodyParser from "body-parser";
 import { createHomeRouter } from "./routes/home";
 import { connectRedis } from "@tareqjoy/clients";
+import { ServerProbStatus } from "@tareqjoy/models";
 
 
 const logger = getFileLogger(__filename);
@@ -19,6 +20,7 @@ const appport = process.env.PORT || 5001;
 const api_path_root = process.env.API_PATH_ROOT || "/v1/timeline";
 
 export const app = express();
+let isReady = false;
 
 class HttpError extends Error {
   statusCode: number;
@@ -33,6 +35,17 @@ async function main() {
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_root));
   app.use(getAccessLogger());
+
+  app.get("/health", (_req, res) => {
+    res.status(200).json(ServerProbStatus.OK);
+  });
+
+  app.get("/ready", (_req, res) => {
+    if (!isReady) {
+      return res.status(503).json(ServerProbStatus.NOT_READY);
+    }
+    return res.status(200).json(ServerProbStatus.READY);
+  });
 
   const redisClient = await connectRedis();
 
@@ -67,6 +80,8 @@ async function main() {
     },
   );
 
+  isReady = true;
+
   // Start the server and listen to the port
   app.listen(appport, () => {
     logger.info(`Server is running on port ${appport}`);
@@ -85,4 +100,3 @@ async function main() {
 }
 
 main();
-
