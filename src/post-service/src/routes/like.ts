@@ -157,7 +157,7 @@ export const createLikeRouter = (
     }
   });
 
-  router.get("/like/who", async (req, res, next) => {
+  router.get("/who", async (req, res, next) => {
     logger.silly(`GET /like/who called`);
 
     const returnLimit = 50;

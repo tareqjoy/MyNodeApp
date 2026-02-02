@@ -97,6 +97,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     router.push(`/home/`);
   };
 
+  const handleTrendingButtonClick = () => {
+    setShowDropdown(false);
+    router.push(`/trending/`);
+  };
+
   if (loading) return <Loading />;
 
   return (
@@ -104,7 +109,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Top Bar */}
       {
         <header className="w-full bg-gray-900 text-white flex items-center justify-between px-6 py-4 shadow-lg shadow-gray-800/50 z-10 backdrop-blur-md bg-opacity-80">
-
           {/* Search Bar */}
           <Search />
 
@@ -117,6 +121,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onClick={handleHomeButtonClick}
             >
               Home
+            </button>
+
+            <button
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md"
+              onClick={handleTrendingButtonClick}
+            >
+              Trending
             </button>
 
             {/* User Menu */}
@@ -168,7 +179,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }
 
       {/* Main Content */}
-      <main ref={mainRef} className="flex-grow overflow-y-auto">{children}</main>
+      <main ref={mainRef} className="flex-grow overflow-y-auto">
+        {children}
+      </main>
     </div>
   );
 }
