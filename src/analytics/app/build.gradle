@@ -26,6 +26,7 @@ ext {
     log4jVersion = '2.25.3'
     lombokVersion = '1.18.42'
 }
+version = project.findProperty("appVersion") ?: "0.1.0"
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -103,12 +104,16 @@ jar {
         attributes 'Built-By': System.getProperty('user.name'),
                 'Build-Jdk': System.getProperty('java.version')
     }
-    archiveFileName = 'flink-jobs-' + project.version + '-thin.jar'
+    archiveBaseName.set('flink-jobs')
+    archiveVersion.set(project.version.toString())
+    archiveClassifier.set('thin')
 }
 
 shadowJar {
     configurations = [project.configurations.flinkShadowJar]
-    archiveFileName = 'cratedb-flink-jobs-' + project.version + '-fat.jar'
+    archiveBaseName.set('flink-jobs')
+    archiveVersion.set(project.version.toString())
+    archiveClassifier.set('fat')
 }
 
 assemble.dependsOn(shadowJar)
