@@ -1,18 +1,32 @@
 package analytics.job;
 
-import analytics.function.LikeCountAggregator;
-import analytics.function.TopPostWindowFunction;
-import analytics.model.likeunlike.*;
+import analytics.function.LikeBucketDeltaAggregator;
+import analytics.function.LikeBucketWindowFunction;
+import analytics.model.likeunlike.LikeBucketCount;
+import analytics.model.likeunlike.LikeBucketDelta;
+import analytics.model.likeunlike.LikeKafkaMsg;
+import analytics.model.likeunlike.LikeUnlikeKafkaMsg;
+import analytics.model.likeunlike.PostLikeKafkaMsgDeserializationSchema;
+import analytics.serialization.LikeBucketCountSerializationSchema;
+import analytics.sink.RedisBucketSink;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
+import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
+import org.apache.flink.streaming.api.CheckpointingMode;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.connector.base.DeliveryGuarantee;
 
 import java.time.Duration;
 
@@ -23,6 +37,8 @@ public class TopLikedPostJob {
 
         Configuration config = new Configuration();
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(config);
+        env.getConfig().setAutoWatermarkInterval(1000L);
+        env.enableCheckpointing(60000L, CheckpointingMode.EXACTLY_ONCE);
 
 
         // 2. Define Kafka Source
@@ -34,35 +50,84 @@ public class TopLikedPostJob {
                 .setValueOnlyDeserializer(new PostLikeKafkaMsgDeserializationSchema())
                 .build();
 
-        // 3. Define Stream with Watermarks
+        // 3. Define Stream and assign event-time watermarks
         DataStream<LikeUnlikeKafkaMsg> rawStream = env
-                .fromSource(
-                        source,
-                        WatermarkStrategy.<LikeUnlikeKafkaMsg>forBoundedOutOfOrderness(
-                                Duration.ofSeconds(10)).withIdleness(Duration.ofSeconds(5)
-                        ),
-                        "Kafka Source"
+                .fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
+        rawStream.print("raw");
+
+        DataStream<LikeKafkaMsg> likeStream = rawStream
+                .filter(msg -> "like".equals(msg.getType()))
+                .map(msg -> (LikeKafkaMsg) msg)
+                .filter(msg -> msg.getMessageObject() != null && msg.getMessageObject().getPostId() != null)
+                .assignTimestampsAndWatermarks(
+                        WatermarkStrategy.<LikeKafkaMsg>forBoundedOutOfOrderness(Duration.ofSeconds(10))
+                                .withIdleness(Duration.ofSeconds(5))
+                                .withTimestampAssigner((event, timestamp) -> extractEventTimeMillis(event))
                 );
-       // rawStream.print();
+        likeStream.print("like-events");
 
-        // 5. Key the stream by postId
-        KeyedStream<LikeUnlikeKafkaMsg, String> keyedStream = rawStream.keyBy(msg -> {
-            // Determine the type and cast messageObject accordingly to get postId
-            if ("like".equals(msg.getType())) {
-                return ((LikeKafkaMsg) msg).getMessageObject().getPostId(); // Cast to LikeReq
-            } else if ("unlike".equals(msg.getType())) {
-                return ((UnlikeKafkaMsg) msg).getMessageObject().getPostId(); // Cast to UnlikeReq
-            }
-            return null; // Fallback in case type is not like or unlike
-        });
-     //   keyedStream.print();
-        // 6. Apply Windowing and Aggregate likes per post
-        SingleOutputStreamOperator<PostLikeCount> aggregatedStream = keyedStream
-                .window(TumblingProcessingTimeWindows.of(Duration.ofSeconds(5)))
-                .aggregate(new LikeCountAggregator(), new TopPostWindowFunction());
+        // 4. Aggregate buckets for minute/hour/day windows
+        SingleOutputStreamOperator<LikeBucketCount> minuteCounts =
+                aggregateBuckets(likeStream, 60);
+        SingleOutputStreamOperator<LikeBucketCount> hourCounts =
+                aggregateBuckets(likeStream, 3600);
+        SingleOutputStreamOperator<LikeBucketCount> dayCounts =
+                aggregateBuckets(likeStream, 86400);
+        minuteCounts.print("minute-counts");
+        hourCounts.print("hour-counts");
+        dayCounts.print("day-counts");
 
-        // 7. Print the top liked post
-        aggregatedStream.print();
+        KafkaSink<LikeBucketCount> bucketCountsSink = KafkaSink.<LikeBucketCount>builder()
+                .setBootstrapServers("localhost:9092")
+                .setRecordSerializer(
+                        KafkaRecordSerializationSchema.builder()
+                                .setTopic("bucket_counts_1m")
+                                .setValueSerializationSchema(new LikeBucketCountSerializationSchema())
+                                .build()
+                )
+                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+                .build();
+        minuteCounts.sinkTo(bucketCountsSink);
+
+        String redisHost = getEnvOrDefault("REDIS_HOST", "localhost");
+        int redisPort = Integer.parseInt(getEnvOrDefault("REDIS_PORT", "6379"));
+
+        minuteCounts.addSink(new RedisBucketSink(
+                redisHost,
+                redisPort,
+                "likes",
+                "m",
+                "chg:likes:global:1h",
+                3600,
+                60,
+                86400,
+                86400,
+                200
+        ));
+        hourCounts.addSink(new RedisBucketSink(
+                redisHost,
+                redisPort,
+                "likes",
+                "h",
+                "chg:likes:global:24h",
+                86400,
+                3600,
+                86400,
+                86400,
+                200
+        ));
+        dayCounts.addSink(new RedisBucketSink(
+                redisHost,
+                redisPort,
+                "likes",
+                "d",
+                "chg:likes:global:30d",
+                30L * 86400,
+                86400,
+                (int) (30L * 86400),
+                86400,
+                200
+        ));
 
         // 8. Execute the Flink job
         env.execute("Top Liked Post Analytics");
@@ -89,5 +154,49 @@ public class TopLikedPostJob {
 
         // 8. Execute the Flink job
         env.execute("Top Liked Post Analytics");
+    }
+
+    private static long extractEventTimeMillis(LikeKafkaMsg event) {
+        long ts = event.getMessageObject().getReactTime();
+        if (ts <= 0L) {
+            return System.currentTimeMillis();
+        }
+        return ts < 1_000_000_000_000L ? ts * 1000L : ts;
+    }
+
+    private static SingleOutputStreamOperator<LikeBucketCount> aggregateBuckets(
+            DataStream<LikeKafkaMsg> likeStream,
+            long bucketSizeSeconds
+    ) {
+        return likeStream
+                .map(event -> new LikeBucketDelta(
+                        "likes",
+                        "global",
+                        event.getMessageObject().getPostId(),
+                        computeBucketTsSeconds(extractEventTimeMillis(event), bucketSizeSeconds),
+                        1L
+                ))
+                .returns(LikeBucketDelta.class)
+                .keyBy(
+                        new KeySelector<LikeBucketDelta, Tuple3<String, String, Long>>() {
+                            @Override
+                            public Tuple3<String, String, Long> getKey(LikeBucketDelta delta) {
+                                return Tuple3.of(delta.getSegment(), delta.getPostId(), delta.getBucketTs());
+                            }
+                        },
+                        TypeInformation.of(new TypeHint<Tuple3<String, String, Long>>() {})
+                )
+                .window(TumblingEventTimeWindows.of(Time.seconds(bucketSizeSeconds)))
+                .aggregate(new LikeBucketDeltaAggregator(), new LikeBucketWindowFunction());
+    }
+
+    private static long computeBucketTsSeconds(long eventTimeMillis, long bucketSizeSeconds) {
+        long eventSeconds = eventTimeMillis / 1000L;
+        return (eventSeconds / bucketSizeSeconds) * bucketSizeSeconds;
+    }
+
+    private static String getEnvOrDefault(String key, String defaultValue) {
+        String value = System.getenv(key);
+        return (value == null || value.isEmpty()) ? defaultValue : value;
     }
 }
