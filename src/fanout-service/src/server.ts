@@ -15,6 +15,10 @@ import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 import { postLikeWorker } from "./workers/post-like-worker";
 import { postProcessWorker } from "./workers/post-process-worker";
+import {
+  startTopKUpdater,
+  type TopKUpdaterHandle,
+} from "./workers/topk-updater-worker";
 import { ServerProbStatus } from "@tareqjoy/models";
 import { Consumer, Producer } from "kafkajs";
 import { type RedisClientType } from "redis";
@@ -33,6 +37,25 @@ const kafka_post_like_fanout_topic =
   process.env.KAFKA_NEW_POST_LIKE_TOPIC || "post-like";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
+const topk_updater_enabled = (process.env.TOPK_UPDATER_ENABLED || "false") === "true";
+const topk_tick_interval_ms = Number(process.env.TOPK_TICK_INTERVAL_MS || 2000);
+const topk_batch_size = Number(process.env.TOPK_BATCH_SIZE || 2000);
+const topk_head_refresh_interval_ms = Number(
+  process.env.TOPK_HEAD_REFRESH_INTERVAL_MS || 60000,
+);
+const topk_head_refresh_size = Number(process.env.TOPK_HEAD_REFRESH_SIZE || 1000);
+const topk_max_size = Number(process.env.TOPK_MAX_SIZE || 5000);
+const topk_window_seconds = Number(process.env.TOPK_WINDOW_SECONDS || 3600);
+const topk_bucket_size_seconds = Number(
+  process.env.TOPK_BUCKET_SIZE_SECONDS || 60,
+);
+const topk_metric = process.env.TOPK_METRIC || "likes";
+const topk_segment = process.env.TOPK_SEGMENT || "global";
+const topk_bucket_suffix = process.env.TOPK_BUCKET_SUFFIX || "m";
+const topk_changed_set_key =
+  process.env.TOPK_CHANGED_SET_KEY || "chg:likes:global:1h";
+const topk_key = process.env.TOPK_KEY || "topk:likes:global:1h";
+
 
 const logger =  getFileLogger(__filename);
 
@@ -41,6 +64,7 @@ const api_path_root = process.env.API_PATH_ROOT || "/v1/fanout";
 
 const app = express();
 let isReady = false;
+let topkUpdater: TopKUpdaterHandle | undefined;
 
 class HttpError extends Error {
   statusCode: number;
@@ -116,6 +140,22 @@ async function main() {
 
   isReady = true;
 
+  topkUpdater = startTopKUpdater(redisClient, {
+    enabled: topk_updater_enabled,
+    tickIntervalMs: topk_tick_interval_ms,
+    batchSize: topk_batch_size,
+    headRefreshIntervalMs: topk_head_refresh_interval_ms,
+    headRefreshSize: topk_head_refresh_size,
+    topKMaxSize: topk_max_size,
+    windowSeconds: topk_window_seconds,
+    bucketSizeSeconds: topk_bucket_size_seconds,
+    metric: topk_metric,
+    segment: topk_segment,
+    bucketSuffix: topk_bucket_suffix,
+    changedSetKey: topk_changed_set_key,
+    topKKey: topk_key,
+  });
+
   // Start the server and listen to the port
   app.listen(appport, () => {
     logger.info(`Server is running on port ${appport}`);
@@ -128,6 +168,10 @@ async function main() {
       logger.info(`Consumer disconnected`);
       await kafkaProducer.disconnect();
       logger.info(`Producer disconnected`);
+      if (topkUpdater) {
+        await topkUpdater.stop();
+        logger.info(`TopK updater stopped`);
+      }
       if (redisClient.isOpen) {
         await redisClient.quit();
         logger.info(`Redis disconnected`);

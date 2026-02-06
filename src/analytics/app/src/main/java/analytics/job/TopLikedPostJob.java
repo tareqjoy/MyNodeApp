@@ -20,12 +20,11 @@ import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
+import org.apache.flink.core.execution.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 
 import java.time.Duration;
@@ -33,6 +32,8 @@ import java.time.Duration;
 public class TopLikedPostJob {
 
     public static void run() throws Exception {
+        String redisHostPort = getEnvOrDefault("REDIS_HOST_PORT", "redis://localhost:6379");
+        String kafkaHostPost = getEnvOrDefault("KAFKA_HOST_PORT", "localhost:9092");
         // 1. Initialize Stream Execution Environment
 
         Configuration config = new Configuration();
@@ -43,7 +44,7 @@ public class TopLikedPostJob {
 
         // 2. Define Kafka Source
         KafkaSource<LikeUnlikeKafkaMsg> source = KafkaSource.<LikeUnlikeKafkaMsg>builder()
-                .setBootstrapServers("localhost:9092")
+                .setBootstrapServers(kafkaHostPost)
                 .setTopics("post-like")
                 .setGroupId("analytics-group")
                 .setStartingOffsets(OffsetsInitializer.earliest())
@@ -78,7 +79,7 @@ public class TopLikedPostJob {
         dayCounts.print("day-counts");
 
         KafkaSink<LikeBucketCount> bucketCountsSink = KafkaSink.<LikeBucketCount>builder()
-                .setBootstrapServers("localhost:9092")
+                .setBootstrapServers(kafkaHostPost)
                 .setRecordSerializer(
                         KafkaRecordSerializationSchema.builder()
                                 .setTopic("bucket_counts_1m")
@@ -89,12 +90,8 @@ public class TopLikedPostJob {
                 .build();
         minuteCounts.sinkTo(bucketCountsSink);
 
-        String redisHost = getEnvOrDefault("REDIS_HOST", "localhost");
-        int redisPort = Integer.parseInt(getEnvOrDefault("REDIS_PORT", "6379"));
-
-        minuteCounts.addSink(new RedisBucketSink(
-                redisHost,
-                redisPort,
+        minuteCounts.sinkTo(new RedisBucketSink(
+                redisHostPort,
                 "likes",
                 "m",
                 "chg:likes:global:1h",
@@ -104,9 +101,8 @@ public class TopLikedPostJob {
                 86400,
                 200
         ));
-        hourCounts.addSink(new RedisBucketSink(
-                redisHost,
-                redisPort,
+        hourCounts.sinkTo(new RedisBucketSink(
+                redisHostPort,
                 "likes",
                 "h",
                 "chg:likes:global:24h",
@@ -116,9 +112,8 @@ public class TopLikedPostJob {
                 86400,
                 200
         ));
-        dayCounts.addSink(new RedisBucketSink(
-                redisHost,
-                redisPort,
+        dayCounts.sinkTo(new RedisBucketSink(
+                redisHostPort,
                 "likes",
                 "d",
                 "chg:likes:global:30d",
@@ -186,7 +181,7 @@ public class TopLikedPostJob {
                         },
                         TypeInformation.of(new TypeHint<Tuple3<String, String, Long>>() {})
                 )
-                .window(TumblingEventTimeWindows.of(Time.seconds(bucketSizeSeconds)))
+                .window(TumblingEventTimeWindows.of(Duration.ofSeconds(bucketSizeSeconds)))
                 .aggregate(new LikeBucketDeltaAggregator(), new LikeBucketWindowFunction());
     }
 
