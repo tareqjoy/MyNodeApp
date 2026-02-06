@@ -16,6 +16,9 @@ import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 import { postLikeWorker } from "./workers/post-like-worker";
 import { postProcessWorker } from "./workers/post-process-worker";
 import { ServerProbStatus } from "@tareqjoy/models";
+import { Consumer, Producer } from "kafkajs";
+import { type RedisClientType } from "redis";
+import { Mongoose } from "mongoose";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
 const kafka_new_post_fanout_topic =
@@ -78,77 +81,8 @@ async function main() {
   );
   const redisClient = await connectRedis();
   const mongoClient = await connectMongo();
-  await newPostConsumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
-      logger.debug("Kafka message received: ", {
-        topic,
-        partition,
-        offset: message.offset,
-        value: message.value?.toString(),
-      });
-      var isProcessed = false;
-      if (message.value != undefined) {
-        const timerEndFn = workerDurationHistogram.labels(topic).startTimer();
-        try {
-          if (topic === kafka_new_post_fanout_topic) {
-            isProcessed = await newPostFanout(
-              redisClient,
-              message.value?.toString(),
-            );
-          } else if (topic === kafka_i_followed_fanout_topic) {
-            isProcessed = await iFollowedFanout(
-              redisClient,
-              message.value?.toString(),
-            );
-          } else if (topic === kafka_i_unfollowed_fanout_topic) {
-            isProcessed = await iUnfollowedFanout(
-              redisClient,
-              message.value?.toString(),
-            );
-          } else if (topic === kafka_post_like_fanout_topic) {
-            isProcessed = await postLikeWorker(
-              redisClient,
-              mongoClient,
-              message.value.toString(),
-            );
-          } else if (topic === kafka_post_topic) {
-            isProcessed = await postProcessWorker(
-              message.value?.toString(),
-              mongoClient,
-              kafkaProducer
-            );
-          } 
 
-
-          if (isProcessed) {
-            logger.debug(
-              `Message is processed by worker. topic: ${topic}. Committing offset`,
-            );
-            await newPostConsumer.commitOffsets([
-              {
-                topic,
-                partition,
-                offset: (Number(message.offset) + 1).toString(),
-              },
-            ]);
-          } else {
-            logger.warn(`Message is not processed by worker. topic: ${topic}`);
-          }
-          const durationInS = timerEndFn();
-
-          logger.debug(`took ${durationInS}s to process the message`);
-        } catch (error) {
-          logger.error("error while executing task", error);
-        }
-      } else {
-        logger.warn(`Message value undefined`);
-      }
-      workerStatCount
-        .labels(topic, isProcessed ? "successful" : "unsuccessful")
-        .inc();
-    },
-    autoCommit: false,
-  });
+  await listenKafkaEvents(newPostConsumer, kafkaProducer, redisClient, mongoClient);
 
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(bodyParser.json());
@@ -206,6 +140,84 @@ async function main() {
     } catch (error) {
       logger.error("Error during disconnect:", error);
     }
+  });
+}
+
+async function listenKafkaEvents(
+  newPostConsumer: Consumer,
+  kafkaProducer: Producer,
+  redisClient: RedisClientType<any, any, any, any>,
+  mongoClient: Mongoose,
+) {
+  await newPostConsumer.run({
+    eachMessage: async ({ topic, partition, message }) => {
+      logger.debug("Kafka message received: ", {
+        topic,
+        partition,
+        offset: message.offset,
+        value: message.value?.toString(),
+      });
+      var isProcessed = false;
+      if (message.value != undefined) {
+        const timerEndFn = workerDurationHistogram.labels(topic).startTimer();
+        try {
+          if (topic === kafka_new_post_fanout_topic) {
+            isProcessed = await newPostFanout(
+              redisClient,
+              message.value?.toString(),
+            );
+          } else if (topic === kafka_i_followed_fanout_topic) {
+            isProcessed = await iFollowedFanout(
+              redisClient,
+              message.value?.toString(),
+            );
+          } else if (topic === kafka_i_unfollowed_fanout_topic) {
+            isProcessed = await iUnfollowedFanout(
+              redisClient,
+              message.value?.toString(),
+            );
+          } else if (topic === kafka_post_like_fanout_topic) {
+            isProcessed = await postLikeWorker(
+              redisClient,
+              mongoClient,
+              message.value.toString(),
+            );
+          } else if (topic === kafka_post_topic) {
+            isProcessed = await postProcessWorker(
+              message.value?.toString(),
+              mongoClient,
+              kafkaProducer,
+            );
+          }
+
+          if (isProcessed) {
+            logger.debug(
+              `Message is processed by worker. topic: ${topic}. Committing offset`,
+            );
+            await newPostConsumer.commitOffsets([
+              {
+                topic,
+                partition,
+                offset: (Number(message.offset) + 1).toString(),
+              },
+            ]);
+          } else {
+            logger.warn(`Message is not processed by worker. topic: ${topic}`);
+          }
+          const durationInS = timerEndFn();
+
+          logger.debug(`took ${durationInS}s to process the message`);
+        } catch (error) {
+          logger.error("error while executing task", error);
+        }
+      } else {
+        logger.warn(`Message value undefined`);
+      }
+      workerStatCount
+        .labels(topic, isProcessed ? "successful" : "unsuccessful")
+        .inc();
+    },
+    autoCommit: false,
   });
 }
 
