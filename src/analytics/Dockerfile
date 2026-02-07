@@ -7,11 +7,7 @@ COPY . .
 
 RUN ./gradlew --no-daemon :app:shadowJar
 
-# Runtime stage
-FROM eclipse-temurin:11-jre
+# Runtime stage (Flink base image)
+FROM flink:1.20.3-java11
 
-WORKDIR /app
-
-COPY --from=build /workspace/app/build/libs/*-fat.jar /app/app.jar
-
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+COPY --from=build /workspace/app/build/libs/*-fat.jar /opt/flink/usrlib/app.jar

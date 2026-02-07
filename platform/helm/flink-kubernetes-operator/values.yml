@@ -1,0 +1,12 @@
+# https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-main/docs/operations/helm/
+
+image:
+  repository: ghcr.io/apache/flink-kubernetes-operator
+  tag: "1.13.0"
+  pullPolicy: IfNotPresent
+
+webhook:
+  create: false
+
+# Watch all namespaces by default
+watchNamespaces: []
