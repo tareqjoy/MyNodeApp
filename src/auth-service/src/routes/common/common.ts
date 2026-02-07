@@ -6,6 +6,7 @@ import {
 } from "@tareqjoy/models";
 import jwt from "jsonwebtoken";
 import { RedisClientType } from "redis";
+import { CookieOptions } from "express";
 
 export const jwt_access_secret =
   process.env.JWT_ACCESS_SECRET || "test_access_secret_key_00x";
@@ -17,6 +18,20 @@ export const jwt_refresh_secret =
 export const jwt_refresh_expires_sec = Number(
   process.env.JWT_REFRESH_EXPIRES_SEC || "1296000",
 ); //15days
+export const refresh_cookie_name =
+  process.env.AUTH_REFRESH_COOKIE_NAME || "refresh_token";
+
+const refresh_cookie_domain = process.env.AUTH_COOKIE_DOMAIN;
+const refresh_cookie_path = process.env.AUTH_COOKIE_PATH || "/";
+const refresh_cookie_secure =
+  process.env.AUTH_COOKIE_SECURE === "true" ||
+  (process.env.AUTH_COOKIE_SECURE == null &&
+    process.env.NODE_ENV === "production");
+const refresh_cookie_same_site = (process.env.AUTH_COOKIE_SAMESITE as
+  | "lax"
+  | "strict"
+  | "none"
+  | undefined) || (refresh_cookie_secure ? "none" : "lax");
 
 const ATTR_HEADER_AUTHORIZATION = "authorization";
 
@@ -66,6 +81,28 @@ export function validateAccessToken(authHeader: any): ValidateResponse {
       new UnauthorizedRequest(`Invalid access token`),
     );
   }
+}
+
+export function getRefreshCookieOptions(): CookieOptions {
+  return {
+    httpOnly: true,
+    secure: refresh_cookie_secure,
+    sameSite: refresh_cookie_same_site,
+    path: refresh_cookie_path,
+    domain: refresh_cookie_domain,
+    maxAge: jwt_refresh_expires_sec * 1000,
+  };
+}
+
+export function getRefreshCookieClearOptions(): CookieOptions {
+  return {
+    httpOnly: true,
+    secure: refresh_cookie_secure,
+    sameSite: refresh_cookie_same_site,
+    path: refresh_cookie_path,
+    domain: refresh_cookie_domain,
+    maxAge: 0,
+  };
 }
 
 export async function genAccessRefreshToken(

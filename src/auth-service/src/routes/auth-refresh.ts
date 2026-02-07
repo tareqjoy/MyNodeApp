@@ -6,9 +6,12 @@ import jwt from "jsonwebtoken";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import {
+  genAccessRefreshToken,
+  getRefreshCookieClearOptions,
+  getRefreshCookieOptions,
   jwt_access_expires_sec,
-  jwt_access_secret,
   jwt_refresh_secret,
+  refresh_cookie_name,
 } from "./common/common";
 import { getFileLogger } from "@tareqjoy/utils";
 
@@ -56,19 +59,34 @@ export const createRefreshRouter = (
       return;
     }
 
+    const refreshToken =
+      (req.cookies && req.cookies[refresh_cookie_name]) ||
+      authSRefreshObj.refresh_token;
+
+    if (!refreshToken) {
+      res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
+      res.status(400).json(new InvalidRequest("Refresh token missing"));
+      return;
+    }
+
     let refreshAuthInfo;
     try {
       refreshAuthInfo = jwt.verify(
-        authSRefreshObj.refresh_token,
+        refreshToken,
         jwt_refresh_secret,
       ) as AuthInfo;
     } catch (err) {
       if (err instanceof Error) {
         if (err.name === "TokenExpiredError") {
+          res.clearCookie(
+            refresh_cookie_name,
+            getRefreshCookieClearOptions(),
+          );
           res.status(401).json(new UnauthorizedRequest("Access token expired"));
           return;
         }
       }
+      res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
       res.status(400).json(new InvalidRequest(`Invalid refresh token`));
       return;
     }
@@ -76,22 +94,26 @@ export const createRefreshRouter = (
     const redisKey = `refresh-token:${refreshAuthInfo.userId}:${clientOrDeviceId}`;
     const redisRefreshToken = await redisClient.get(redisKey);
 
-    if (
-      !redisRefreshToken ||
-      redisRefreshToken !== authSRefreshObj.refresh_token
-    ) {
+    if (!redisRefreshToken || redisRefreshToken !== refreshToken) {
+      res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
       res.status(403).json(new UnauthorizedRequest());
       return;
     }
 
-    const authInfo = new AuthInfo(refreshAuthInfo.userId);
-    const newAccessToken = jwt.sign({ ...authInfo }, jwt_access_secret, {
-      expiresIn: jwt_access_expires_sec,
-    });
-
+    const authResp = await genAccessRefreshToken(
+      redisClient,
+      refreshAuthInfo.userId,
+      clientOrDeviceId,
+    );
+    res.cookie(
+      refresh_cookie_name,
+      authResp.refresh_token,
+      getRefreshCookieOptions(),
+    );
+    authResp.refresh_token = "";
     res
       .status(200)
-      .json(new AuthRefreshRes(newAccessToken, jwt_access_expires_sec));
+      .json(new AuthRefreshRes(authResp.access_token, jwt_access_expires_sec));
   });
 
   return router;

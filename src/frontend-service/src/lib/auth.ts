@@ -1,41 +1,36 @@
 'use client'
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { AuthRefreshReq, AuthRefreshRes } from '@tareqjoy/models'
+import { AuthRefreshRes } from '@tareqjoy/models'
 import { plainToInstance } from 'class-transformer';
 
 const authRefreshUrl: string = process.env.NEXT_PUBLIC_AUTH_REFRESH_URL || "/v1/auth/refresh/";
 
 interface EnhancedAxiosRequestConfig extends InternalAxiosRequestConfig {
-    _retry?: boolean; 
+  _retry?: boolean;
 }
 
-let refreshPromise: Promise<string> | null = null;
+const ACCESS_TOKEN_EVENT = 'auth:access-token';
+const DEVICE_ID_KEY = 'deviceId';
+
+let accessToken: string | null = null;
+let refreshPromise: Promise<string | null> | null = null;
 
 export function getAccessToken(): string | null {
-    return localStorage.getItem('accessToken');
+  return accessToken;
 }
 
-export function setAccessToken(accessToken: string) {
-  localStorage.setItem('accessToken', accessToken);
+export function setAccessToken(accessTokenValue: string) {
+  accessToken = accessTokenValue;
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('auth:access-token'));
+    window.dispatchEvent(new Event(ACCESS_TOKEN_EVENT));
   }
 }
 
 export function deleteAccessToken() {
-  localStorage.removeItem('accessToken');
-}
-
-export function getRefreshToken(): string | null {
-    return localStorage.getItem('refreshToken');
-}
-
-export function setRefreshToken(refreshToken: string) {
-  localStorage.setItem('refreshToken', refreshToken);
-}
-
-export function deleteRefreshToken() {
-  localStorage.removeItem('refreshToken');
+  accessToken = null;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(ACCESS_TOKEN_EVENT));
+  }
 }
 
 
@@ -65,84 +60,117 @@ export function deleteUserName() {
 
 export const axiosAuthClient = axios.create({
   timeout: 5000,
+  withCredentials: true,
 });
 
 export const axiosPublicClient = axios.create({
-    timeout: 5000,
+  timeout: 5000,
+  withCredentials: true,
 });
 
+export function getOrCreateDeviceId(): string {
+  if (typeof window === 'undefined') {
+    return 'server-device';
+  }
+  let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+  if (!deviceId) {
+    deviceId =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(DEVICE_ID_KEY, deviceId);
+  }
+  return deviceId;
+}
+
+export function deleteDeviceId() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(DEVICE_ID_KEY);
+  }
+}
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshResp = await axiosPublicClient.post(
+    authRefreshUrl,
+    {},
+    { headers: { 'Device-ID': getOrCreateDeviceId() } },
+  );
+  const authRefreshResObj = plainToInstance(AuthRefreshRes, refreshResp.data);
+  const newAccessToken = authRefreshResObj.access_token;
+  if (!newAccessToken) {
+    return null;
+  }
+  setAccessToken(newAccessToken);
+  axiosAuthClient.defaults.headers.common['Authorization'] =
+    'Bearer ' + newAccessToken;
+  return newAccessToken;
+}
+
+async function ensureAccessToken(): Promise<string | null> {
+  if (accessToken) {
+    return accessToken;
+  }
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken()
+      .catch((err) => {
+        console.info('axiosAuthClient: error while refreshing access token');
+        return null;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 axiosAuthClient.interceptors.request.use(
-    (config: EnhancedAxiosRequestConfig) => {
-      if (!config.headers || !config.headers['Authorization']) {
-        const accessToken = getAccessToken(); 
-        if (accessToken) {
-          config.headers['Authorization'] = `Bearer ${accessToken}`;
-        } else {
-          config.headers['Authorization'] = `Bearer REJECT_ME`;
-        }
-      }
-        
-      return config;
-    },
-    (error: AxiosError) => {
-        return Promise.reject(error);
+  async (config: EnhancedAxiosRequestConfig) => {
+    if (!config.headers) {
+      config.headers = {};
     }
+    if (!config.headers['Authorization']) {
+      const token = await ensureAccessToken();
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
+    return config;
+  },
+  (error: AxiosError) => {
+    return Promise.reject(error);
+  },
 );
 
 axiosAuthClient.interceptors.response.use(
-    (response: AxiosResponse) => response, // If response is successful, return it
-    async (error: AxiosError) => {
-      const originalRequest = error.config as EnhancedAxiosRequestConfig;
-      console.debug("axiosAuthClient: intercepting after error response..");
-      // If the error is 401 (Unauthorized) and not already retrying
-      if (error.response?.status === 401 && !originalRequest?._retry) {
-        console.debug("axiosAuthClient: got 401, so will try to get accesstoken using refresh token");
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) {
-          return Promise.reject(new AxiosError('Refresh token is missing', 'NO_REFRESH_TOKEN'));
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as EnhancedAxiosRequestConfig;
+    console.debug('axiosAuthClient: intercepting after error response..');
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      console.debug(
+        'axiosAuthClient: got 401, will try to refresh access token',
+      );
+
+      originalRequest._retry = true;
+
+      try {
+        const newAccessToken = await ensureAccessToken();
+        if (!newAccessToken) {
+          deleteAccessToken();
+          return Promise.reject(error);
         }
-
-        originalRequest._retry = true;
-
-        if (!refreshPromise) {
-          console.debug("axiosAuthClient: no refresh in flight, starting refresh");
-          refreshPromise = (async () => {
-            const refreshReq = new AuthRefreshReq(refreshToken);
-            const refreshResp = await axiosPublicClient.post(
-              authRefreshUrl,
-              refreshReq,
-              { headers: { 'Device-ID': 'some-unique-device-id' } }
-            );
-            const authRefreshResObj = plainToInstance(AuthRefreshRes, refreshResp.data);
-            const newAccessToken = authRefreshResObj.access_token;
-
-            console.debug(`axiosAuthClient: yay! found new accesstoken & saving into local db: ${newAccessToken}`);
-            setAccessToken(newAccessToken);
-            axiosAuthClient.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
-
-            return newAccessToken;
-          })()
-            .catch((err) => {
-              console.error("axiosAuthClient: error while getting new accesstoken");
-              throw err;
-            })
-            .finally(() => {
-              refreshPromise = null;
-            });
-        } else {
-          console.debug("axiosAuthClient: refresh already in flight, awaiting token");
-        }
-
-        try {
-          const newAccessToken = await refreshPromise;
-          originalRequest.headers = originalRequest.headers || {};
-          originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
-          return axiosAuthClient(originalRequest);
-        } catch (err) {
-          return Promise.reject(err);
-        }
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+        return axiosAuthClient(originalRequest);
+      } catch (err) {
+        deleteAccessToken();
+        return Promise.reject(err);
       }
-      console.debug("axiosAuthClient: not 401, not doing any accesstoken related work");
-      return Promise.reject(error);
     }
-  );
+    console.debug(
+      'axiosAuthClient: not 401, not doing any access token related work',
+    );
+    return Promise.reject(error);
+  },
+);

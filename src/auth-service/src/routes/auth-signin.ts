@@ -13,7 +13,11 @@ import {
 import { RedisClientType } from "redis";
 import { validate } from "class-validator";
 import axios, { AxiosError } from "axios";
-import { genAccessRefreshToken } from "./common/common";
+import {
+  genAccessRefreshToken,
+  getRefreshCookieOptions,
+  refresh_cookie_name,
+} from "./common/common";
 import { getFileLogger } from "@tareqjoy/utils";
 
 const logger = getFileLogger(__filename);
@@ -67,6 +71,12 @@ export const createSignInRouter = (
         deviceId,
       );
 
+      res.cookie(
+        refresh_cookie_name,
+        authResp.refresh_token,
+        getRefreshCookieOptions(),
+      );
+      authResp.refresh_token = "";
       res.status(200).json(authResp);
     } catch (error) {
       if (error instanceof AxiosError) {

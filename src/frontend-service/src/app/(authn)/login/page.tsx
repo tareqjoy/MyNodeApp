@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { axiosAuthClient, axiosPublicClient, getRefreshToken, setAccessToken, setRefreshToken, setUserId, setUserName } from '@/lib/auth';
+import { axiosAuthClient, axiosPublicClient, getOrCreateDeviceId, setAccessToken, setUserId, setUserName } from '@/lib/auth';
 import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import Loading from './loading';
@@ -26,10 +26,6 @@ export default function LoginPage() {
   useEffect(() => {
     const isAuthed = async () => {
       console.log("Checking authentication...");
-      if(!getRefreshToken()) {
-        console.log("User is not authenticated, showing login form...");
-        return;
-      }
       try {
         const resp = await axiosAuthClient.post(authVerifyUrl, {});
         if (resp.status === 200) {
@@ -53,7 +49,7 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
-      const deviceId = 'some-unique-device-id';
+      const deviceId = getOrCreateDeviceId();
       const signInReq = new AuthSignInReq({ username }, password);
 
       const signInRes = await axiosPublicClient.post(authSignInUrl, signInReq, {
@@ -63,7 +59,6 @@ export default function LoginPage() {
       if (signInRes.status === 200) {
         const authSignInResObj = plainToInstance(AuthSignInRes, signInRes.data);
         setAccessToken(authSignInResObj.access_token);
-        setRefreshToken(authSignInResObj.refresh_token);
         setUserName(username);
 
         const usernameRes = await axiosAuthClient.post(userIdUrl, { username });

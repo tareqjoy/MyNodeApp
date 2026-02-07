@@ -6,7 +6,9 @@ import useVerifyAccessToken from "@/hooks/use-verify-access-token";
 import {
   getUserName,
   deleteAccessToken,
-  deleteRefreshToken,
+  deleteUserId,
+  deleteUserName,
+  getOrCreateDeviceId,
   axiosAuthClient,
 } from "@/lib/auth";
 import Loading from "./loading";
@@ -16,7 +18,7 @@ import Search from "./_ui/Search";
 const authSignOutUrl =
   process.env.NEXT_PUBLIC_AUTH_SIGN_OUT_URL ||
   "/v1/auth/signout/";
-const deviceId = "some-unique-device-id";
+const deviceId = getOrCreateDeviceId();
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -75,8 +77,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {},
         { headers: { "Device-ID": deviceId } }
       );
-      deleteRefreshToken();
       deleteAccessToken();
+      deleteUserId();
+      deleteUserName();
       setShowDropdown(false);
       router.push("/login");
       window.location.reload();

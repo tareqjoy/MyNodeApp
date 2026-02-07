@@ -10,6 +10,7 @@ import "reflect-metadata";
 import { connectRedis } from "@tareqjoy/clients";
 import bodyParser from "body-parser";
 import "source-map-support/register";
+import cookieParser from "cookie-parser";
 import { createSignInRouter } from "./routes/auth-signin";
 import { createVerifyRouter } from "./routes/auth-verify";
 import { createRefreshRouter } from "./routes/auth-refresh";
@@ -36,6 +37,7 @@ class HttpError extends Error {
 }
 
 async function main() {
+  app.use(cookieParser());
   app.use(bodyParser.json());
   app.use(commonServiceMetricsMiddleware(api_path_auth_root));
   app.use(getAccessLogger());

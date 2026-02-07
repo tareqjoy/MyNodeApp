@@ -4,7 +4,11 @@ import { AuthInfo, AuthSignoutReq, MessageResponse } from "@tareqjoy/models";
 import { InternalServerError, InvalidRequest } from "@tareqjoy/models";
 import { RedisClientType } from "redis";
 import { validate } from "class-validator";
-import { validateAccessToken } from "./common/common";
+import {
+  getRefreshCookieClearOptions,
+  refresh_cookie_name,
+  validateAccessToken,
+} from "./common/common";
 import { getFileLogger } from "@tareqjoy/utils";
 
 const logger = getFileLogger(__filename);
@@ -22,6 +26,7 @@ export const createSignOutRouter = (
 
     const authHeader = req.headers[ATTR_HEADER_AUTHORIZATION];
     if (!authHeader || typeof authHeader !== "string") {
+      res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
       res
         .status(400)
         .json(
@@ -43,6 +48,7 @@ export const createSignOutRouter = (
       !authSignOutObj.allDevices &&
       (!deviceId || typeof deviceId !== "string")
     ) {
+      res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
       res
         .status(400)
         .json(
@@ -68,13 +74,16 @@ export const createSignOutRouter = (
         logger.debug(`logging out, redis-key: ${redisKey}`);
         const signOutCount = await redisClient.del(redisKey);
 
+        res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
         res
           .status(200)
           .json(new MessageResponse(`Logged out from ${signOutCount} devices`));
       } else {
+        res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
         res.status(validateRet.statusCode).json(validateRet.msg);
       }
     } catch (error) {
+      res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
       logger.error("Error while /signout", error);
       res.status(500).json(new InternalServerError());
     }
