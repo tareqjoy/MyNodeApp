@@ -128,7 +128,7 @@ async function runTick(
   }
 
   const ids = await scanChangedIds(redisClient, config.changedSetKey, config.batchSize);
-  logger.info("TopK updater tick", {
+  logger.debug("TopK updater tick", {
     changedSetKey: config.changedSetKey,
     changedSetSize,
     scannedIds: ids.length,
@@ -171,7 +171,7 @@ async function runTick(
       config.headRefreshSize - 1,
       { REV: true },
     )) as string[];
-    logger.info("TopK updater head refresh", {
+    logger.debug("TopK updater head refresh", {
       topKKey: config.topKKey,
       headCount: headIds.length,
     });
