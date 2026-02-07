@@ -37,7 +37,7 @@ const kafka_post_like_fanout_topic =
   process.env.KAFKA_NEW_POST_LIKE_TOPIC || "post-like";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
-const topk_updater_enabled = (process.env.TOPK_UPDATER_ENABLED || "false") === "true";
+const topk_updater_enabled = (process.env.TOPK_UPDATER_ENABLED || "true") === "true";
 const topk_tick_interval_ms = Number(process.env.TOPK_TICK_INTERVAL_MS || 2000);
 const topk_batch_size = Number(process.env.TOPK_BATCH_SIZE || 2000);
 const topk_head_refresh_interval_ms = Number(

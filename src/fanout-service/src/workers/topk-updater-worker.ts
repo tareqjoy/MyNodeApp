@@ -33,6 +33,21 @@ export function startTopKUpdater(
     return { stop: async () => {} };
   }
 
+  logger.info("TopK updater starting", {
+    tickIntervalMs: config.tickIntervalMs,
+    batchSize: config.batchSize,
+    headRefreshIntervalMs: config.headRefreshIntervalMs,
+    headRefreshSize: config.headRefreshSize,
+    topKMaxSize: config.topKMaxSize,
+    windowSeconds: config.windowSeconds,
+    bucketSizeSeconds: config.bucketSizeSeconds,
+    metric: config.metric,
+    segment: config.segment,
+    bucketSuffix: config.bucketSuffix,
+    changedSetKey: config.changedSetKey,
+    topKKey: config.topKKey,
+  });
+
   let stopped = false;
   let loopPromise: Promise<void> | undefined;
   let lastHeadRefresh = 0;
@@ -79,23 +94,47 @@ async function runTick(
   const cutoffAligned =
     Math.floor(rawCutoff / config.bucketSizeSeconds) *
     config.bucketSizeSeconds;
+  const endAligned =
+    Math.floor(nowSeconds / config.bucketSizeSeconds) *
+    config.bucketSizeSeconds;
   let didRefresh = false;
 
+  let changedSetSize: number | undefined;
+  try {
+    changedSetSize = await redisClient.sCard(config.changedSetKey);
+  } catch (error) {
+    logger.warn("TopK updater failed to read changed set size", error);
+  }
+
   const ids = await scanChangedIds(redisClient, config.changedSetKey, config.batchSize);
+  logger.info("TopK updater tick", {
+    changedSetKey: config.changedSetKey,
+    changedSetSize,
+    scannedIds: ids.length,
+    cutoffAligned,
+    endAligned,
+  });
   if (ids.length > 0) {
     const scores = await computeScores(
       redisClient,
       config,
       ids,
       cutoffAligned,
+      endAligned,
     );
 
     if (scores.length > 0) {
+      const nonZero = scores.filter((entry) => entry.score > 0).length;
       const updated = await applyScores(redisClient, config.topKKey, scores);
       if (updated) {
         await redisClient.sRem(config.changedSetKey, ids as string[]);
         await trimTopK(redisClient, config.topKKey, config.topKMaxSize);
         workerOperationCount.labels("topk_updater", "processed_ids").inc(ids.length);
+        logger.info("TopK updater applied scores", {
+          topKKey: config.topKKey,
+          ids: ids.length,
+          nonZero,
+        });
       }
     }
   }
@@ -111,12 +150,17 @@ async function runTick(
       config.headRefreshSize - 1,
       { REV: true },
     )) as string[];
+    logger.info("TopK updater head refresh", {
+      topKKey: config.topKKey,
+      headCount: headIds.length,
+    });
     if (headIds.length > 0) {
       const headScores = await computeScores(
         redisClient,
         config,
         headIds,
         cutoffAligned,
+        endAligned,
       );
       if (headScores.length > 0) {
         const updated = await applyScores(redisClient, config.topKKey, headScores);
@@ -161,27 +205,67 @@ async function computeScores(
   config: TopKUpdaterConfig,
   ids: string[],
   cutoffAligned: number,
+  endAligned: number,
 ): Promise<Array<{ id: string; score: number }>> {
-  const pipeline = redisClient.multi();
+  const indexPipeline = redisClient.multi();
   for (const id of ids) {
-    const bucketKey = buildBucketKey(config, id);
-    pipeline.zRangeByScoreWithScores(bucketKey, cutoffAligned, "+inf");
+    const indexKey = buildBucketIndexKey(config, id);
+    indexPipeline.zRangeByScore(indexKey, cutoffAligned, endAligned);
   }
 
-  const replies = await pipeline.exec();
-  if (!replies) {
-    logger.warn("TopK updater read pipeline returned null");
+  const indexReplies = await indexPipeline.exec();
+  if (!indexReplies) {
+    logger.warn("TopK updater index pipeline returned null");
     return [];
   }
 
-  if (hasPipelineError(replies)) {
-    logger.warn("TopK updater read pipeline had errors");
+  if (hasPipelineError(indexReplies)) {
+    logger.warn("TopK updater index pipeline had errors");
     return [];
   }
 
-  return replies.map((reply: any, index: number) => ({
-    id: ids[index],
-    score: sumScores(reply),
+  const bucketLists = indexReplies.map((reply: any) =>
+    Array.isArray(reply) ? (reply as string[]) : [],
+  );
+
+  const hmCommands: Array<{ id: string; buckets: string[] }> = [];
+  ids.forEach((id, idx) => {
+    const buckets = bucketLists[idx];
+    if (buckets.length > 0) {
+      hmCommands.push({ id, buckets });
+    }
+  });
+
+  const hmPipeline = redisClient.multi();
+  for (const cmd of hmCommands) {
+    const bucketKey = buildBucketKey(config, cmd.id);
+    hmPipeline.hmGet(bucketKey, cmd.buckets);
+  }
+
+  const hmReplies = await hmPipeline.exec();
+  if (!hmReplies) {
+    logger.warn("TopK updater HMGET pipeline returned null");
+    return [];
+  }
+  if (hasPipelineError(hmReplies)) {
+    logger.warn("TopK updater HMGET pipeline had errors");
+    return [];
+  }
+
+  const scoreMap = new Map<string, number>();
+  hmReplies.forEach((reply: any, idx: number) => {
+    const { id } = hmCommands[idx];
+    const values = Array.isArray(reply) ? (reply as Array<string | null>) : [];
+    const sum = values.reduce(
+      (acc, value) => acc + (value ? Number(value) || 0 : 0),
+      0,
+    );
+    scoreMap.set(id, sum);
+  });
+
+  return ids.map((id) => ({
+    id,
+    score: scoreMap.get(id) ?? 0,
   }));
 }
 
@@ -229,6 +313,10 @@ function buildBucketKey(config: TopKUpdaterConfig, postId: string): string {
   return `b:${config.metric}:${config.segment}:${postId}:${config.bucketSuffix}`;
 }
 
+function buildBucketIndexKey(config: TopKUpdaterConfig, postId: string): string {
+  return `b:${config.metric}:${config.segment}:${postId}:${config.bucketSuffix}:idx`;
+}
+
 function normalizeScanReply(reply: any): { nextCursor: string; members: string[] } {
   if (Array.isArray(reply)) {
     const [nextCursor, members] = reply as [string, string[]];
@@ -238,26 +326,6 @@ function normalizeScanReply(reply: any): { nextCursor: string; members: string[]
     nextCursor: String(reply?.cursor ?? "0"),
     members: reply?.members ?? [],
   };
-}
-
-function sumScores(reply: any): number {
-  if (!reply || reply.length === 0) {
-    return 0;
-  }
-
-  if (typeof reply[0] === "string") {
-    let sum = 0;
-    for (let i = 1; i < reply.length; i += 2) {
-      sum += Number(reply[i]) || 0;
-    }
-    return sum;
-  }
-
-  if (typeof reply[0] === "object" && reply[0] !== null && "score" in reply[0]) {
-    return reply.reduce((acc: number, item: any) => acc + (Number(item.score) || 0), 0);
-  }
-
-  return 0;
 }
 
 function hasPipelineError(replies: any[]): boolean {
