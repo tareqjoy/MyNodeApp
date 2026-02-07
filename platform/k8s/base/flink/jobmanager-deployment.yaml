@@ -30,13 +30,5 @@ spec:
             - name: FLINK_PROPERTIES
               value: |
                 jobmanager.rpc.address: flink-jobmanager
-          volumeMounts:
-            - name: flink-config
-              mountPath: /opt/flink/conf
-      volumes:
-        - name: flink-config
-          configMap:
-            name: flink-config
-            items:
-              - key: flink-conf.yaml
-                path: flink-conf.yaml
+                jobmanager.memory.process.size: 1024m
+                parallelism.default: 2
