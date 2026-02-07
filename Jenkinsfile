@@ -14,6 +14,11 @@ pipeline {
     timeout(time: 45, unit: 'MINUTES')
   }
 
+  parameters {
+    string(name: 'FORCE_DEPLOY_SERVICES', defaultValue: '', description: 'Comma-separated list of services to deploy regardless of change detection')
+    string(name: 'FORCE_BUILD_SERVICES', defaultValue: '', description: 'Comma-separated list of services to build regardless of change detection')
+  }
+
   environment {
     DOCKERHUB_NAMESPACE = "tareqjoy"
     DOCKER_CREDS_ID     = "dockerhub-creds"
@@ -99,11 +104,28 @@ pipeline {
             .findAll { it }
             .toSet()
 
+          def forcedDeploy = (params.FORCE_DEPLOY_SERVICES ?: '')
+            .split(',')
+            .collect { it.trim() }
+            .findAll { it }
+            .toSet()
+
+          if (forcedDeploy) {
+            changed = (changed + forcedDeploy).toSet()
+            echo "FORCE_DEPLOY_SERVICES enabled; forcing deploy for: ${forcedDeploy}"
+          }
+
+          def forcedBuild = (params.FORCE_BUILD_SERVICES ?: '')
+            .split(',')
+            .collect { it.trim() }
+            .findAll { it }
+            .toSet()
+
           def fanout = [:]
 
           allowed.each { svc ->
             fanout[svc] = {
-              if (!changed.contains(svc)) {
+              if (!changed.contains(svc) && !forcedBuild.contains(svc)) {
                 stage("${svc} (skipped)") {
                   echo "No changes for ${svc}, skipping"
                 }
