@@ -6,6 +6,7 @@ resources:
   - ../../src/fanout-service/k8s/overlays/prod
   - ../../src/post-service/k8s/overlays/prod
   - ../../src/search-service/k8s/overlays/prod
+  - ../../src/analytics/k8s/overlays/prod
   - ../../src/auth-service/k8s/overlays/prod
   - ../../src/frontend-service/k8s/overlays/prod
   - ../../src/file-service/k8s/overlays/prod

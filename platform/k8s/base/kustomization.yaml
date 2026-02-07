@@ -1,5 +1,6 @@
 resources:
   - ingress.yaml
+  - flink
   - configmaps/mongodb-config.yaml
   - configmaps/kafka-config.yaml
   - configmaps/redis-config.yaml
