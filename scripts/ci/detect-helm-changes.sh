@@ -66,6 +66,9 @@ fi
 if echo "$changed" | grep -q '^platform/helm/otel-collector/'; then
   charts+=("otel-collector")
 fi
+if echo "$changed" | grep -q '^platform/helm/flink-kubernetes-operator/'; then
+  charts+=("flink-kubernetes-operator")
+fi
 
 if [ ${#charts[@]} -eq 0 ]; then
   echo ""

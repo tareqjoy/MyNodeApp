@@ -1,0 +1,34 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: analytics
+spec:
+  image: tareqjoy/analytics:latest
+  flinkVersion: v1_20
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "2"
+    parallelism.default: "2"
+  podTemplate:
+    spec:
+      containers:
+        - name: flink-main-container
+          envFrom:
+            - configMapRef:
+                name: analytics-config
+            - configMapRef:
+                name: redis-config
+            - configMapRef:
+                name: kafka-config
+  jobManager:
+    resource:
+      cpu: 1
+      memory: "1024m"
+  taskManager:
+    resource:
+      cpu: 1
+      memory: "2048m"
+  job:
+    jarURI: local:///opt/flink/usrlib/app.jar
+    entryClass: analytics.App
+    parallelism: 2
+    upgradeMode: stateless
