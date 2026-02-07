@@ -8,8 +8,10 @@ export * from "./common/server-prob-response";
 export * from "./timeline-service/common/timeline-home-paging-raw";
 
 export * from "./timeline-service/request/timeline-home-req";
+export * from "./timeline-service/request/trending-req";
 
 export * from "./timeline-service/response/timeline-home-res";
+export * from "./timeline-service/response/trending-res";
 
 export * from "./user-service/request/user-signin-req";
 export * from "./user-service/request/signup-req";

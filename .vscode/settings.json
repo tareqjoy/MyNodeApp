@@ -19,5 +19,6 @@
     "workbench.colorCustomizations": {
         "tab.activeBackground": "#455A64"
     },
-    "java.import.gradle.wrapper.enabled": true
+    "java.import.gradle.wrapper.enabled": true,
+    "kafka.clusters.selected": "local-bG9jYWxob3N0OjkwOTI"
 }

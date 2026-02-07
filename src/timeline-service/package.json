@@ -1,45 +1,45 @@
 {
-    "name": "timeline-service",
-    "version": "1.0.0",
-    "description": "",
-    "main": "dist/server.js",
-    "scripts": {
-        "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
-        "test": "echo \"No tests\"",
-        "set-env": "node set-env.js",
-        "start": "export $(node set-env.js) && node dist/server.js",
-        "dev": "export $(node set-env.js) && ts-node src/server.ts",
-        "format": "prettier --write 'src/**/*.{ts,tsx}'",
-        "build": "tsc"
-    },
-    "author": "Tareq Joy",
-    "license": "ISC",
-    "dependencies": {
-        "@tareqjoy/clients": "^1.0.57",
-        "@tareqjoy/models": "^1.0.137",
-        "@tareqjoy/utils": "^1.0.86",
-        "apache-arrow": "^21.1.0",
-        "axios": "^1.13.3",
-        "class-transformer": "^0.5.1",
-        "class-validator": "^0.14.3",
-        "express": "^5.2.1",
-        "mongoose": "^9.1.5",
-        "redis": "^5.10.0",
-        "reflect-metadata": "^0.2.2"
-    },
-    "devDependencies": {
-        "@eslint/js": "^9.39.2",
-        "@types/express": "^5.0.6",
-        "@types/node": "^25.0.10",
-        "@typescript-eslint/eslint-plugin": "^8.54.0",
-        "@typescript-eslint/parser": "^8.54.0",
-        "eslint": "^9.39.2",
-        "globals": "^17.1.0",
-        "nodemon": "^3.1.11",
-        "prettier": "^3.8.1",
-        "rimraf": "^6.1.2",
-        "ts-node": "10.9.2",
-        "typescript": "^5.9.3",
-        "typescript-eslint": "^8.54.0"
-    }
+  "name": "timeline-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/server.js",
+  "scripts": {
+    "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
+    "test": "echo \"No tests\"",
+    "set-env": "node set-env.js",
+    "start": "export $(node set-env.js) && node dist/server.js",
+    "dev": "export $(node set-env.js) && NODE_ENV=development ts-node src/server.ts",
+    "format": "prettier --write 'src/**/*.{ts,tsx}'",
+    "build": "tsc"
+  },
+  "author": "Tareq Joy",
+  "license": "ISC",
+  "dependencies": {
+    "@tareqjoy/clients": "^1.0.57",
+    "@tareqjoy/models": "^1.0.139",
+    "@tareqjoy/utils": "^1.0.86",
+    "apache-arrow": "^21.1.0",
+    "axios": "^1.13.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "express": "^5.2.1",
+    "mongoose": "^9.1.5",
+    "redis": "^5.10.0",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.10",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "globals": "^17.1.0",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.8.1",
+    "rimraf": "^6.1.2",
+    "ts-node": "10.9.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0"
+  }
 }

@@ -22,13 +22,12 @@ tasks.register("printFlinkVersion") {
 
 
 ext {
-    javaVersion = '11'
-    flinkVersion = '1.20.1'
-    log4jVersion = '2.24.1'
-    lombokVersion = '1.18.36'
+    flinkVersion = '1.20.3'
+    log4jVersion = '2.25.3'
+    lombokVersion = '1.18.42'
 }
-sourceCompatibility = javaVersion
-targetCompatibility = javaVersion
+version = project.findProperty("appVersion") ?: "0.1.0"
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
@@ -72,6 +71,7 @@ dependencies {
     implementation "org.apache.flink:flink-connector-base:${flinkVersion}"
     implementation "org.apache.flink:flink-core:${flinkVersion}"
     implementation "org.apache.flink:flink-java:${flinkVersion}"
+    flinkShadowJar "redis.clients:jedis:7.2.1"
 
     runtimeOnly "org.apache.flink:flink-runtime:${flinkVersion}"
 
@@ -104,12 +104,16 @@ jar {
         attributes 'Built-By': System.getProperty('user.name'),
                 'Build-Jdk': System.getProperty('java.version')
     }
-    archiveFileName = 'flink-jobs-' + project.version + '-thin.jar'
+    archiveBaseName.set('flink-jobs')
+    archiveVersion.set(project.version.toString())
+    archiveClassifier.set('thin')
 }
 
 shadowJar {
     configurations = [project.configurations.flinkShadowJar]
-    archiveFileName = 'cratedb-flink-jobs-' + project.version + '-fat.jar'
+    archiveBaseName.set('flink-jobs')
+    archiveVersion.set(project.version.toString())
+    archiveClassifier.set('fat')
 }
 
 assemble.dependsOn(shadowJar)

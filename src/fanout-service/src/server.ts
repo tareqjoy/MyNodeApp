@@ -15,7 +15,15 @@ import { iUnfollowedFanout } from "./workers/i-unfollowed-worker";
 import { workerDurationHistogram, workerStatCount } from "./metrics/metrics";
 import { postLikeWorker } from "./workers/post-like-worker";
 import { postProcessWorker } from "./workers/post-process-worker";
+import {
+  startTopKUpdater,
+  type TopKUpdaterHandle,
+  type TopKUpdaterConfig,
+} from "./workers/topk-updater-worker";
 import { ServerProbStatus } from "@tareqjoy/models";
+import { Consumer, Producer } from "kafkajs";
+import { type RedisClientType } from "redis";
+import { Mongoose } from "mongoose";
 
 const kafka_client_id = process.env.KAFKA_CLIENT_ID || "fanout";
 const kafka_new_post_fanout_topic =
@@ -30,6 +38,13 @@ const kafka_post_like_fanout_topic =
   process.env.KAFKA_NEW_POST_LIKE_TOPIC || "post-like";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
+const topk_1h_enabled =
+  (process.env.TOPK_1H_ENABLED ||
+    process.env.TOPK_UPDATER_ENABLED ||
+    "true") === "true";
+const topk_24h_enabled = (process.env.TOPK_24H_ENABLED || "true") === "true";
+const topk_30d_enabled = (process.env.TOPK_30D_ENABLED || "true") === "true";
+
 
 const logger =  getFileLogger(__filename);
 
@@ -38,6 +53,7 @@ const api_path_root = process.env.API_PATH_ROOT || "/v1/fanout";
 
 const app = express();
 let isReady = false;
+let topkUpdaters: TopKUpdaterHandle[] = [];
 
 class HttpError extends Error {
   statusCode: number;
@@ -78,6 +94,134 @@ async function main() {
   );
   const redisClient = await connectRedis();
   const mongoClient = await connectMongo();
+
+  await listenKafkaEvents(newPostConsumer, kafkaProducer, redisClient, mongoClient);
+
+  app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(bodyParser.json());
+
+  app.use(api_path_root, createFanoutRouter(redisClient));
+
+  app.use(
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      const error = new HttpError("Not found", 404);
+      next(error);
+    },
+  );
+
+  app.use(
+    (
+      error: any,
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      res.status(error.statusCode || 500);
+      res.json({
+        message: error,
+      });
+    },
+  );
+
+  isReady = true;
+
+  const topkConfigs: TopKUpdaterConfig[] = [
+    {
+      enabled: topk_1h_enabled,
+      tickIntervalMs: Number(process.env.TOPK_1H_TICK_INTERVAL_MS || 2000),
+      batchSize: Number(process.env.TOPK_1H_BATCH_SIZE || 2000),
+      headRefreshIntervalMs: Number(
+        process.env.TOPK_1H_HEAD_REFRESH_INTERVAL_MS || 60000,
+      ),
+      headRefreshSize: Number(process.env.TOPK_1H_HEAD_REFRESH_SIZE || 1000),
+      topKMaxSize: Number(process.env.TOPK_1H_MAX_SIZE || 5000),
+      windowSeconds: Number(process.env.TOPK_1H_WINDOW_SECONDS || 3600),
+      bucketSizeSeconds: Number(process.env.TOPK_1H_BUCKET_SIZE_SECONDS || 60),
+      metric: process.env.TOPK_1H_METRIC || "likes",
+      segment: process.env.TOPK_1H_SEGMENT || "global",
+      bucketSuffix: process.env.TOPK_1H_BUCKET_SUFFIX || "m",
+      changedSetKey: process.env.TOPK_1H_CHANGED_SET_KEY || "chg:likes:global:1h",
+      topKKey: process.env.TOPK_1H_KEY || "topk:likes:global:1h",
+    },
+    {
+      enabled: topk_24h_enabled,
+      tickIntervalMs: Number(process.env.TOPK_24H_TICK_INTERVAL_MS || 30000),
+      batchSize: Number(process.env.TOPK_24H_BATCH_SIZE || 2000),
+      headRefreshIntervalMs: Number(
+        process.env.TOPK_24H_HEAD_REFRESH_INTERVAL_MS || 300000,
+      ),
+      headRefreshSize: Number(process.env.TOPK_24H_HEAD_REFRESH_SIZE || 1000),
+      topKMaxSize: Number(process.env.TOPK_24H_MAX_SIZE || 5000),
+      windowSeconds: Number(process.env.TOPK_24H_WINDOW_SECONDS || 86400),
+      bucketSizeSeconds: Number(process.env.TOPK_24H_BUCKET_SIZE_SECONDS || 3600),
+      metric: process.env.TOPK_24H_METRIC || "likes",
+      segment: process.env.TOPK_24H_SEGMENT || "global",
+      bucketSuffix: process.env.TOPK_24H_BUCKET_SUFFIX || "h",
+      changedSetKey: process.env.TOPK_24H_CHANGED_SET_KEY || "chg:likes:global:24h",
+      topKKey: process.env.TOPK_24H_KEY || "topk:likes:global:24h",
+    },
+    {
+      enabled: topk_30d_enabled,
+      tickIntervalMs: Number(process.env.TOPK_30D_TICK_INTERVAL_MS || 300000),
+      batchSize: Number(process.env.TOPK_30D_BATCH_SIZE || 2000),
+      headRefreshIntervalMs: Number(
+        process.env.TOPK_30D_HEAD_REFRESH_INTERVAL_MS || 900000,
+      ),
+      headRefreshSize: Number(process.env.TOPK_30D_HEAD_REFRESH_SIZE || 1000),
+      topKMaxSize: Number(process.env.TOPK_30D_MAX_SIZE || 5000),
+      windowSeconds: Number(process.env.TOPK_30D_WINDOW_SECONDS || 30 * 86400),
+      bucketSizeSeconds: Number(process.env.TOPK_30D_BUCKET_SIZE_SECONDS || 86400),
+      metric: process.env.TOPK_30D_METRIC || "likes",
+      segment: process.env.TOPK_30D_SEGMENT || "global",
+      bucketSuffix: process.env.TOPK_30D_BUCKET_SUFFIX || "d",
+      changedSetKey: process.env.TOPK_30D_CHANGED_SET_KEY || "chg:likes:global:30d",
+      topKKey: process.env.TOPK_30D_KEY || "topk:likes:global:30d",
+    },
+  ];
+
+  topkUpdaters = topkConfigs.map((cfg) => startTopKUpdater(redisClient, cfg));
+
+  // Start the server and listen to the port
+  app.listen(appport, () => {
+    logger.info(`Server is running on port ${appport}`);
+  });
+
+  process.on("SIGINT", async () => {
+    try {
+      logger.info("Caught interrupt signal, shutting down...");
+      await newPostConsumer.disconnect();
+      logger.info(`Consumer disconnected`);
+      await kafkaProducer.disconnect();
+      logger.info(`Producer disconnected`);
+      if (topkUpdaters.length > 0) {
+        await Promise.all(topkUpdaters.map((updater) => updater.stop()));
+        logger.info(`TopK updaters stopped`);
+      }
+      if (redisClient.isOpen) {
+        await redisClient.quit();
+        logger.info(`Redis disconnected`);
+      } else {
+        logger.info(`Redis was not connected at the first place`);
+      }
+      await mongoClient.disconnect();
+      logger.info(`MongoDB disconnected`);
+      process.exit(0);
+    } catch (error) {
+      logger.error("Error during disconnect:", error);
+    }
+  });
+}
+
+async function listenKafkaEvents(
+  newPostConsumer: Consumer,
+  kafkaProducer: Producer,
+  redisClient: RedisClientType<any, any, any, any>,
+  mongoClient: Mongoose,
+) {
   await newPostConsumer.run({
     eachMessage: async ({ topic, partition, message }) => {
       logger.debug("Kafka message received: ", {
@@ -115,10 +259,9 @@ async function main() {
             isProcessed = await postProcessWorker(
               message.value?.toString(),
               mongoClient,
-              kafkaProducer
+              kafkaProducer,
             );
-          } 
-
+          }
 
           if (isProcessed) {
             logger.debug(
@@ -148,64 +291,6 @@ async function main() {
         .inc();
     },
     autoCommit: false,
-  });
-
-  app.use(bodyParser.urlencoded({ extended: false }));
-  app.use(bodyParser.json());
-
-  app.use(api_path_root, createFanoutRouter(redisClient));
-
-  app.use(
-    (
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      const error = new HttpError("Not found", 404);
-      next(error);
-    },
-  );
-
-  app.use(
-    (
-      error: any,
-      req: express.Request,
-      res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      res.status(error.statusCode || 500);
-      res.json({
-        message: error,
-      });
-    },
-  );
-
-  isReady = true;
-
-  // Start the server and listen to the port
-  app.listen(appport, () => {
-    logger.info(`Server is running on port ${appport}`);
-  });
-
-  process.on("SIGINT", async () => {
-    try {
-      logger.info("Caught interrupt signal, shutting down...");
-      await newPostConsumer.disconnect();
-      logger.info(`Consumer disconnected`);
-      await kafkaProducer.disconnect();
-      logger.info(`Producer disconnected`);
-      if (redisClient.isOpen) {
-        await redisClient.quit();
-        logger.info(`Redis disconnected`);
-      } else {
-        logger.info(`Redis was not connected at the first place`);
-      }
-      await mongoClient.disconnect();
-      logger.info(`MongoDB disconnected`);
-      process.exit(0);
-    } catch (error) {
-      logger.error("Error during disconnect:", error);
-    }
   });
 }
 

@@ -12,6 +12,7 @@ import bodyParser from "body-parser";
 import { createHomeRouter } from "./routes/home";
 import { connectRedis } from "@tareqjoy/clients";
 import { ServerProbStatus } from "@tareqjoy/models";
+import { createTrendingRouter } from "./routes/trending";
 
 
 const logger = getFileLogger(__filename);
@@ -53,6 +54,12 @@ async function main() {
     getApiPath(api_path_root, "home"),
     authorize,
     createHomeRouter(redisClient),
+  );
+
+  app.use(
+    getApiPath(api_path_root, "trending"),
+    authorize,
+    createTrendingRouter(redisClient),
   );
 
   app.use(

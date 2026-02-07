@@ -37,10 +37,12 @@ export default function TimelinePosts({ username }: { username: string }) {
       const timelineHomeReq = nextToken
         ? new TimelineHomeReq(nextToken, 10)
         : new TimelineHomeReq(10);
-      const axiosTimelineHomeResp = await axiosAuthClient.post(
-        timelineUrl,
-        timelineHomeReq
-      );
+      const axiosTimelineHomeResp = await axiosAuthClient.get(timelineUrl, {
+        params: {
+          nextToken: timelineHomeReq.nextToken,
+          limit: timelineHomeReq.limit,
+        },
+      });
 
       const timelineHomeResObj = plainToInstance(
         TimelineHomeRes,

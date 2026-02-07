@@ -1,38 +1,38 @@
 {
-    "name": "post-service",
-    "version": "1.0.0",
-    "description": "",
-    "main": "dist/server.js",
-    "scripts": {
-        "setup:db:createIndex": "tsc -p . && node dist/db/DbSetup.js --create-index",
-        "setup:db:createShard": "tsc -p . && node dist/db/DbSetup.js --create-shard",
-        "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
-        "test": "echo \"No tests\"",
-        "set-env": "node set-env.js",
-        "start": "export $(node set-env.js) && node dist/server.js",
-        "dev": "export $(node set-env.js) && ts-node src/server.ts",
-        "format": "prettier --write 'src/**/*.{ts,tsx}'",
-        "build": "tsc"
-    },
-    "author": "Tareq Joy",
-    "license": "ISC",
-    "dependencies": {
-        "@tareqjoy/clients": "^1.0.57",
-        "@tareqjoy/models": "^1.0.137",
-        "@tareqjoy/utils": "^1.0.86",
-        "axios": "^1.13.3",
-        "class-transformer": "^0.5.1",
-        "class-validator": "^0.14.3",
-        "express": "^5.2.1",
-        "reflect-metadata": "^0.2.2"
-    },
-    "devDependencies": {
-        "@types/express": "^5.0.6",
-        "@types/node": "^25.0.10",
-        "nodemon": "^3.1.11",
-        "prettier": "^3.8.1",
-        "rimraf": "^6.1.2",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.9.3"
-    }
+  "name": "post-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/server.js",
+  "scripts": {
+    "setup:db:createIndex": "tsc -p . && node dist/db/DbSetup.js --create-index",
+    "setup:db:createShard": "tsc -p . && node dist/db/DbSetup.js --create-shard",
+    "clean": "rimraf dist && rimraf package-lock.json && rimraf node_modules",
+    "test": "echo \"No tests\"",
+    "set-env": "node set-env.js",
+    "start": "export $(node set-env.js) && node dist/server.js",
+    "dev": "export $(node set-env.js) && NODE_ENV=development ts-node src/server.ts",
+    "format": "prettier --write 'src/**/*.{ts,tsx}'",
+    "build": "tsc"
+  },
+  "author": "Tareq Joy",
+  "license": "ISC",
+  "dependencies": {
+    "@tareqjoy/clients": "^1.0.57",
+    "@tareqjoy/models": "^1.0.137",
+    "@tareqjoy/utils": "^1.0.86",
+    "axios": "^1.13.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "express": "^5.2.1",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.10",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.8.1",
+    "rimraf": "^6.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
 }

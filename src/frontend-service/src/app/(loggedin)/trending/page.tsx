@@ -2,6 +2,7 @@
 import useUserDetails from "@/hooks/use-user-details";
 import PageContainer from "../_ui/PageContainer";
 import StateMessage from "../_ui/StateMessage";
+import TrendingPosts from "./_ui/TrendingPosts";
 
 export default function TrendingPage() {
   const { user, loading, error } = useUserDetails();
@@ -20,9 +21,7 @@ export default function TrendingPage() {
 
   return (
     <PageContainer>
-      <div className=" rounded-lg shadow">
-        
-      </div>
+      <TrendingPosts username={user.username} />
     </PageContainer>
   );
 }
