@@ -3,16 +3,17 @@ package analytics.sink;
 import analytics.model.likeunlike.LikeBucketCount;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.connector.sink2.SinkWriter;
-import org.apache.flink.api.connector.sink2.WriterInitContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class RedisBucketSink implements Sink<LikeBucketCount> {
     private static final Logger LOG = LoggerFactory.getLogger(RedisBucketSink.class);
@@ -51,15 +52,10 @@ public class RedisBucketSink implements Sink<LikeBucketCount> {
         this.batchSize = batchSize;
     }
 
-    public SinkWriter<LikeBucketCount> createWriter(InitContext context) throws IOException {
-        return null;
-    }
-
     @Override
-    public SinkWriter<LikeBucketCount> createWriter(WriterInitContext context) throws IOException {
+    public SinkWriter<LikeBucketCount> createWriter(InitContext context) {
         return new RedisBucketSinkWriter();
     }
-
 
     private class RedisBucketSinkWriter implements SinkWriter<LikeBucketCount> {
         private Jedis jedis;
@@ -107,6 +103,7 @@ public class RedisBucketSink implements Sink<LikeBucketCount> {
                 try {
                     ensureConnected();
                     Pipeline pipeline = jedis.pipelined();
+                    List<RetentionCleanup> cleanups = new ArrayList<>();
                     long nowSeconds = Instant.now().getEpochSecond();
                     long cutoff = 0L;
                     if (retentionSeconds > 0) {
@@ -121,12 +118,23 @@ public class RedisBucketSink implements Sink<LikeBucketCount> {
                                 record.getPostId(),
                                 bucketSuffix
                         );
-                        pipeline.zadd(key, record.getCount(), String.valueOf(record.getBucketTs()));
+                        String idxKey = key + ":idx";
+                        pipeline.hset(
+                                key,
+                                String.valueOf(record.getBucketTs()),
+                                String.valueOf(record.getCount())
+                        );
+                        pipeline.zadd(idxKey, record.getBucketTs(), String.valueOf(record.getBucketTs()));
                         if (retentionSeconds > 0) {
-                            pipeline.zremrangeByScore(key, "-inf", "(" + cutoff);
+                            cleanups.add(new RetentionCleanup(
+                                    key,
+                                    pipeline.zrangeByScore(idxKey, "-inf", "(" + cutoff)
+                            ));
+                            pipeline.zremrangeByScore(idxKey, "-inf", "(" + cutoff);
                         }
                         if (ttlSeconds > 0) {
                             pipeline.expire(key, ttlSeconds);
+                            pipeline.expire(idxKey, ttlSeconds);
                         }
                         if (changedSetKey != null && !changedSetKey.isEmpty()) {
                             pipeline.sadd(changedSetKey, record.getPostId());
@@ -136,6 +144,19 @@ public class RedisBucketSink implements Sink<LikeBucketCount> {
                         }
                     }
                     pipeline.sync();
+                    if (!cleanups.isEmpty()) {
+                        Pipeline cleanupPipeline = jedis.pipelined();
+                        for (RetentionCleanup cleanup : cleanups) {
+                            List<String> oldBuckets = cleanup.oldBuckets.get();
+                            if (oldBuckets != null && !oldBuckets.isEmpty()) {
+                                cleanupPipeline.hdel(
+                                        cleanup.key,
+                                        oldBuckets.toArray(new String[0])
+                                );
+                            }
+                        }
+                        cleanupPipeline.sync();
+                    }
                     buffer.clear();
                     return;
                 } catch (Exception e) {
@@ -145,6 +166,7 @@ public class RedisBucketSink implements Sink<LikeBucketCount> {
                         LOG.error("Redis sink flush failed after {} attempts", MAX_RETRIES, e);
                         throw new IOException("Redis sink flush failed", e);
                     }
+                    LOG.info("Retrying Redis sink flush after backoff (attempt {}/{})", attempt, MAX_RETRIES);
                     resetConnection();
                     sleepBackoff();
                 }
@@ -189,6 +211,16 @@ public class RedisBucketSink implements Sink<LikeBucketCount> {
 
         private void sleepBackoff() throws InterruptedException {
             Thread.sleep(RETRY_BACKOFF_MILLIS);
+        }
+
+        private class RetentionCleanup {
+            private final String key;
+            private final Response<List<String>> oldBuckets;
+
+            private RetentionCleanup(String key, Response<List<String>> oldBuckets) {
+                this.key = key;
+                this.oldBuckets = oldBuckets;
+            }
         }
     }
 }

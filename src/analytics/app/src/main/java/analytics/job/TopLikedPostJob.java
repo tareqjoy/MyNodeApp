@@ -99,7 +99,7 @@ public class TopLikedPostJob {
                 60,
                 86400,
                 86400,
-                200
+                1
         ));
         hourCounts.sinkTo(new RedisBucketSink(
                 redisHostPort,
@@ -110,7 +110,7 @@ public class TopLikedPostJob {
                 3600,
                 86400,
                 86400,
-                200
+                1
         ));
         dayCounts.sinkTo(new RedisBucketSink(
                 redisHostPort,
@@ -121,7 +121,7 @@ public class TopLikedPostJob {
                 86400,
                 (int) (30L * 86400),
                 86400,
-                200
+                1
         ));
 
         // 8. Execute the Flink job
@@ -156,7 +156,7 @@ public class TopLikedPostJob {
         if (ts <= 0L) {
             return System.currentTimeMillis();
         }
-        return ts < 1_000_000_000_000L ? ts * 1000L : ts;
+        return ts;
     }
 
     private static SingleOutputStreamOperator<LikeBucketCount> aggregateBuckets(
