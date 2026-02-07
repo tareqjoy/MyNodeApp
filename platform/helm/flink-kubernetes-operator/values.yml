@@ -12,4 +12,6 @@ webhook:
 watchNamespaces: []
 
 # ServiceAccount used by Flink jobs
-jobServiceAccount: analytics
+jobServiceAccount:
+  create: true
+  name: analytics
