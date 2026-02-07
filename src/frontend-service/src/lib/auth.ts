@@ -17,6 +17,9 @@ export function getAccessToken(): string | null {
 
 export function setAccessToken(accessToken: string) {
   localStorage.setItem('accessToken', accessToken);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('auth:access-token'));
+  }
 }
 
 export function deleteAccessToken() {
