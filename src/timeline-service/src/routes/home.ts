@@ -40,14 +40,16 @@ const router = express.Router();
 export const createHomeRouter = (
   redisClient: RedisClientType<any, any, any, any>
 ) => {
-  router.post("/", async (req, res, next) => {
+  router.get("/", async (req, res, next) => {
     if (!req.headers || !req.headers[ATTR_HEADER_USER_ID]) {
       res
         .status(400)
         .json(new InvalidRequest(`$${ATTR_HEADER_USER_ID} header missing`));
     }
 
-    const timelineHomeReq = plainToInstance(TimelineHomeReq, req.body);
+    const timelineHomeReq = plainToInstance(TimelineHomeReq, req.query, {
+      enableImplicitConversion: true,
+    });
     const errors = await validate(timelineHomeReq);
 
     if (errors.length > 0) {
