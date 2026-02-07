@@ -1,6 +1,8 @@
 resources:
   - serviceaccount.yaml
   - configmap.yaml
+  - role.yaml
+  - rolebinding.yaml
   - flinkdeployment.yaml
 configurations:
   - kustomizeconfig.yaml
