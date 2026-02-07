@@ -16,7 +16,7 @@
     "@opentelemetry/sdk-logs": "^0.211.0",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/postcss": "^4.1.18",
-    "@tareqjoy/models": "1.0.136",
+    "@tareqjoy/models": "1.0.139",
     "@vercel/otel": "^2.1.0",
     "axios": "^1.13.3",
     "class-transformer": "^0.5.1",
