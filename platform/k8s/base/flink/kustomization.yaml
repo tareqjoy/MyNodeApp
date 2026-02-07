@@ -1,0 +1,5 @@
+resources:
+  - configmap.yaml
+  - jobmanager-service.yaml
+  - jobmanager-deployment.yaml
+  - taskmanager-deployment.yaml

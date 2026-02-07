@@ -7,5 +7,6 @@ resources:
   - ../../src/fanout-service/k8s/overlays/dev
   - ../../src/timeline-service/k8s/overlays/dev
   - ../../src/search-service/k8s/overlays/dev
+  - ../../src/analytics/k8s/overlays/dev
   - ../../src/frontend-service/k8s/overlays/dev
   - ../../src/file-service/k8s/overlays/dev

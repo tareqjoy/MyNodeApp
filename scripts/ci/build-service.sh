@@ -6,6 +6,11 @@ SERVICES_DIR=${SERVICES_DIR:-src}
 
 cd "$SERVICES_DIR/$SVC"
 
+if [ "$SVC" = "analytics" ]; then
+  ./gradlew --no-daemon :app:shadowJar
+  exit 0
+fi
+
 node -v
 npm -v
 npm ci

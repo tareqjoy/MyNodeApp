@@ -20,7 +20,7 @@ pipeline {
     KUBECONFIG_CRED_ID  = "kubeconfig"
     K8S_NAMESPACE       = "default"
     SERVICES_DIR        = "src"
-    ALLOWED_SERVICES    = "timeline-service,user-service,follower-service,fanout-service,post-service,search-service,auth-service,frontend-service,file-service"
+    ALLOWED_SERVICES    = "timeline-service,user-service,follower-service,fanout-service,post-service,search-service,auth-service,frontend-service,file-service,analytics"
   }
 
   stages {
