@@ -29,4 +29,10 @@ cd "$OVERLAY_DIR"
 kustomize edit set image "$DOCKERHUB_NAMESPACE/$SVC=$IMAGE"
 kustomize build . | kubectl -n "$NS" apply -f -
 
-kubectl -n "$NS" rollout status "deploy/$SVC" --timeout=180s
+if kubectl -n "$NS" get deploy "$SVC" >/dev/null 2>&1; then
+  kubectl -n "$NS" rollout status "deploy/$SVC" --timeout=180s
+elif kubectl -n "$NS" get job "${SVC}-job" >/dev/null 2>&1; then
+  kubectl -n "$NS" wait --for=condition=complete "job/${SVC}-job" --timeout=180s
+else
+  echo "No deploy/$SVC or job/${SVC}-job found; skipping rollout wait" >&2
+fi

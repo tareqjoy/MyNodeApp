@@ -102,6 +102,8 @@ https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
          ```sh
          sudo usermod -aG docker jenkins                                                                        
          sudo systemctl restart jenkins
+         sudo ufw allow out 443/tcp  
+         sudo apt-get install -y openjdk-11-jdk
          ```
 
    6. Setup Github:
