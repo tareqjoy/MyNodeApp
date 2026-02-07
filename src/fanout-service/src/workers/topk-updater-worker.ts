@@ -51,6 +51,8 @@ export function startTopKUpdater(
   let stopped = false;
   let loopPromise: Promise<void> | undefined;
   let lastHeadRefresh = 0;
+  let sleepTimer: NodeJS.Timeout | null = null;
+  let sleepResolve: (() => void) | null = null;
 
   const loop = async () => {
     while (!stopped) {
@@ -67,7 +69,14 @@ export function startTopKUpdater(
       const elapsed = Date.now() - tickStart;
       const sleepMs = Math.max(0, config.tickIntervalMs - elapsed);
       if (sleepMs > 0) {
-        await delay(sleepMs);
+        await new Promise<void>((resolve) => {
+          sleepResolve = resolve;
+          sleepTimer = setTimeout(() => {
+            sleepTimer = null;
+            sleepResolve = null;
+            resolve();
+          }, sleepMs);
+        });
       }
     }
   };
@@ -77,8 +86,20 @@ export function startTopKUpdater(
   return {
     stop: async () => {
       stopped = true;
+      if (sleepTimer) {
+        clearTimeout(sleepTimer);
+        sleepTimer = null;
+      }
+      if (sleepResolve) {
+        sleepResolve();
+        sleepResolve = null;
+      }
       if (loopPromise) {
-        await loopPromise;
+        const timeoutMs = 5000;
+        await Promise.race([
+          loopPromise,
+          new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+        ]);
       }
     },
   };
@@ -330,8 +351,4 @@ function normalizeScanReply(reply: any): { nextCursor: string; members: string[]
 
 function hasPipelineError(replies: any[]): boolean {
   return replies.some((reply) => reply instanceof Error);
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

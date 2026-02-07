@@ -18,6 +18,7 @@ import { postProcessWorker } from "./workers/post-process-worker";
 import {
   startTopKUpdater,
   type TopKUpdaterHandle,
+  type TopKUpdaterConfig,
 } from "./workers/topk-updater-worker";
 import { ServerProbStatus } from "@tareqjoy/models";
 import { Consumer, Producer } from "kafkajs";
@@ -37,24 +38,12 @@ const kafka_post_like_fanout_topic =
   process.env.KAFKA_NEW_POST_LIKE_TOPIC || "post-like";
 const kafka_fanout_group = process.env.KAFKA_FANOUT_GROUP || "fanout-group";
 
-const topk_updater_enabled = (process.env.TOPK_UPDATER_ENABLED || "true") === "true";
-const topk_tick_interval_ms = Number(process.env.TOPK_TICK_INTERVAL_MS || 2000);
-const topk_batch_size = Number(process.env.TOPK_BATCH_SIZE || 2000);
-const topk_head_refresh_interval_ms = Number(
-  process.env.TOPK_HEAD_REFRESH_INTERVAL_MS || 60000,
-);
-const topk_head_refresh_size = Number(process.env.TOPK_HEAD_REFRESH_SIZE || 1000);
-const topk_max_size = Number(process.env.TOPK_MAX_SIZE || 5000);
-const topk_window_seconds = Number(process.env.TOPK_WINDOW_SECONDS || 3600);
-const topk_bucket_size_seconds = Number(
-  process.env.TOPK_BUCKET_SIZE_SECONDS || 60,
-);
-const topk_metric = process.env.TOPK_METRIC || "likes";
-const topk_segment = process.env.TOPK_SEGMENT || "global";
-const topk_bucket_suffix = process.env.TOPK_BUCKET_SUFFIX || "m";
-const topk_changed_set_key =
-  process.env.TOPK_CHANGED_SET_KEY || "chg:likes:global:1h";
-const topk_key = process.env.TOPK_KEY || "topk:likes:global:1h";
+const topk_1h_enabled =
+  (process.env.TOPK_1H_ENABLED ||
+    process.env.TOPK_UPDATER_ENABLED ||
+    "true") === "true";
+const topk_24h_enabled = (process.env.TOPK_24H_ENABLED || "true") === "true";
+const topk_30d_enabled = (process.env.TOPK_30D_ENABLED || "true") === "true";
 
 
 const logger =  getFileLogger(__filename);
@@ -64,7 +53,7 @@ const api_path_root = process.env.API_PATH_ROOT || "/v1/fanout";
 
 const app = express();
 let isReady = false;
-let topkUpdater: TopKUpdaterHandle | undefined;
+let topkUpdaters: TopKUpdaterHandle[] = [];
 
 class HttpError extends Error {
   statusCode: number;
@@ -140,21 +129,61 @@ async function main() {
 
   isReady = true;
 
-  topkUpdater = startTopKUpdater(redisClient, {
-    enabled: topk_updater_enabled,
-    tickIntervalMs: topk_tick_interval_ms,
-    batchSize: topk_batch_size,
-    headRefreshIntervalMs: topk_head_refresh_interval_ms,
-    headRefreshSize: topk_head_refresh_size,
-    topKMaxSize: topk_max_size,
-    windowSeconds: topk_window_seconds,
-    bucketSizeSeconds: topk_bucket_size_seconds,
-    metric: topk_metric,
-    segment: topk_segment,
-    bucketSuffix: topk_bucket_suffix,
-    changedSetKey: topk_changed_set_key,
-    topKKey: topk_key,
-  });
+  const topkConfigs: TopKUpdaterConfig[] = [
+    {
+      enabled: topk_1h_enabled,
+      tickIntervalMs: Number(process.env.TOPK_1H_TICK_INTERVAL_MS || 2000),
+      batchSize: Number(process.env.TOPK_1H_BATCH_SIZE || 2000),
+      headRefreshIntervalMs: Number(
+        process.env.TOPK_1H_HEAD_REFRESH_INTERVAL_MS || 60000,
+      ),
+      headRefreshSize: Number(process.env.TOPK_1H_HEAD_REFRESH_SIZE || 1000),
+      topKMaxSize: Number(process.env.TOPK_1H_MAX_SIZE || 5000),
+      windowSeconds: Number(process.env.TOPK_1H_WINDOW_SECONDS || 3600),
+      bucketSizeSeconds: Number(process.env.TOPK_1H_BUCKET_SIZE_SECONDS || 60),
+      metric: process.env.TOPK_1H_METRIC || "likes",
+      segment: process.env.TOPK_1H_SEGMENT || "global",
+      bucketSuffix: process.env.TOPK_1H_BUCKET_SUFFIX || "m",
+      changedSetKey: process.env.TOPK_1H_CHANGED_SET_KEY || "chg:likes:global:1h",
+      topKKey: process.env.TOPK_1H_KEY || "topk:likes:global:1h",
+    },
+    {
+      enabled: topk_24h_enabled,
+      tickIntervalMs: Number(process.env.TOPK_24H_TICK_INTERVAL_MS || 30000),
+      batchSize: Number(process.env.TOPK_24H_BATCH_SIZE || 2000),
+      headRefreshIntervalMs: Number(
+        process.env.TOPK_24H_HEAD_REFRESH_INTERVAL_MS || 300000,
+      ),
+      headRefreshSize: Number(process.env.TOPK_24H_HEAD_REFRESH_SIZE || 1000),
+      topKMaxSize: Number(process.env.TOPK_24H_MAX_SIZE || 5000),
+      windowSeconds: Number(process.env.TOPK_24H_WINDOW_SECONDS || 86400),
+      bucketSizeSeconds: Number(process.env.TOPK_24H_BUCKET_SIZE_SECONDS || 3600),
+      metric: process.env.TOPK_24H_METRIC || "likes",
+      segment: process.env.TOPK_24H_SEGMENT || "global",
+      bucketSuffix: process.env.TOPK_24H_BUCKET_SUFFIX || "h",
+      changedSetKey: process.env.TOPK_24H_CHANGED_SET_KEY || "chg:likes:global:24h",
+      topKKey: process.env.TOPK_24H_KEY || "topk:likes:global:24h",
+    },
+    {
+      enabled: topk_30d_enabled,
+      tickIntervalMs: Number(process.env.TOPK_30D_TICK_INTERVAL_MS || 300000),
+      batchSize: Number(process.env.TOPK_30D_BATCH_SIZE || 2000),
+      headRefreshIntervalMs: Number(
+        process.env.TOPK_30D_HEAD_REFRESH_INTERVAL_MS || 900000,
+      ),
+      headRefreshSize: Number(process.env.TOPK_30D_HEAD_REFRESH_SIZE || 1000),
+      topKMaxSize: Number(process.env.TOPK_30D_MAX_SIZE || 5000),
+      windowSeconds: Number(process.env.TOPK_30D_WINDOW_SECONDS || 30 * 86400),
+      bucketSizeSeconds: Number(process.env.TOPK_30D_BUCKET_SIZE_SECONDS || 86400),
+      metric: process.env.TOPK_30D_METRIC || "likes",
+      segment: process.env.TOPK_30D_SEGMENT || "global",
+      bucketSuffix: process.env.TOPK_30D_BUCKET_SUFFIX || "d",
+      changedSetKey: process.env.TOPK_30D_CHANGED_SET_KEY || "chg:likes:global:30d",
+      topKKey: process.env.TOPK_30D_KEY || "topk:likes:global:30d",
+    },
+  ];
+
+  topkUpdaters = topkConfigs.map((cfg) => startTopKUpdater(redisClient, cfg));
 
   // Start the server and listen to the port
   app.listen(appport, () => {
@@ -168,9 +197,9 @@ async function main() {
       logger.info(`Consumer disconnected`);
       await kafkaProducer.disconnect();
       logger.info(`Producer disconnected`);
-      if (topkUpdater) {
-        await topkUpdater.stop();
-        logger.info(`TopK updater stopped`);
+      if (topkUpdaters.length > 0) {
+        await Promise.all(topkUpdaters.map((updater) => updater.stop()));
+        logger.info(`TopK updaters stopped`);
       }
       if (redisClient.isOpen) {
         await redisClient.quit();
