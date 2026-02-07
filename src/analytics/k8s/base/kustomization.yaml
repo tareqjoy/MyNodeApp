@@ -2,3 +2,5 @@ resources:
   - serviceaccount.yaml
   - configmap.yaml
   - flinkdeployment.yaml
+configurations:
+  - kustomizeconfig.yaml
