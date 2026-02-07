@@ -5,6 +5,7 @@ metadata:
 spec:
   image: tareqjoy/analytics:latest
   flinkVersion: v1_20
+  serviceAccount: analytics
   flinkConfiguration:
     taskmanager.numberOfTaskSlots: "2"
     parallelism.default: "2"

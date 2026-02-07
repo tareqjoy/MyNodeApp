@@ -10,3 +10,6 @@ webhook:
 
 # Watch all namespaces by default
 watchNamespaces: []
+
+# ServiceAccount used by Flink jobs
+jobServiceAccount: analytics
