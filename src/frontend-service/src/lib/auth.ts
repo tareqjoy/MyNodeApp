@@ -9,21 +9,7 @@ interface EnhancedAxiosRequestConfig extends InternalAxiosRequestConfig {
     _retry?: boolean; 
 }
 
-let isRefreshing = false;
-let subscribers: ((token: string) => void)[] = [];
-
-function onRefreshed(token: string) {
-  subscribers.forEach((callback) => callback(token));
-  subscribers = [];
-}
-
-function onError() {
-  subscribers = [];
-}
-
-function addSubscriber(callback: (token: string) => void) {
-  subscribers.push(callback);
-}
+let refreshPromise: Promise<string> | null = null;
 
 export function getAccessToken(): string | null {
     return localStorage.getItem('accessToken');
@@ -112,50 +98,44 @@ axiosAuthClient.interceptors.response.use(
         if (!refreshToken) {
           return Promise.reject(new AxiosError('Refresh token is missing', 'NO_REFRESH_TOKEN'));
         }
-        console.debug(`axiosAuthClient: got refresh token: ${refreshToken}`);
-        if (isRefreshing) {
-          console.log(`axiosAuthClient: already refreshing, adding as subscriber waiting for the new accesstoken`);
-          // If another refresh request is in progress, queue the request until it's completed
-          return new Promise((resolve) => {
-            addSubscriber((token: string) => {
-              originalRequest.headers['Authorization'] = 'Bearer ' + token;
-              resolve(axiosAuthClient(originalRequest));
-            });
-          });
-        }
-        console.debug(`axiosAuthClient: this request will try to fetch accesstoken`);
-        // Start refreshing token
+
         originalRequest._retry = true;
-        isRefreshing = true;
-  
+
+        if (!refreshPromise) {
+          console.debug("axiosAuthClient: no refresh in flight, starting refresh");
+          refreshPromise = (async () => {
+            const refreshReq = new AuthRefreshReq(refreshToken);
+            const refreshResp = await axiosPublicClient.post(
+              authRefreshUrl,
+              refreshReq,
+              { headers: { 'Device-ID': 'some-unique-device-id' } }
+            );
+            const authRefreshResObj = plainToInstance(AuthRefreshRes, refreshResp.data);
+            const newAccessToken = authRefreshResObj.access_token;
+
+            console.debug(`axiosAuthClient: yay! found new accesstoken & saving into local db: ${newAccessToken}`);
+            setAccessToken(newAccessToken);
+            axiosAuthClient.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
+
+            return newAccessToken;
+          })()
+            .catch((err) => {
+              console.error("axiosAuthClient: error while getting new accesstoken");
+              throw err;
+            })
+            .finally(() => {
+              refreshPromise = null;
+            });
+        } else {
+          console.debug("axiosAuthClient: refresh already in flight, awaiting token");
+        }
+
         try {
-          const refreshReq = new AuthRefreshReq(refreshToken);
-          const refreshResp = await axiosPublicClient.post(authRefreshUrl, refreshReq,
-            {headers: {'Device-ID': 'some-unique-device-id'}}
-          ); 
-          const authRefreshResObj = plainToInstance(AuthRefreshRes, refreshResp.data);
-          const newAccessToken = authRefreshResObj.access_token;
-
-          console.debug(`axiosAuthClient: yay! found new accesstoken & saving into local db: ${newAccessToken}`);
-
-          setAccessToken(newAccessToken);
-  
-          // Retry the failed request with the new access token
-          console.debug(`axiosAuthClient: updating header with the new acesstoken`);
-          axiosAuthClient.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
+          const newAccessToken = await refreshPromise;
+          originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
-  
-          console.debug(`axiosAuthClient: updating the ${subscribers.length} subscribed awaiting requests with the new acesstoken`);
-          // Execute queued requests
-          onRefreshed(newAccessToken);
-          isRefreshing = false;
-  
-          return axiosAuthClient(originalRequest); // Retry original request with new token
+          return axiosAuthClient(originalRequest);
         } catch (err) {
-          console.error("axiosAuthClient: error while getting new accesstoken");
-          console.warn(`axiosAuthClient: ignoring the ${subscribers.length} awaiting subscribed requests`);
-          onRefreshed("");
-          isRefreshing = false;
           return Promise.reject(err);
         }
       }
