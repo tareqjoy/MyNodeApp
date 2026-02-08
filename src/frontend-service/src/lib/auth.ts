@@ -111,10 +111,7 @@ async function refreshAccessToken(): Promise<string | null> {
   return newAccessToken;
 }
 
-async function ensureAccessToken(): Promise<string | null> {
-  if (accessToken) {
-    return accessToken;
-  }
+async function forceRefreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = refreshAccessToken()
       .catch((err) => {
@@ -126,6 +123,13 @@ async function ensureAccessToken(): Promise<string | null> {
       });
   }
   return refreshPromise;
+}
+
+async function ensureAccessToken(): Promise<string | null> {
+  if (accessToken) {
+    return accessToken;
+  }
+  return forceRefreshAccessToken();
 }
 
 axiosAuthClient.interceptors.request.use(
@@ -165,13 +169,17 @@ axiosAuthClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const newAccessToken = await ensureAccessToken();
+        const newAccessToken = await forceRefreshAccessToken();
         if (!newAccessToken) {
           deleteAccessToken();
           return Promise.reject(error);
         }
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+        const retryHeaders =
+          originalRequest.headers instanceof AxiosHeaders
+            ? originalRequest.headers
+            : AxiosHeaders.from(originalRequest.headers || {});
+        retryHeaders.set('Authorization', 'Bearer ' + newAccessToken);
+        originalRequest.headers = retryHeaders;
         return axiosAuthClient(originalRequest);
       } catch (err) {
         deleteAccessToken();
