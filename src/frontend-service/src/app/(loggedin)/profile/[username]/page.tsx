@@ -7,7 +7,7 @@ import {
   UnfollowReq,
   UserDetailsRes,
 } from "@tareqjoy/models";
-import { axiosAuthClient, getUserId } from "@/lib/auth";
+import { authGet, authPost, getUserId } from "@/lib/auth";
 import UserProfile from "./_ui/UserProfile";
 import { plainToInstance } from "class-transformer";
 import UserPosts from "./_ui/UserPosts";
@@ -71,7 +71,7 @@ export default function ProfilePage({
       followUnfollowObj = new FollowReq(username, Date.now());
     }
     try {
-      const axiosFollowUnfollowResp = await axiosAuthClient.post(
+      const axiosFollowUnfollowResp = await authPost(
         followUnfollowUrl,
         followUnfollowObj
       );
@@ -88,7 +88,7 @@ export default function ProfilePage({
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const userDetailsResp = await axiosAuthClient.get(
+        const userDetailsResp = await authGet(
           `${userDetailsUrl}/${usernameOrId}`,
           {
             params: { provided: isProvidedUsername ? "username" : "userid" },
@@ -101,7 +101,7 @@ export default function ProfilePage({
         );
         setUser(userDetailsResObj);
 
-        const doIFollowResp = await axiosAuthClient.get(
+        const doIFollowResp = await authGet(
           `${doIFollowUrl}/${userDetailsResObj.userId}`
         );
 

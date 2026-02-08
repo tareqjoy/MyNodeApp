@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { axiosAuthClient, axiosPublicClient, getOrCreateDeviceId, setAccessToken, setUserId, setUserName } from '@/lib/auth';
+import { authPost, getOrCreateDeviceId, publicPost, setAccessToken, setUserId, setUserName } from '@/lib/auth';
 import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import Loading from './loading';
@@ -27,7 +27,7 @@ export default function LoginPage() {
     const isAuthed = async () => {
       console.log("Checking authentication...");
       try {
-        const resp = await axiosAuthClient.post(authVerifyUrl, {});
+        const resp = await authPost(authVerifyUrl, {});
         if (resp.status === 200) {
           console.log("User is authenticated, redirecting to profile...");
           router.push('/home');
@@ -52,7 +52,7 @@ export default function LoginPage() {
       const deviceId = getOrCreateDeviceId();
       const signInReq = new AuthSignInReq({ username }, password);
 
-      const signInRes = await axiosPublicClient.post(authSignInUrl, signInReq, {
+      const signInRes = await publicPost(authSignInUrl, signInReq, {
         headers: { 'Device-ID': deviceId },
       });
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
         setAccessToken(authSignInResObj.access_token);
         setUserName(username);
 
-        const usernameRes = await axiosAuthClient.post(userIdUrl, { username });
+        const usernameRes = await authPost(userIdUrl, { username });
         setUserId(usernameRes.data.toUserIds[username]);
 
         // Redirect user to previous page or profile

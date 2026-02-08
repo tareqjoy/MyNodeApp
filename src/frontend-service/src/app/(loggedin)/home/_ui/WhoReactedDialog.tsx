@@ -4,7 +4,7 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import React from "react";
 import { plainToInstance } from "class-transformer";
 import { UserLike, WhoLikedRes } from "@tareqjoy/models";
-import { axiosAuthClient } from "@/lib/auth";
+import { authGet } from "@/lib/auth";
 import { REACTIONS } from "../../_ui/ReactionMap";
 
 interface ReactionsDialogProps {
@@ -35,7 +35,7 @@ const ReactionsDialog: React.FC<ReactionsDialogProps> = ({
   ) => {
     setLoading(true);
     try {
-      const axiosResponse = await axiosAuthClient.get(whoLikedUrl, {
+      const axiosResponse = await authGet(whoLikedUrl, {
         params: { postId, nextToken },
       });
 

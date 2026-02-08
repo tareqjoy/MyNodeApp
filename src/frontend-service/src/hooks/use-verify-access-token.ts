@@ -1,11 +1,11 @@
-import { axiosAuthClient } from '@/lib/auth';
+import { authPost } from '@/lib/auth';
 
 const authVerifyUrl: string = process.env.NEXT_PUBLIC_AUTH_VERIFY_URL || "/v1/auth/verify/";
 
 export default async function useVerifyAccessToken(): Promise<boolean> {
   console.log("useVerifyAccessToken: is called");
   try {
-    const resp = await axiosAuthClient.post(authVerifyUrl, {}); 
+    const resp = await authPost(authVerifyUrl, {}); 
     if (resp.status === 200) {
       console.log(`useVerifyAccessToken: returned 200 from: ${authVerifyUrl}`);
       return true;

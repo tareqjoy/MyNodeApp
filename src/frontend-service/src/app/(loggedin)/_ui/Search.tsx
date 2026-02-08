@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import debounce from "debounce"; // For debouncing API calls
 import { SearchReq, SearchRes } from "@tareqjoy/models";
-import { axiosAuthClient } from "@/lib/auth";
+import { authPost } from "@/lib/auth";
 import { plainToInstance } from "class-transformer";
 import HighlightText from "./HighlightText";
 
@@ -38,7 +38,7 @@ const Search = () => {
 
     try {
       const searchReq = new SearchReq({ allToken: searchTerm });
-      const searchAxiosResp = await axiosAuthClient.post(searchUrl, searchReq);
+      const searchAxiosResp = await authPost(searchUrl, searchReq);
       const searchResObj = plainToInstance(SearchRes, searchAxiosResp.data);
       setResults(searchResObj);
       setShowResults(true);

@@ -1,24 +1,38 @@
 'use client'
-import axios, {
-  AxiosError,
-  AxiosHeaders,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from 'axios';
-import { AuthRefreshRes } from '@tareqjoy/models'
+import { AuthRefreshRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 
-const authRefreshUrl: string = process.env.NEXT_PUBLIC_AUTH_REFRESH_URL || "/v1/auth/refresh/";
+const authRefreshUrl: string =
+  process.env.NEXT_PUBLIC_AUTH_REFRESH_URL || '/v1/auth/refresh/';
 
-interface EnhancedAxiosRequestConfig extends InternalAxiosRequestConfig {
+interface EnhancedRequestInit extends RequestInit {
   _retry?: boolean;
 }
 
+type FetchResponse<T = unknown> = {
+  status: number;
+  ok: boolean;
+  data: T;
+  headers: Headers;
+};
+
 const ACCESS_TOKEN_EVENT = 'auth:access-token';
 const DEVICE_ID_KEY = 'deviceId';
+const DEFAULT_TIMEOUT_MS = 5000;
 
 let accessToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
+
+class HttpError<T = unknown> extends Error {
+  status: number;
+  data: T | null;
+  constructor(message: string, status: number, data: T | null) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = status;
+    this.data = data;
+  }
+}
 
 export function getAccessToken(): string | null {
   return accessToken;
@@ -26,18 +40,11 @@ export function getAccessToken(): string | null {
 
 export function setAccessToken(accessTokenValue: string) {
   accessToken = accessTokenValue;
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event(ACCESS_TOKEN_EVENT));
-  }
 }
 
 export function deleteAccessToken() {
   accessToken = null;
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event(ACCESS_TOKEN_EVENT));
-  }
 }
-
 
 export function setUserId(userId: string) {
   localStorage.setItem('userId', userId);
@@ -51,7 +58,7 @@ export function getUserId(): string | null {
   return localStorage.getItem('userId');
 }
 
-export function getUserName(): string | null  {
+export function getUserName(): string | null {
   return localStorage.getItem('username');
 }
 
@@ -62,16 +69,6 @@ export function deleteUserId() {
 export function deleteUserName() {
   localStorage.removeItem('username');
 }
-
-export const axiosAuthClient = axios.create({
-  timeout: 5000,
-  withCredentials: true,
-});
-
-export const axiosPublicClient = axios.create({
-  timeout: 5000,
-  withCredentials: true,
-});
 
 export function getOrCreateDeviceId(): string {
   if (typeof window === 'undefined') {
@@ -94,28 +91,138 @@ export function deleteDeviceId() {
   }
 }
 
+function buildUrl(
+  url: string,
+  params?: Record<string, string | number | boolean | null | undefined>,
+): string {
+  if (!params) return url;
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    searchParams.append(key, String(value));
+  });
+  const qs = searchParams.toString();
+  if (!qs) return url;
+  return url.includes('?') ? `${url}&${qs}` : `${url}?${qs}`;
+}
+
+function mergeHeaders(base?: HeadersInit, extra?: HeadersInit): Headers {
+  const headers = new Headers(base || undefined);
+  if (extra) {
+    const extraHeaders = new Headers(extra);
+    extraHeaders.forEach((value, key) => headers.set(key, value));
+  }
+  return headers;
+}
+
+async function fetchJson<T>(
+  input: RequestInfo | URL,
+  init: EnhancedRequestInit = {},
+): Promise<FetchResponse<T>> {
+  const timeoutMs = init._retry ? DEFAULT_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  if (init.signal) {
+    init.signal.addEventListener('abort', () => controller.abort(), {
+      once: true,
+    });
+  }
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(input, {
+      ...init,
+      signal: controller.signal,
+      credentials: 'include',
+    });
+
+    let data: any = null;
+    if (response.status !== 204 && response.status !== 205) {
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        data = text.length ? text : null;
+      }
+    }
+
+    const fetchResp: FetchResponse<T> = {
+      status: response.status,
+      ok: response.ok,
+      data: data as T,
+      headers: response.headers,
+    };
+
+    if (!response.ok) {
+      throw new HttpError('Request failed', response.status, data);
+    }
+
+    return fetchResp;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function fetchRaw(
+  input: RequestInfo | URL,
+  init: EnhancedRequestInit = {},
+): Promise<Response> {
+  const timeoutMs = init._retry ? DEFAULT_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  if (init.signal) {
+    init.signal.addEventListener('abort', () => controller.abort(), {
+      once: true,
+    });
+  }
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(input, {
+      ...init,
+      signal: controller.signal,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let data: any = null;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        data = text.length ? text : null;
+      }
+      throw new HttpError('Request failed', response.status, data);
+    }
+
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function refreshAccessToken(): Promise<string | null> {
-  const refreshResp = await axiosPublicClient.post(
-    authRefreshUrl,
-    {},
-    { headers: { 'Device-ID': getOrCreateDeviceId() } },
-  );
+  const refreshResp = await fetchJson<AuthRefreshRes>(authRefreshUrl, {
+    method: 'POST',
+    headers: { 'Device-ID': getOrCreateDeviceId() },
+  });
   const authRefreshResObj = plainToInstance(AuthRefreshRes, refreshResp.data);
-  const newAccessToken = authRefreshResObj.access_token;
+  const newAccessToken =
+    authRefreshResObj.access_token ||
+    (refreshResp.data &&
+      ((refreshResp.data as any).access_token || (refreshResp.data as any).accessToken));
   if (!newAccessToken) {
     return null;
   }
   setAccessToken(newAccessToken);
-  axiosAuthClient.defaults.headers.common['Authorization'] =
-    'Bearer ' + newAccessToken;
   return newAccessToken;
 }
 
 async function forceRefreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = refreshAccessToken()
-      .catch((err) => {
-        console.info('axiosAuthClient: error while refreshing access token');
+      .catch(() => {
+        console.info('authFetch: error while refreshing access token');
         return null;
       })
       .finally(() => {
@@ -132,63 +239,155 @@ async function ensureAccessToken(): Promise<string | null> {
   return forceRefreshAccessToken();
 }
 
-axiosAuthClient.interceptors.request.use(
-  async (config: EnhancedAxiosRequestConfig) => {
-    if (!config.headers) {
-      config.headers = new AxiosHeaders();
+async function authFetchJson<T>(
+  url: string,
+  init: EnhancedRequestInit = {},
+): Promise<FetchResponse<T>> {
+  const headers = mergeHeaders(init.headers, undefined);
+  if (!headers.get('Authorization')) {
+    const token = await ensureAccessToken();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
     }
-    const headers =
-      config.headers instanceof AxiosHeaders
-        ? config.headers
-        : AxiosHeaders.from(config.headers);
-    if (!headers.get('Authorization')) {
-      const token = await ensureAccessToken();
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-        config.headers = headers;
+  }
+
+  try {
+    return await fetchJson<T>(url, {
+      ...init,
+      headers,
+    });
+  } catch (err) {
+    if (err instanceof HttpError && err.status === 401 && !init._retry) {
+      if (url.includes(authRefreshUrl)) {
+        throw err;
       }
-    }
-
-    return config;
-  },
-  (error: AxiosError) => {
-    return Promise.reject(error);
-  },
-);
-
-axiosAuthClient.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as EnhancedAxiosRequestConfig;
-    console.debug('axiosAuthClient: intercepting after error response..');
-    if (error.response?.status === 401 && !originalRequest?._retry) {
-      console.debug(
-        'axiosAuthClient: got 401, will try to refresh access token',
-      );
-
-      originalRequest._retry = true;
-
-      try {
-        const newAccessToken = await forceRefreshAccessToken();
-        if (!newAccessToken) {
-          deleteAccessToken();
-          return Promise.reject(error);
-        }
-        const retryHeaders =
-          originalRequest.headers instanceof AxiosHeaders
-            ? originalRequest.headers
-            : AxiosHeaders.from(originalRequest.headers || {});
-        retryHeaders.set('Authorization', 'Bearer ' + newAccessToken);
-        originalRequest.headers = retryHeaders;
-        return axiosAuthClient(originalRequest);
-      } catch (err) {
+      const newAccessToken = await forceRefreshAccessToken();
+      if (!newAccessToken) {
         deleteAccessToken();
-        return Promise.reject(err);
+        throw err;
       }
+      const retryHeaders = mergeHeaders(headers, {
+        Authorization: `Bearer ${newAccessToken}`,
+      });
+      return fetchJson<T>(url, {
+        ...init,
+        _retry: true,
+        headers: retryHeaders,
+      });
     }
-    console.debug(
-      'axiosAuthClient: not 401, not doing any access token related work',
-    );
-    return Promise.reject(error);
+    throw err;
+  }
+}
+
+async function authFetchRaw(
+  url: string,
+  init: EnhancedRequestInit = {},
+): Promise<Response> {
+  const headers = mergeHeaders(init.headers, undefined);
+  if (!headers.get('Authorization')) {
+    const token = await ensureAccessToken();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  }
+
+  try {
+    return await fetchRaw(url, {
+      ...init,
+      headers,
+    });
+  } catch (err) {
+    if (err instanceof HttpError && err.status === 401 && !init._retry) {
+      if (url.includes(authRefreshUrl)) {
+        throw err;
+      }
+      const newAccessToken = await forceRefreshAccessToken();
+      if (!newAccessToken) {
+        deleteAccessToken();
+        throw err;
+      }
+      const retryHeaders = mergeHeaders(headers, {
+        Authorization: `Bearer ${newAccessToken}`,
+      });
+      return fetchRaw(url, {
+        ...init,
+        _retry: true,
+        headers: retryHeaders,
+      });
+    }
+    throw err;
+  }
+}
+
+export async function authGet<T>(
+  url: string,
+  options?: {
+    params?: Record<string, string | number | boolean | null | undefined>;
+    headers?: HeadersInit;
   },
-);
+): Promise<FetchResponse<T>> {
+  const fullUrl = buildUrl(url, options?.params);
+  return authFetchJson<T>(fullUrl, {
+    method: 'GET',
+    headers: options?.headers,
+  });
+}
+
+export async function authPost<T>(
+  url: string,
+  body?: unknown,
+  options?: { headers?: HeadersInit },
+): Promise<FetchResponse<T>> {
+  const headers = mergeHeaders({ 'Content-Type': 'application/json' }, options?.headers);
+  const payload = body === undefined ? undefined : JSON.stringify(body);
+  return authFetchJson<T>(url, {
+    method: 'POST',
+    headers,
+    body: payload,
+  });
+}
+
+export async function publicGet<T>(
+  url: string,
+  options?: {
+    params?: Record<string, string | number | boolean | null | undefined>;
+    headers?: HeadersInit;
+  },
+): Promise<FetchResponse<T>> {
+  const fullUrl = buildUrl(url, options?.params);
+  return fetchJson<T>(fullUrl, {
+    method: 'GET',
+    headers: options?.headers,
+  });
+}
+
+export async function publicPost<T>(
+  url: string,
+  body?: unknown,
+  options?: { headers?: HeadersInit },
+): Promise<FetchResponse<T>> {
+  const headers = mergeHeaders({ 'Content-Type': 'application/json' }, options?.headers);
+  const payload = body === undefined ? undefined : JSON.stringify(body);
+  return fetchJson<T>(url, {
+    method: 'POST',
+    headers,
+    body: payload,
+  });
+}
+
+export async function authGetBlob(
+  url: string,
+  options?: {
+    params?: Record<string, string | number | boolean | null | undefined>;
+    headers?: HeadersInit;
+  },
+): Promise<Blob> {
+  const fullUrl = buildUrl(url, options?.params);
+  const response = await authFetchRaw(fullUrl, {
+    method: 'GET',
+    headers: options?.headers,
+  });
+  return response.blob();
+}
+
+export { HttpError, FetchResponse };

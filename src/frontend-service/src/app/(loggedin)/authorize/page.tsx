@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
-import { axiosAuthClient } from '@/lib/auth';
+import { authPost } from '@/lib/auth';
 import { AuthorizeClientReq, AuthorizeClientRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 
@@ -33,7 +33,7 @@ export default function AuthorizePage() {
     try {
       if (searchParams.get('client_id') && searchParams.get('redirect_uri')) {
         const authClientReq = new AuthorizeClientReq(searchParams.get('client_id')!, searchParams.get('redirect_uri')!, "code");
-        const resp = await axiosAuthClient.post(authorizeClientUrl, authClientReq);
+        const resp = await authPost(authorizeClientUrl, authClientReq);
 
         const authResObj = plainToInstance(AuthorizeClientRes, resp.data);
 

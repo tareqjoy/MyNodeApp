@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { axiosAuthClient } from "@/lib/auth";
+import { authPost } from "@/lib/auth";
 import { CreatePostReq, MessageResponse } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import StateMessage from "./StateMessage";
@@ -27,7 +27,7 @@ export default function PostComposer({
 
     try {
       const createPostReqObj = new CreatePostReq(content, Date.now());
-      const axiosResp = await axiosAuthClient.post(
+      const axiosResp = await authPost(
         postCreateUrl,
         createPostReqObj
       );

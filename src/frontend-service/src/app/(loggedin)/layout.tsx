@@ -9,7 +9,7 @@ import {
   deleteUserId,
   deleteUserName,
   getOrCreateDeviceId,
-  axiosAuthClient,
+  authPost,
 } from "@/lib/auth";
 import Loading from "./loading";
 import Link from "next/link";
@@ -72,7 +72,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleLogOut = async () => {
     try {
-      await axiosAuthClient.post(
+      await authPost(
         authSignOutUrl,
         {},
         { headers: { "Device-ID": deviceId } }

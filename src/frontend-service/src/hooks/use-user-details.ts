@@ -3,7 +3,7 @@
 import "reflect-metadata";
 import { useEffect, useState } from "react";
 import { UserDetailsRes } from "@tareqjoy/models";
-import { axiosAuthClient, getUserId } from "@/lib/auth";
+import { authGet, getUserId } from "@/lib/auth";
 import { plainToInstance } from "class-transformer";
 
 const userDetailsUrl: string =
@@ -34,7 +34,7 @@ export default function useUserDetails(
       setLoading(true);
       setError(null);
       try {
-        const axiosResp = await axiosAuthClient.get(
+        const axiosResp = await authGet(
           `${userDetailsUrl}/${resolvedUserId}`,
           {
             params: { provided: "userid" },
@@ -44,32 +44,17 @@ export default function useUserDetails(
           UserDetailsRes,
           axiosResp.data
         );
+        console.info("Fetched user details:", userDetailsResObj);
         setUser(userDetailsResObj);
       } catch (err) {
         setError("Failed to load user data.");
+        console.error("Error fetching user details:", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUser();
-
-    const handleAccessTokenRefresh = () => {
-      fetchUser();
-    };
-
-    if (typeof window !== "undefined") {
-      window.addEventListener("auth:access-token", handleAccessTokenRefresh);
-    }
-
-    return () => {
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "auth:access-token",
-          handleAccessTokenRefresh
-        );
-      }
-    };
   }, [userId]);
 
   return { user, loading, error };

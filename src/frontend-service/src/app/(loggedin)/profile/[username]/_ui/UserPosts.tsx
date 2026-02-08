@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { axiosAuthClient, getUserName } from "@/lib/auth";
+import { authPost, getUserName } from "@/lib/auth";
 import {
   GetPostByUserReq,
   PostDetailsRes,
@@ -46,7 +46,7 @@ export default function UserPosts({
           limit: 10,
         }
       );
-      const axiosResp = await axiosAuthClient.post(userPostsUrl, postByUserReq);
+      const axiosResp = await authPost(userPostsUrl, postByUserReq);
 
       const postDetailsResObj = plainToInstance(PostDetailsRes, axiosResp.data);
 

@@ -2,8 +2,7 @@
 import 'reflect-metadata';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
-import { axiosAuthClient } from "@/lib/auth";
+import { authPost, publicGet, publicPost, HttpError } from "@/lib/auth";
 import debounce from 'debounce';
 import { plainToInstance } from 'class-transformer';
 import { CheckUsernameResponse, SignUpReq } from '@tareqjoy/models';
@@ -20,7 +19,7 @@ export default function SignUpForm() {
       const isAuthed = async () => {
         console.log("Checking authentication...");
         try {
-          const resp = await axiosAuthClient.post(authVerifyUrl, {});
+          const resp = await authPost(authVerifyUrl, {});
           if (resp.status === 200) {
             console.log("User is authenticated, redirecting to profile...");
             router.push('/home');
@@ -74,7 +73,9 @@ export default function SignUpForm() {
       return;
     }
     try {
-      const checkUsernameAxiosResp = await axios.get(`${userCheckUsernameUrl}?username=${username}`);
+      const checkUsernameAxiosResp = await publicGet(userCheckUsernameUrl, {
+        params: { username },
+      });
       const authSignInResObj = plainToInstance(CheckUsernameResponse, checkUsernameAxiosResp.data);
       setUsernameAvailable(authSignInResObj.available? "available": "unavailable");
     } catch (error) {
@@ -117,13 +118,14 @@ export default function SignUpForm() {
 
     try {
       const signUpReq = new SignUpReq(formData.username, formData.email, formData.password, formData.name, formData.birthday, formData.gender);
-      const signUpAxiosRes = await axios.post(authSignUpUrl, signUpReq);
+      const signUpAxiosRes = await publicPost(authSignUpUrl, signUpReq);
       if (signUpAxiosRes.status === 200) {
         router.push("/login");
       } 
     } catch (error: any) {
-      if (axios.isAxiosError(error)) {
-        setErrorMessage(error.response?.data?.error || "Something went wrong. Please try again later.");
+      if (error instanceof HttpError) {
+        const data: any = error.data;
+        setErrorMessage(data?.error || "Something went wrong. Please try again later.");
       } else {
         setErrorMessage("Something went wrong. Please try again later.");
         console.error(error);

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { axiosAuthClient } from "@/lib/auth";
+import { authGet, authPost } from "@/lib/auth";
 import {
   GetPostReq,
   PostDetailsRes,
@@ -40,12 +40,14 @@ export default function TrendingPosts({ username }: { username: string }) {
     setLoading(true);
     try {
       const trendingReq = new TrendingReq(windowValue, 20);
-      const axiosTrendingResp = await axiosAuthClient.get(trendingUrl, {
+      const axiosTrendingResp = await authGet(trendingUrl, {
         params: {
           window: trendingReq.window,
           limit: trendingReq.limit,
         },
       });
+
+      console.info("Fetched trending data:", axiosTrendingResp);
 
       const trendingResObj = plainToInstance(
         TrendingRes,
@@ -59,10 +61,12 @@ export default function TrendingPosts({ username }: { username: string }) {
       }
 
       const getPostsReq = new GetPostReq(postIds, true);
-      const axiosGetPostsResp = await axiosAuthClient.post(
+      const axiosGetPostsResp = await authPost(
         getPostsUrl,
         getPostsReq,
       );
+
+      console.info("Fetched get posts data:", axiosGetPostsResp.data);
 
       const postDetailsResObj = plainToInstance(
         PostDetailsRes,
@@ -79,6 +83,7 @@ export default function TrendingPosts({ username }: { username: string }) {
       setPosts(postsAsTrendingOrder);
     } catch (err) {
       setError("Failed to load trending posts.");
+      console.error("Error fetching trending posts:", err);
     } finally {
       setLoading(false);
     }

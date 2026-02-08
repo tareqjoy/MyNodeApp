@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { SinglePost } from "@tareqjoy/models";
-import { axiosAuthClient } from "@/lib/auth";
+import { authGetBlob } from "@/lib/auth";
 
 interface Props {
   post: SinglePost;
@@ -22,16 +22,15 @@ const ProfilePhotoPostBody: React.FC<Props> = ({ post }) => {
       try {
         const singleAttachment = post.attachments[0];
         // Replace with your API endpoint to fetch attachment by ID
-        const response = await axiosAuthClient.get(
+        const blob = await authGetBlob(
           `${getAttachmentUrl}/${singleAttachment.attachmentId}`,
           {
             params: { variant: "medium" },
-            responseType: "blob", // important to get image data
           }
         );
 
         // Create a local object URL
-        const url = URL.createObjectURL(response.data);
+        const url = URL.createObjectURL(blob);
         setImageUrl(url);
       } catch (err) {
         console.error("Failed to load image", err);

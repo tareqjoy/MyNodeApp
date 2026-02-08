@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { axiosAuthClient } from "@/lib/auth";
+import { authGet, authPost } from "@/lib/auth";
 import {
   GetPostReq,
   PostDetailsRes,
@@ -37,7 +37,7 @@ export default function TimelinePosts({ username }: { username: string }) {
       const timelineHomeReq = nextToken
         ? new TimelineHomeReq(nextToken, 10)
         : new TimelineHomeReq(10);
-      const axiosTimelineHomeResp = await axiosAuthClient.get(timelineUrl, {
+      const axiosTimelineHomeResp = await authGet(timelineUrl, {
         params: {
           nextToken: timelineHomeReq.nextToken,
           limit: timelineHomeReq.limit,
@@ -52,7 +52,7 @@ export default function TimelinePosts({ username }: { username: string }) {
       const postIds = timelineHomeResObj.posts.map((tpost) => tpost.postId);
 
       const getPostsReq = new GetPostReq(postIds, true);
-      const axiosGetPostsResp = await axiosAuthClient.post(
+      const axiosGetPostsResp = await authPost(
         getPostsUrl,
         getPostsReq
       );
