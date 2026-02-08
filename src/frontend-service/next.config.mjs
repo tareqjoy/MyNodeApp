@@ -2,21 +2,8 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enabling Webpack 5 for HMR
-  webpack(config, { isServer, dev }) {
-    // Only apply these settings for development mode
-    if (dev) {
-      // Enable Hot Module Replacement in development
-      config.devServer = {
-        ...config.devServer,
-        hot: true,
-        liveReload: true,
-      };
-    }
-
-    // Optional: Custom webpack configuration here, if needed
-    return config;
-  },
+  // Use default bundler settings (Turbopack enabled by default in Next 16).
+  turbopack: {},
 
   // Enable React Strict Mode for better debugging and performance
   reactStrictMode: true,
