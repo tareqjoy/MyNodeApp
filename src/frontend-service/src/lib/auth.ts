@@ -1,5 +1,10 @@
 'use client'
-import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from 'axios';
 import { AuthRefreshRes } from '@tareqjoy/models'
 import { plainToInstance } from 'class-transformer';
 
@@ -126,12 +131,17 @@ async function ensureAccessToken(): Promise<string | null> {
 axiosAuthClient.interceptors.request.use(
   async (config: EnhancedAxiosRequestConfig) => {
     if (!config.headers) {
-      config.headers = {};
+      config.headers = new AxiosHeaders();
     }
-    if (!config.headers['Authorization']) {
+    const headers =
+      config.headers instanceof AxiosHeaders
+        ? config.headers
+        : AxiosHeaders.from(config.headers);
+    if (!headers.get('Authorization')) {
       const token = await ensureAccessToken();
       if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
+        headers.set('Authorization', `Bearer ${token}`);
+        config.headers = headers;
       }
     }
 
