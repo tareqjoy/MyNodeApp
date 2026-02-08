@@ -33,6 +33,7 @@ const unfollowUrl: string =
 
 const userIdUrl: string =
   process.env.NEXT_PUBLIC_USER_ID_URL || "/v1/user/userid";
+const PROFILE_TAB_STORAGE_KEY = "profile.selectedTab";
 
 interface ProfilePageProps {
   username: string;
@@ -56,6 +57,7 @@ export default function ProfilePage({
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<"posts" | "ifollow">("posts");
   const [isItMe, setIsItMe] = useState<boolean>(false);
+  const [isTabReady, setIsTabReady] = useState(false);
   const [followingState, setFollowingState] = useState<
     "hide" | "following" | "unfollowing"
   >("hide");
@@ -127,6 +129,22 @@ export default function ProfilePage({
     };
     fetchUser();
   }, [usernameOrId, isProvidedUsername]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedTab = window.localStorage.getItem(PROFILE_TAB_STORAGE_KEY);
+    if (savedTab === "posts" || savedTab === "ifollow") {
+      setSelectedTab(savedTab);
+    }
+    setIsTabReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isTabReady) return;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(PROFILE_TAB_STORAGE_KEY, selectedTab);
+    }
+  }, [selectedTab, isTabReady]);
 
   if (loading) {
     return <StateMessage variant="loading" message="Loading..." />;

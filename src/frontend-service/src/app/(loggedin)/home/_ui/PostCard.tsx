@@ -73,18 +73,25 @@ const PostCard: React.FC<PostCardProps> = ({
   return (
     <div className="p-5 card relative transition-transform duration-200 hover:-translate-y-0.5">
       {/* User Info */}
-      <a
-        href={`/profile/${post.username}`}
-        className="text-sky-600 hover:text-sky-700 dark:text-sky-300 dark:hover:text-white font-semibold transition"
-      >
-        {post.username}
-      </a>
-      <p
-        className="text-xs text-gray-500 dark:text-gray-400"
-        title={format(new Date(post.time), "PPpp")}
-      >
-        {formatDistanceToNow(new Date(post.time), { addSuffix: true })}
-      </p>
+      <div className="flex items-start gap-3">
+        <div className="h-11 w-11 shrink-0 rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 text-white flex items-center justify-center font-semibold">
+          {post.username?.[0]?.toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <a
+            href={`/profile/${post.username}`}
+            className="text-sky-600 hover:text-sky-700 dark:text-sky-300 dark:hover:text-white font-semibold transition"
+          >
+            {post.username}
+          </a>
+          <p
+            className="text-xs text-gray-500 dark:text-gray-400"
+            title={format(new Date(post.time), "PPpp")}
+          >
+            {formatDistanceToNow(new Date(post.time), { addSuffix: true })}
+          </p>
+        </div>
+      </div>
       <PostBodyFactory post={post} />
 
       {/* Reactions Summary */}
@@ -129,7 +136,7 @@ const PostCard: React.FC<PostCardProps> = ({
       </div>
 
       {/* Reaction and Comment Section */}
-      <div className="mt-3 flex w-full relative">
+      <div className="mt-3 flex w-full relative border-t border-white/70 dark:border-white/10 pt-2">
         {/* Reactions */}
         <div className="flex-1 flex justify-center items-center cursor-pointer">
           <div
@@ -178,7 +185,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
         {/* Comments */}
 
-        <div className="flex-1 flex justify-center items-center cursor-pointer">
+        <div className="flex-1 flex justify-center items-center cursor-pointer border-l border-white/70 dark:border-white/10">
           <motion.div
             whileHover={{ scale: 1.2 }}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}

@@ -22,10 +22,15 @@ const windowOptions = [
   { label: "24h", value: "24h" },
   { label: "30d", value: "30d" },
 ];
+const DEFAULT_WINDOW = "1h";
+const WINDOW_STORAGE_KEY = "trending.window";
+const isValidWindow = (value: string) =>
+  windowOptions.some((option) => option.value === value);
 
 export default function TrendingPosts({ username }: { username: string }) {
   const [posts, setPosts] = useState<SinglePost[]>([]);
-  const [windowValue, setWindowValue] = useState<string>("24h");
+  const [windowValue, setWindowValue] = useState<string>(DEFAULT_WINDOW);
+  const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,8 +95,21 @@ export default function TrendingPosts({ username }: { username: string }) {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedWindow = window.localStorage.getItem(WINDOW_STORAGE_KEY);
+    if (savedWindow && isValidWindow(savedWindow)) {
+      setWindowValue(savedWindow);
+    }
+    setIsReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isReady) return;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(WINDOW_STORAGE_KEY, windowValue);
+    }
     fetchTrending();
-  }, [windowValue]);
+  }, [windowValue, isReady]);
 
   return (
     <div className="w-full">
