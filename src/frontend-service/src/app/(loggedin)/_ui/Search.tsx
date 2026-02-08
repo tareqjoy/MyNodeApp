@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import debounce from "debounce"; // For debouncing API calls
 import { SearchReq, SearchRes } from "@tareqjoy/models";
 import { authPost } from "@/lib/auth";
@@ -13,9 +14,12 @@ const searchUrl: string =
   "/v1/search/all";
 
 const Search = () => {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchRes | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -27,30 +31,57 @@ const Search = () => {
     setShowResults(false);
     setQuery("");
     setResults(null);
+    setHasSearched(false);
   };
 
   // Fetch search results (Debounced)
-  const fetchSearchResults = debounce(async (searchTerm: string) => {
-    if (!searchTerm) {
-      setResults(null);
-      return;
-    }
+  const fetchSearchResults = useMemo(
+    () =>
+      debounce(async (searchTerm: string) => {
+        const trimmed = searchTerm.trim();
+        if (!trimmed || trimmed.length < 2) {
+          setResults(null);
+          setHasSearched(false);
+          return;
+        }
 
-    try {
-      const searchReq = new SearchReq({ allToken: searchTerm });
-      const searchAxiosResp = await authPost(searchUrl, searchReq);
-      const searchResObj = plainToInstance(SearchRes, searchAxiosResp.data);
-      setResults(searchResObj);
-      setShowResults(true);
-    } catch (error) {
-      console.error("Error fetching search results", error);
-    }
-  }, 300); // Debounce for 300ms
+        setLoading(true);
+        try {
+          const searchReq = new SearchReq({ allToken: trimmed });
+          const searchAxiosResp = await authPost(searchUrl, searchReq);
+          const searchResObj = plainToInstance(SearchRes, searchAxiosResp.data);
+          setResults(searchResObj);
+          setHasSearched(true);
+          setShowResults(true);
+        } catch (error) {
+          console.error("Error fetching search results", error);
+        } finally {
+          setLoading(false);
+        }
+      }, 300),
+    [],
+  );
 
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-    fetchSearchResults(e.target.value);
+    const nextQuery = e.target.value;
+    setQuery(nextQuery);
+    setShowResults(true);
+    fetchSearchResults(nextQuery);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      setShowResults(false);
+      return;
+    }
+    if (e.key === "Enter") {
+      const trimmed = query.trim();
+      if (trimmed.length > 0) {
+        router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+        setShowResults(false);
+      }
+    }
   };
 
   // Handles outside clicks to hide the dropdown
@@ -68,23 +99,94 @@ const Search = () => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      (fetchSearchResults as unknown as { clear?: () => void }).clear?.();
+    };
+  }, [fetchSearchResults]);
+
+  const trimmedQuery = query.trim();
+  const hasUsers = (results?.userResults?.length || 0) > 0;
+  const hasPosts = (results?.postResults?.length || 0) > 0;
+  const hasResults = hasUsers || hasPosts;
+
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
       {/* Search Input */}
-      <input
-        type="text"
-        placeholder="Search..."
-        value={query}
-        onChange={handleChange}
-        className="w-full px-4 py-2.5 rounded-full bg-white/80 text-gray-900 border border-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition placeholder:text-gray-400 dark:bg-white/10 dark:text-white dark:border-white/10 dark:placeholder:text-white/60"
-        onClick={() => setShowResults(true)} // Prevent immediate close on click
-      />
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/60">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          placeholder="Search people or posts"
+          value={query}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setShowResults(true)}
+          className="w-full pl-10 pr-10 py-2.5 rounded-full bg-white/80 text-gray-900 border border-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition placeholder:text-gray-400 dark:bg-white/10 dark:text-white dark:border-white/10 dark:placeholder:text-white/60"
+          aria-expanded={showResults}
+          aria-haspopup="listbox"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={resetSearchUI}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:text-gray-700 dark:text-white/60 dark:hover:text-white"
+            aria-label="Clear search"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
+      </div>
 
       {/* Search Results Dropdown */}
       {showResults && (
         <div className="absolute min-w-full card text-gray-900 dark:text-gray-100 shadow-2xl rounded-2xl mt-3 z-50 p-2 border border-white/70 dark:border-white/10 rise-in">
+          {loading && (
+            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+              Searching...
+            </div>
+          )}
+
+          {!loading && trimmedQuery.length > 0 && trimmedQuery.length < 2 && (
+            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+              Type at least 2 characters to search.
+            </div>
+          )}
+
+          {!loading && hasSearched && !hasResults && (
+            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+              No results for "{trimmedQuery}".
+            </div>
+          )}
+
           {/* User Results */}
-          {results?.userResults && results?.userResults?.length > 0 && (
+          {hasUsers && (
             <div>
               <h3 className="text-gray-500 dark:text-gray-400 font-semibold px-2 text-xs uppercase tracking-wider">Users</h3>
               {results?.userResults?.map((user) => (
@@ -102,7 +204,7 @@ const Search = () => {
           )}
 
           {/* "See More" Button */}
-          {(results?.userResults && results.userResults.length > 0) && (
+          {hasUsers && (
             <div className="mt-2 text-center">
               <Link
                 href={`/search?q=${query}`}
@@ -115,7 +217,7 @@ const Search = () => {
           )}
 
           {/* Post Results */}
-          {results?.postResults && results.postResults.length > 0 && (
+          {hasPosts && (
             <div className="mt-2">
               <h3 className="text-gray-500 dark:text-gray-400 font-semibold px-2 text-xs uppercase tracking-wider">Posts</h3>
               {results?.postResults?.map((post) => (
@@ -132,8 +234,7 @@ const Search = () => {
           )}
 
           {/* "See More" Button */}
-          {(
-            (results?.postResults && results.postResults.length > 0)) && (
+          {hasPosts && (
             <div className="mt-2 text-center">
               <Link
                 href={`/search?q=${query}`}
