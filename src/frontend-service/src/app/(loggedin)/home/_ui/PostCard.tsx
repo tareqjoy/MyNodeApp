@@ -71,16 +71,16 @@ const PostCard: React.FC<PostCardProps> = ({
   };
 
   return (
-    <div className="p-4 border rounded-lg shadow-sm relative">
+    <div className="p-5 card relative transition-transform duration-200 hover:-translate-y-0.5">
       {/* User Info */}
       <a
         href={`/profile/${post.username}`}
-        className="text-blue-500 hover:underline"
+        className="text-sky-600 hover:text-sky-700 dark:text-sky-300 dark:hover:text-white font-semibold transition"
       >
         {post.username}
       </a>
       <p
-        className="text-sm text-gray-600"
+        className="text-xs text-gray-500 dark:text-gray-400"
         title={format(new Date(post.time), "PPpp")}
       >
         {formatDistanceToNow(new Date(post.time), { addSuffix: true })}
@@ -88,7 +88,7 @@ const PostCard: React.FC<PostCardProps> = ({
       <PostBodyFactory post={post} />
 
       {/* Reactions Summary */}
-      <div className="mt-1 flex items-center space-x-2">
+      <div className="mt-2 flex items-center space-x-2">
         <div
           className="flex items-center space-x-1 cursor-pointer"
           onClick={() => totalReactions > 0 && setDialogOpen(true)}
@@ -100,7 +100,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 <div
                   key={reactionType}
                   className="w-2.5 h-6"
-                  style={{ zIndex: -topReactions.length - index }}
+                  style={{ zIndex: topReactions.length - index }}
                 >
                   {reaction}
                 </div>
@@ -108,7 +108,7 @@ const PostCard: React.FC<PostCardProps> = ({
             })}
           </div>
           {totalReactions > 0 && (
-            <span className="text-sm font-semibold text-gray-600 ml-3 hover:underline">
+            <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 ml-3 hover:underline">
               {totalReactions} {totalReactions <= 1 ? "reaction" : "reactions"}
             </span>
           )}
@@ -122,14 +122,14 @@ const PostCard: React.FC<PostCardProps> = ({
           />
         </div>
         {/* Separator & Comment Count */}
-        <span className="text-sm text-gray-400 ">•</span>
-        <span className="text-sm font-semibold text-gray-600 cursor-pointer hover:underline">
+        <span className="text-sm text-gray-400 dark:text-gray-500">•</span>
+        <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 cursor-pointer hover:underline">
           {0} comments
         </span>
       </div>
 
       {/* Reaction and Comment Section */}
-      <div className="mt-2 flex w-full relative">
+      <div className="mt-3 flex w-full relative">
         {/* Reactions */}
         <div className="flex-1 flex justify-center items-center cursor-pointer">
           <div
@@ -150,7 +150,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
             {hovering && (
               <motion.div
-                className="absolute bottom-8 flex bg-white dark:bg-gray-800 shadow-lg rounded-lg p-1"
+                className="absolute bottom-8 flex bg-white dark:bg-gray-900 shadow-xl rounded-2xl p-1 border border-gray-100 dark:border-white/10"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -161,8 +161,8 @@ const PostCard: React.FC<PostCardProps> = ({
                 {[...REACTIONS].map(([type, icon]) => (
                   <motion.div
                     key={type}
-                    className={`cursor-pointer text-2xl p-1 rounded-lg transition ${
-                      selectedReaction === type ? "bg-gray-200" : ""
+                    className={`cursor-pointer text-2xl p-1 rounded-xl transition ${
+                      selectedReaction === type ? "bg-gray-200 dark:bg-white/10" : ""
                     }`}
                     onClick={() => handleReactionSelect(type)}
                     whileHover={{ scale: 1.4 }}
@@ -183,7 +183,7 @@ const PostCard: React.FC<PostCardProps> = ({
             whileHover={{ scale: 1.2 }}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
           >
-            <FaComment size={18} color="white" />
+            <FaComment size={18} className="text-slate-500 dark:text-slate-300" />
           </motion.div>
         </div>
       </div>

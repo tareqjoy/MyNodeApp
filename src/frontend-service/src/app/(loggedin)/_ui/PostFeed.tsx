@@ -28,7 +28,7 @@ export default function PostFeed({
   emptyMessage = "No posts available.",
 }: PostFeedProps) {
   return (
-    <div className="w-full max-w-5xl mt-6">
+    <div className="w-full max-w-5xl mt-6 fade-in">
       {error && (
         <StateMessage variant="error" message={error} center={false} />
       )}
@@ -36,7 +36,7 @@ export default function PostFeed({
         <StateMessage variant="empty" message={emptyMessage} center={false} />
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {posts.map((post) => (
           <PostCard
             key={post.postId}
@@ -50,7 +50,7 @@ export default function PostFeed({
 
       {nextToken && (
         <button
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+          className="mt-6 px-5 py-2.5 btn-primary text-sm font-semibold"
           onClick={onLoadMore}
           disabled={loading}
         >

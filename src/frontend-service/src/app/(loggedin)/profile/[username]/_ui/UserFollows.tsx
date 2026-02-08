@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { axiosAuthClient } from "@/lib/auth";
+import { authPost } from "@/lib/auth";
 import { FollowersReq, FollowersRes } from "@tareqjoy/models";
 import { plainToInstance } from "class-transformer";
 import Link from "next/link";
@@ -19,7 +19,7 @@ export default function UserFollows() {
     const fetchIFollows = async () => {
       try {
         const iFollowObj = new FollowersReq(true);
-        const axiosResp = await axiosAuthClient.post(iFollowUrl, iFollowObj);
+        const axiosResp = await authPost(iFollowUrl, iFollowObj);
         const postDetailsResObj = plainToInstance(FollowersRes, axiosResp.data);
         if (postDetailsResObj.usernames) {
           setIFollow(postDetailsResObj.usernames!);

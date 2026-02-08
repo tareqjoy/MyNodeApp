@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useVerifyAccessToken from '@/hooks/use-verify-access-token';
-import { axiosAuthClient } from '@/lib/auth';
+import { authPost } from '@/lib/auth';
 import { AuthorizeClientReq, AuthorizeClientRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 
@@ -33,7 +33,7 @@ export default function AuthorizePage() {
     try {
       if (searchParams.get('client_id') && searchParams.get('redirect_uri')) {
         const authClientReq = new AuthorizeClientReq(searchParams.get('client_id')!, searchParams.get('redirect_uri')!, "code");
-        const resp = await axiosAuthClient.post(authorizeClientUrl, authClientReq);
+        const resp = await authPost(authorizeClientUrl, authClientReq);
 
         const authResObj = plainToInstance(AuthorizeClientRes, resp.data);
 
@@ -56,15 +56,19 @@ export default function AuthorizePage() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '2rem' }}>
-      {!authorized ? (
-        <>
-          <button style={{ width: '100%', padding: '0.75rem', backgroundColor: '#0070f3', color: 'white', border: 'none', cursor: 'pointer' }} onClick={handleAuthorize}>Authorize</button>
-          <button style={{ width: '100%', padding: '0.75rem', backgroundColor: '#0070f3', color: 'white', border: 'none', cursor: 'pointer' }} onClick={handleCancel}>Cancel</button>
-        </>
-      ) : (
-        <div>Authorized</div>
-      )}
+    <div className="min-h-screen flex items-center justify-center px-6 py-10">
+      <div className="card p-8 w-full max-w-md space-y-4">
+        {!authorized ? (
+          <>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 text-center">Authorize App</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-center">Continue to grant access to your account.</p>
+            <button className="w-full btn-primary py-2.5 text-sm font-semibold" onClick={handleAuthorize}>Authorize</button>
+            <button className="w-full btn-secondary py-2.5 text-sm font-semibold" onClick={handleCancel}>Cancel</button>
+          </>
+        ) : (
+          <div className="text-center text-gray-600 dark:text-gray-300">Authorized</div>
+        )}
+      </div>
     </div>
   );
 };

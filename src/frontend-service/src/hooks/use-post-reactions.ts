@@ -1,7 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction } from "react";
-import { axiosAuthClient } from "@/lib/auth";
+import { authPost } from "@/lib/auth";
 import {
   GetPostReq,
   LikeReq,
@@ -28,7 +28,7 @@ export default function usePostReactions({
   const refreshSinglePost = async (postId: string) => {
     try {
       const getPostReq = new GetPostReq([postId], true);
-      const axiosGetPostResp = await axiosAuthClient.post(
+      const axiosGetPostResp = await authPost(
         getPostsUrl,
         getPostReq
       );
@@ -51,7 +51,7 @@ export default function usePostReactions({
   const handleReact = async (postId: string, reaction: string) => {
     try {
       const likeReq = new LikeReq(postId, reaction, Date.now());
-      await axiosAuthClient.post(`${likeUnlikeUrl}?type=like`, likeReq);
+      await authPost(`${likeUnlikeUrl}?type=like`, likeReq);
       await refreshSinglePost(postId);
     } catch (err) {
       setError("Failed to react.");
@@ -61,7 +61,7 @@ export default function usePostReactions({
   const handleUnreact = async (postId: string) => {
     try {
       const unlikeReq = new UnlikeReq(postId);
-      await axiosAuthClient.post(`${likeUnlikeUrl}?type=unlike`, unlikeReq);
+      await authPost(`${likeUnlikeUrl}?type=unlike`, unlikeReq);
       await refreshSinglePost(postId);
     } catch (err) {
       setError("Failed to react.");

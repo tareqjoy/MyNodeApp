@@ -11,7 +11,7 @@ import { CookieOptions } from "express";
 export const jwt_access_secret =
   process.env.JWT_ACCESS_SECRET || "test_access_secret_key_00x";
 export const jwt_access_expires_sec = Number(
-  process.env.JWT_ACCESS_EXPIRES_SEC || "900",
+  process.env.JWT_ACCESS_EXPIRES_SEC || "2",
 ); //15min
 export const jwt_refresh_secret =
   process.env.JWT_REFRESH_SECRET || "test_refresh_secret_key_00x";

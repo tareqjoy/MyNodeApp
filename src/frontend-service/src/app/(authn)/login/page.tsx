@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { axiosAuthClient, axiosPublicClient, getOrCreateDeviceId, setAccessToken, setUserId, setUserName } from '@/lib/auth';
+import { authPost, getOrCreateDeviceId, publicPost, setAccessToken, setUserId, setUserName } from '@/lib/auth';
 import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import Loading from './loading';
@@ -27,7 +27,7 @@ export default function LoginPage() {
     const isAuthed = async () => {
       console.log("Checking authentication...");
       try {
-        const resp = await axiosAuthClient.post(authVerifyUrl, {});
+        const resp = await authPost(authVerifyUrl, {});
         if (resp.status === 200) {
           console.log("User is authenticated, redirecting to profile...");
           router.push('/home');
@@ -52,7 +52,7 @@ export default function LoginPage() {
       const deviceId = getOrCreateDeviceId();
       const signInReq = new AuthSignInReq({ username }, password);
 
-      const signInRes = await axiosPublicClient.post(authSignInUrl, signInReq, {
+      const signInRes = await publicPost(authSignInUrl, signInReq, {
         headers: { 'Device-ID': deviceId },
       });
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
         setAccessToken(authSignInResObj.access_token);
         setUserName(username);
 
-        const usernameRes = await axiosAuthClient.post(userIdUrl, { username });
+        const usernameRes = await authPost(userIdUrl, { username });
         setUserId(usernameRes.data.toUserIds[username]);
 
         // Redirect user to previous page or profile
@@ -85,12 +85,12 @@ export default function LoginPage() {
   };
 
   return (
-<div className="relative h-screen w-full bg-center flex items-center justify-center">
-  {/* Overlay */}
+<div className="relative min-h-screen w-full flex items-center justify-center px-6 py-10">
+  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+  <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.2),transparent_55%)] dark:bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.18),transparent_55%)]" />
 
-  {/* Login Form */}
-  <div className="relative z-10 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full">
-    <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-200">Welcome Back</h2>
+  <div className="relative z-10 card p-8 max-w-md w-full">
+    <h2 className="text-3xl font-semibold text-center text-gray-900 dark:text-gray-100">Welcome Back</h2>
     <p className="text-gray-500 dark:text-gray-400 text-center mb-6">Sign in to your account</p>
 
     {error && <p className="text-red-500 text-sm text-center mb-4">{errorMessage}</p>}
@@ -102,7 +102,7 @@ export default function LoginPage() {
           type="username"
           value={username}
           onChange={(e) => setUsernameInForm(e.target.value)}
-          className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 mt-1 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           placeholder="Enter your username"
           autoComplete="username"
           required
@@ -116,7 +116,7 @@ export default function LoginPage() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-2 mt-1 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 mt-1 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           placeholder="Enter your password"
           autoComplete="current-password"
           required
@@ -131,15 +131,15 @@ export default function LoginPage() {
       {/* Login Button */}
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition dark:bg-blue-500 dark:hover:bg-blue-600"
+        className="w-full btn-primary py-2.5 text-sm font-semibold"
       >
         Sign In
       </button>
     </form>
 
     {/* Signup Link */}
-    <p className="text-gray-600 text-sm text-center mt-4 dark:text-gray-400">
-      Don't have an account? <a href="/register" className="text-blue-500 hover:underline dark:text-blue-400">Sign up</a>
+    <p className="text-gray-600 dark:text-gray-400 text-sm text-center mt-4">
+      Don't have an account? <a href="/register" className="text-blue-600 hover:underline dark:text-sky-300">Sign up</a>
     </p>
   </div>
 </div>

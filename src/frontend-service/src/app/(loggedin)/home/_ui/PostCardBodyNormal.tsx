@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { SinglePost } from "@tareqjoy/models";
-import { axiosAuthClient } from "@/lib/auth";
+import { authGetBlob } from "@/lib/auth";
 
 interface Props {
   post: SinglePost;
@@ -23,14 +23,13 @@ const NormalPostBody: React.FC<Props> = ({ post }) => {
         const urls = await Promise.all(
           post.attachments!.map(async (att) => {
             try {
-              const response = await axiosAuthClient.get(
+              const blob = await authGetBlob(
                 `${getAttachmentUrl}/${att.attachmentId}`,
                 {
                   params: { variant: "medium" },
-                  responseType: "blob",
                 }
               );
-              return URL.createObjectURL(response.data);
+              return URL.createObjectURL(blob);
             } catch (err) {
               console.error(`Failed to load image ${att.attachmentId}`, err);
               return null;
