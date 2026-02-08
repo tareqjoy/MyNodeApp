@@ -31,6 +31,8 @@ export default function useUserDetails(
     }
 
     const fetchUser = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const axiosResp = await axiosAuthClient.get(
           `${userDetailsUrl}/${resolvedUserId}`,
@@ -51,6 +53,23 @@ export default function useUserDetails(
     };
 
     fetchUser();
+
+    const handleAccessTokenRefresh = () => {
+      fetchUser();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("auth:access-token", handleAccessTokenRefresh);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener(
+          "auth:access-token",
+          handleAccessTokenRefresh
+        );
+      }
+    };
   }, [userId]);
 
   return { user, loading, error };

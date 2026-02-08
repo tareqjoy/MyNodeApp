@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { axiosAuthClient, getRefreshToken } from "@/lib/auth";
+import { axiosAuthClient } from "@/lib/auth";
 import debounce from 'debounce';
 import { plainToInstance } from 'class-transformer';
 import { CheckUsernameResponse, SignUpReq } from '@tareqjoy/models';
@@ -19,10 +19,6 @@ export default function SignUpForm() {
     useEffect(() => {
       const isAuthed = async () => {
         console.log("Checking authentication...");
-        if(!getRefreshToken()) {
-          console.log("User is not authenticated, showing sign up form...");
-          return;
-        }
         try {
           const resp = await axiosAuthClient.post(authVerifyUrl, {});
           if (resp.status === 200) {
