@@ -52,16 +52,8 @@ export const createRefreshRouter = (
       return;
     }
 
-    const authSRefreshObj = plainToInstance(AuthRefreshReq, req.body);
-    const errors = await validate(authSRefreshObj);
-    if (errors.length > 0) {
-      res.status(400).json(new InvalidRequest(errors));
-      return;
-    }
-
     const refreshToken =
-      (req.cookies && req.cookies[refresh_cookie_name]) ||
-      authSRefreshObj.refresh_token;
+      req.cookies && req.cookies[refresh_cookie_name];
 
     if (!refreshToken) {
       res.clearCookie(refresh_cookie_name, getRefreshCookieClearOptions());
