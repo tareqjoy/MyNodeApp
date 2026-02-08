@@ -136,9 +136,12 @@ export default function SignUpForm() {
   };
 
   return (
-<div className="relative h-screen w-full bg-center flex items-center justify-center">
-  <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full">
-    <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-200">Create an Account</h2>
+<div className="relative min-h-screen w-full flex items-center justify-center px-6 py-10">
+  <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+  <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.2),transparent_55%)] dark:bg-[radial-gradient(circle_at_top,rgba(129,140,248,0.18),transparent_55%)]" />
+
+  <div className="relative card p-8 max-w-md w-full">
+    <h2 className="text-3xl font-semibold text-center text-gray-900 dark:text-gray-100">Create an Account</h2>
 
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
       {/* Name */}
@@ -149,7 +152,7 @@ export default function SignUpForm() {
           name="name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           autoComplete="name"
           required
         />
@@ -164,7 +167,7 @@ export default function SignUpForm() {
           name="email"
           value={formData.email}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           autoComplete="email"
           required
         />
@@ -178,7 +181,7 @@ export default function SignUpForm() {
           name="gender"
           value={formData.gender}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           required
         >
           <option value="">Select Gender</option>
@@ -197,7 +200,7 @@ export default function SignUpForm() {
           name="birthday"
           value={formData.birthday}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           autoComplete="bday"
           required
         />
@@ -211,7 +214,7 @@ export default function SignUpForm() {
           name="username"
           value={formData.username}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           autoComplete="username"
           required
         />
@@ -229,7 +232,7 @@ export default function SignUpForm() {
           name="password"
           value={formData.password}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           autoComplete="new-password"
           required
         />
@@ -244,7 +247,7 @@ export default function SignUpForm() {
           name="confirmPassword"
           value={formData.confirmPassword}
           onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
           autoComplete="new-password"
           required
         />
@@ -260,15 +263,15 @@ export default function SignUpForm() {
       {/* Submit Button */}
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition dark:bg-blue-500 dark:hover:bg-blue-600"
+        className="w-full btn-primary py-2.5 text-sm font-semibold"
       >
         {isSubmitting ? "Signing Up..." : "Sign Up"}
       </button>
     </form>
 
     {/* Sign-in Link */}
-    <p className="text-gray-600 text-sm text-center mt-4 dark:text-gray-400">
-      Already have an account? <a href="/login" className="text-blue-500 hover:underline dark:text-blue-400">Sign in</a>
+    <p className="text-gray-600 dark:text-gray-400 text-sm text-center mt-4">
+      Already have an account? <a href="/login" className="text-blue-600 hover:underline dark:text-sky-300">Sign in</a>
     </p>
   </div>
 </div>

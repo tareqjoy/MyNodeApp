@@ -111,23 +111,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-screen">
       {/* Top Bar */}
       {
-        <header className="w-full bg-gray-900 text-white flex items-center justify-between px-6 py-4 shadow-lg shadow-gray-800/50 z-10 backdrop-blur-md bg-opacity-80">
+        <header className="w-full glass text-gray-900 dark:text-gray-100 flex items-center justify-between px-6 py-4 shadow-lg z-10 backdrop-blur-md bg-opacity-80 border-b border-white/40 dark:border-white/10">
           {/* Search Bar */}
           <Search />
 
           {/* Navigation Buttons */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* Home Button */}
 
             <button
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md"
+              className="px-5 py-2 btn-primary text-sm font-semibold tracking-wide"
               onClick={handleHomeButtonClick}
             >
               Home
             </button>
 
             <button
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition shadow-md"
+              className="px-5 py-2 btn-primary text-sm font-semibold tracking-wide"
               onClick={handleTrendingButtonClick}
             >
               Trending
@@ -137,9 +137,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="relative">
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+                className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/80 hover:bg-white transition text-sm font-medium shadow-sm dark:bg-white/10 dark:hover:bg-white/20"
               >
-                <span>{userData}</span>
+                <span className="text-gray-900 dark:text-gray-100">{userData}</span>
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -160,17 +160,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {showDropdown && (
                 <div
                   ref={dropdownRef}
-                  className="absolute right-0 mt-2 w-48 bg-white text-gray-900 shadow-lg rounded-lg"
+                  className="absolute right-0 mt-2 w-48 card text-gray-900 dark:text-gray-100 shadow-lg overflow-hidden rise-in"
                 >
                   <button
                     onClick={handleProfileButtonClick}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/10 transition"
                   >
                     Profile
                   </button>
                   <button
                     onClick={handleLogOut}
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-200 rounded-lg"
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-white/10 transition"
                   >
                     Log Out
                   </button>

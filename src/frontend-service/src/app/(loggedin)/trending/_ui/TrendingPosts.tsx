@@ -95,14 +95,14 @@ export default function TrendingPosts({ username }: { username: string }) {
 
   return (
     <div className="w-full">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 p-2 rounded-full bg-white/60 dark:bg-white/10 backdrop-blur border border-white/70 dark:border-white/10 shadow-sm w-fit">
         {windowOptions.map((option) => (
           <button
             key={option.value}
-            className={`px-3 py-1 rounded-full border text-sm ${
+            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition ${
               windowValue === option.value
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-700 border-gray-300 hover:border-blue-300"
+                ? "btn-primary"
+                : "btn-secondary"
             }`}
             onClick={() => setWindowValue(option.value)}
             disabled={loading}

@@ -46,7 +46,7 @@ export default function UserProfile({
   }, []);
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white bg-opacity-80 rounded-lg shadow-md overflow-visible relative">
+    <div className="w-full max-w-5xl mx-auto card overflow-visible relative">
       {/* Cover Photo */}
       <div className="relative w-full max-h-[300px] h-64 group">
         <Image
@@ -59,7 +59,7 @@ export default function UserProfile({
 
         {/* Camera Icon */}
         <div
-          className={`absolute bottom-2 right-2 p-2 bg-black bg-opacity-50 rounded-full cursor-pointer transition ${
+          className={`absolute bottom-2 right-2 p-2 bg-black/50 rounded-full cursor-pointer transition ${
             changePhotoDialogType === "cover"
               ? "opacity-100"
               : "opacity-0 group-hover:opacity-100"
@@ -76,10 +76,10 @@ export default function UserProfile({
         {changePhotoDialogType === "cover" && (
           <div
             ref={dialogRef}
-            className="absolute bottom-14 right-2 bg-white border shadow-lg rounded-md z-10"
+            className="absolute bottom-14 right-2 card z-10"
           >
             <button
-              className="block px-4 py-2 hover:bg-gray-100 w-full text-left text-gray-700"
+              className="block px-4 py-2 hover:bg-gray-100 w-full text-left text-gray-700 transition"
               onClick={() => {
                 document.getElementById("coverUpload")?.click();
                 setChangePhotoDialogType(null);
@@ -88,7 +88,7 @@ export default function UserProfile({
               Change Photo
             </button>
             <button
-              className="block px-4 py-2 hover:bg-gray-100 w-full text-left text-red-500"
+              className="block px-4 py-2 hover:bg-gray-100 w-full text-left text-red-500 transition"
               onClick={() => setConfirmDeleteDialogType("cover")}
             >
               Delete Photo
@@ -127,7 +127,7 @@ export default function UserProfile({
 
             {/* Hover Camera Icon */}
             <div
-              className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 rounded-full p-1 cursor-pointer opacity-0 group-hover:opacity-100 transition ${
+              className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 bg-black/50 rounded-full p-1 cursor-pointer opacity-0 group-hover:opacity-100 transition ${
                 changePhotoDialogType === "avatar"
                   ? "opacity-100"
                   : "opacity-0 group-hover:opacity-100"
@@ -147,10 +147,10 @@ export default function UserProfile({
           {changePhotoDialogType === "avatar" && (
             <div
               ref={dialogRef}
-              className="absolute top-[105%] bg-white border shadow-lg rounded-md"
+              className="absolute top-[105%] card"
             >
               <button
-                className="block px-4 py-2 hover:bg-gray-100 w-35 text-left text-gray-700"
+                className="block px-4 py-2 hover:bg-gray-100 w-35 text-left text-gray-700 transition"
                 onClick={() => {
                   document.getElementById("avatarUpload")?.click();
                   setChangePhotoDialogType(null);
@@ -159,7 +159,7 @@ export default function UserProfile({
                 Change Photo
               </button>
               <button
-                className="block px-4 py-2 hover:bg-gray-100 w-35 text-left text-red-500"
+                className="block px-4 py-2 hover:bg-gray-100 w-35 text-left text-red-500 transition"
                 onClick={() => setConfirmDeleteDialogType("avatar")}
               >
                 Delete Photo
@@ -184,10 +184,10 @@ export default function UserProfile({
 
         {/* User Info */}
         <div className="flex flex-col">
-          <h2 className="text-gray-600 text-2xl font-semibold">{name}</h2>
-          <p className="text-gray-600">@{username}</p>
-          <p className="text-gray-500">{email}</p>
-          <p className="text-gray-500">Birthday {birthDay}</p>
+          <h2 className="text-gray-900 dark:text-gray-100 text-2xl font-semibold">{name}</h2>
+          <p className="text-gray-500 dark:text-gray-400">@{username}</p>
+          <p className="text-gray-500 dark:text-gray-400">{email}</p>
+          <p className="text-gray-500 dark:text-gray-400">Birthday {birthDay}</p>
         </div>
 
         {/* Follow Button */}
@@ -196,8 +196,10 @@ export default function UserProfile({
             <button
               onClick={onFollowToggle}
               className={`${
-                followState === "following" ? "bg-gray-400" : "bg-blue-500"
-              } text-white py-2 px-4 rounded-full hover:bg-blue-600 focus:outline-none`}
+                followState === "following"
+                  ? "btn-secondary text-gray-800"
+                  : "btn-primary"
+              } py-2 px-4 text-sm font-semibold`}
             >
               {followState === "following" ? "Unfollow" : "Follow"}
             </button>

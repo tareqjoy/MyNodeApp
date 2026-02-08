@@ -12,7 +12,7 @@ export default function PageContainer({
   className = "",
 }: PageContainerProps) {
   return (
-    <div className={`max-w-4xl mx-auto p-6 space-y-6 ${className}`.trim()}>
+    <div className={`max-w-5xl mx-auto px-6 py-8 space-y-6 fade-in ${className}`.trim()}>
       {children}
     </div>
   );

@@ -69,29 +69,29 @@ const Search = () => {
   }, []);
 
   return (
-    <div ref={searchRef} className="relative w-1/3">
+    <div ref={searchRef} className="relative w-full max-w-md">
       {/* Search Input */}
       <input
         type="text"
         placeholder="Search..."
         value={query}
         onChange={handleChange}
-        className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-4 py-2.5 rounded-full bg-white/80 text-gray-900 border border-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition placeholder:text-gray-400 dark:bg-white/10 dark:text-white dark:border-white/10 dark:placeholder:text-white/60"
         onClick={() => setShowResults(true)} // Prevent immediate close on click
       />
 
       {/* Search Results Dropdown */}
       {showResults && (
-        <div className="absolute min-w-full bg-gray-800 text-white shadow-lg rounded-lg mt-2 z-50 p-2 border border-gray-600">
+        <div className="absolute min-w-full card text-gray-900 dark:text-gray-100 shadow-2xl rounded-2xl mt-3 z-50 p-2 border border-white/70 dark:border-white/10 rise-in">
           {/* User Results */}
           {results?.userResults && results?.userResults?.length > 0 && (
             <div>
-              <h3 className="text-gray-300 font-semibold px-2">Users</h3>
+              <h3 className="text-gray-500 dark:text-gray-400 font-semibold px-2 text-xs uppercase tracking-wider">Users</h3>
               {results?.userResults?.map((user) => (
                 <Link
                   href={`/profile/${removeMarkTags(user.username)}`}
                   key={user.userid}
-                  className="block px-4 py-2 hover:bg-gray-700 rounded-md"
+                  className="block px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition"
                   onClick={() => resetSearchUI() }
                 >
                   <HighlightText text={user.name} /> 
@@ -106,7 +106,7 @@ const Search = () => {
             <div className="mt-2 text-center">
               <Link
                 href={`/search?q=${query}`}
-                className="block py-2 text-blue-400 hover:underline"
+                className="block py-2 text-blue-600 hover:text-blue-700 dark:text-sky-300 dark:hover:text-white transition"
                 onClick={() => resetSearchUI() }
               >
                 See More Users
@@ -117,12 +117,12 @@ const Search = () => {
           {/* Post Results */}
           {results?.postResults && results.postResults.length > 0 && (
             <div className="mt-2">
-              <h3 className="text-gray-300 font-semibold px-2">Posts</h3>
+              <h3 className="text-gray-500 dark:text-gray-400 font-semibold px-2 text-xs uppercase tracking-wider">Posts</h3>
               {results?.postResults?.map((post) => (
                 <Link
                   href={`/post/${post.postid}`}
                   key={post.postid}
-                  className="block px-4 py-2 hover:bg-gray-700 rounded-md"
+                  className="block px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition"
                   onClick={() => resetSearchUI() }
                 >
                   <HighlightText text={post.body} />
@@ -137,7 +137,7 @@ const Search = () => {
             <div className="mt-2 text-center">
               <Link
                 href={`/search?q=${query}`}
-                className="block py-2 text-blue-400 hover:underline"
+                className="block py-2 text-blue-600 hover:text-blue-700 dark:text-sky-300 dark:hover:text-white transition"
                 onClick={() => resetSearchUI() }
               >
                 See More Posts

@@ -45,9 +45,9 @@ export default function PostComposer({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md space-y-4">
+    <div className="card p-5 space-y-4">
       <textarea
-        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition dark:bg-gray-900/60 dark:border-white/10 dark:text-white"
         placeholder={placeholder}
         rows={3}
         value={content}
@@ -57,7 +57,7 @@ export default function PostComposer({
         <StateMessage variant="error" message={error} center={false} />
       )}
       <button
-        className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
+        className="w-full btn-primary py-2.5 text-sm font-semibold disabled:opacity-60"
         onClick={handlePost}
         disabled={!content.trim() || loading}
       >

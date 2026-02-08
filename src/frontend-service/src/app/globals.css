@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @tailwind base;
@@ -5,21 +6,168 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f7fb;
+  --foreground: #101827;
+  --surface: #ffffff;
+  --surface-strong: #f1f3f9;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --muted: #6b7280;
+  --ring: rgba(37, 99, 235, 0.35);
+  --shadow-soft: 0 20px 60px -40px rgba(15, 23, 42, 0.6);
+  --shadow-card: 0 20px 40px -30px rgba(15, 23, 42, 0.5);
+  --radius-lg: 18px;
+  --radius-md: 14px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0b0f1a;
+    --foreground: #eef1f7;
+    --surface: #111827;
+    --surface-strong: #0f172a;
+    --accent: #60a5fa;
+    --accent-strong: #3b82f6;
+    --muted: #94a3b8;
+    --ring: rgba(96, 165, 250, 0.35);
+    --shadow-soft: 0 30px 60px -40px rgba(2, 6, 23, 0.8);
+    --shadow-card: 0 24px 60px -38px rgba(2, 6, 23, 0.7);
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(1200px 800px at 10% -10%, rgba(37, 99, 235, 0.16), transparent 55%),
+    radial-gradient(900px 700px at 90% -20%, rgba(99, 102, 241, 0.18), transparent 60%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 60%, rgba(241, 245, 249, 0.92) 100%);
+  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background:
+      radial-gradient(1200px 800px at 10% -10%, rgba(59, 130, 246, 0.18), transparent 55%),
+      radial-gradient(900px 700px at 90% -20%, rgba(129, 140, 248, 0.2), transparent 60%),
+      linear-gradient(160deg, rgba(2, 6, 23, 0.98) 0%, rgba(15, 23, 42, 0.96) 55%, rgba(3, 7, 18, 0.98) 100%);
+  }
+}
+
+@layer base {
+  h1, h2, h3, h4 {
+    font-family: "Fraunces", "Plus Jakarta Sans", serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  .glass {
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--surface-strong) 70%, transparent);
+    backdrop-filter: blur(14px);
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    border: 1px solid color-mix(in srgb, var(--surface-strong) 70%, transparent);
+  }
+
+  .btn-primary {
+    background: linear-gradient(120deg, var(--accent), var(--accent-strong));
+    color: #fff;
+    border-radius: 9999px;
+    box-shadow: 0 16px 30px -20px rgba(37, 99, 235, 0.8);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+    box-shadow: 0 18px 34px -22px rgba(37, 99, 235, 0.9);
+  }
+
+  .btn-secondary {
+    background: color-mix(in srgb, var(--surface-strong) 70%, transparent);
+    color: var(--foreground);
+    border-radius: 9999px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .soft-ring {
+    box-shadow: 0 0 0 3px var(--ring);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .fade-in {
+    animation: fade-in 0.35s ease forwards;
+  }
+
+  .rise-in {
+    animation: rise-in 0.4s ease forwards;
+  }
+
+  .pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+@layer components {
+  .top-loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    z-index: 50;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  .top-loading-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: loading-bar 1.3s ease-in-out infinite;
+  }
 }
 
 @layer utilities {
