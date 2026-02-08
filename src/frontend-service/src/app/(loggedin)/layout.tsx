@@ -11,6 +11,7 @@ import {
   getOrCreateDeviceId,
   authPost,
 } from "@/lib/auth";
+import { AuthSignoutReq } from "@tareqjoy/models";
 import Loading from "./loading";
 import Link from "next/link";
 import Search from "./_ui/Search";
@@ -71,21 +72,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleLogOut = async () => {
+    setLoading(true);
     try {
+      const signOutReq = new AuthSignoutReq();
       await authPost(
         authSignOutUrl,
-        {},
+        signOutReq,
         { headers: { "Device-ID": deviceId } }
       );
+    } catch (error) {
+      console.error("Auth failed:", error);
+    } finally {
       deleteAccessToken();
       deleteUserId();
       deleteUserName();
       setShowDropdown(false);
       router.push("/login");
       window.location.reload();
-    } catch (error) {
-      console.error("Auth failed:", error);
-    } finally {
       setLoading(false);
     }
   };

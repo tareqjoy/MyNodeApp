@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authPost, getOrCreateDeviceId, publicPost, setAccessToken, setUserId, setUserName } from '@/lib/auth';
-import { AuthSignInReq, AuthSignInRes } from '@tareqjoy/models';
+import { AuthSignInReq, AuthSignInRes, UserInternalReq, UserInternalRes } from '@tareqjoy/models';
 import { plainToInstance } from 'class-transformer';
 import Loading from './loading';
 import error from 'next/error';
@@ -61,8 +61,21 @@ export default function LoginPage() {
         setAccessToken(authSignInResObj.access_token);
         setUserName(username);
 
-        const usernameRes = await authPost(userIdUrl, { username });
-        setUserId(usernameRes.data.toUserIds[username]);
+        const userInternalReq = new UserInternalReq(username, true);
+        const usernameRes = await authPost<UserInternalRes>(
+          userIdUrl,
+          userInternalReq
+        );
+        const userInternalResObj = plainToInstance(
+          UserInternalRes,
+          usernameRes.data
+        );
+        const resolvedUserId = userInternalResObj.toUserIds?.[username];
+        if (!resolvedUserId) {
+          setErrorMessage('Failed to resolve user id.');
+          return;
+        }
+        setUserId(resolvedUserId);
 
         // Redirect user to previous page or profile
         const callerPage = searchParams.get('callerPage');

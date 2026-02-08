@@ -390,4 +390,5 @@ export async function authGetBlob(
   return response.blob();
 }
 
-export { HttpError, FetchResponse };
+export { HttpError };
+export type { FetchResponse };
